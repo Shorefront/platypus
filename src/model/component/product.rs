@@ -1,6 +1,7 @@
 //! Product Component
 //! 
+use serde::{Deserialize,Serialize};
 
-
-/// Product Compoent
+/// Product Component
+#[derive(Deserialize,Serialize)]
 pub struct ProductComponent {}
