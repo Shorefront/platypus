@@ -28,9 +28,11 @@ fn main() {
     let template = ProductTemplate::new(String::from("Fixed_Internet_Template"));
     let catalog = Catalog::new().name(String::from("Templates"));
     let access_category = Category::new(String::from("Access"));
+    let service_category = Category::new(String::from("Service"));
     let _result = template.add_components(&mut vec![component1,component2]);
     let _result = catalog.add_category(access_category);
-    let _result = template.with_category(access_category);
+    let _result = catalog.add_category(service_category);
+    
     //let _result = catalog.add(template);
     //let _result = template.add_component(component2);
     

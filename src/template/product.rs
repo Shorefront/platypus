@@ -1,6 +1,6 @@
 //! Product Template
 //! 
-use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf620::{product_offering::ProductOffering, category::Category};
 
 use serde::{Deserialize,Serialize};
 use log::info;
@@ -20,6 +20,7 @@ impl ProductTemplate {
             offering    : Some(offering), 
             components  : None }
     }
+  
     pub fn add_components(mut self, components : &mut Vec<ComponentTemplate>) -> Result<String,String> {
         match self.components {
             Some(mut c) => {
