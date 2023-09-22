@@ -1,8 +1,10 @@
 //! Product Template
 //! 
-use tmflib::tmf620::{product_offering::ProductOffering, category::Category};
+use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf620::category::{Category,CategoryRef};
 
 use serde::{Deserialize,Serialize};
+use std::convert::Into;
 use log::info;
 
 use super::component::ComponentTemplate;
@@ -16,6 +18,8 @@ pub struct ProductTemplate {
 impl ProductTemplate {
     pub fn new(name : String) -> ProductTemplate {
         let offering = ProductOffering::new(name);
+        let cat_ref = Category::new(String::from("Templates"));
+        let _result = offering.with_category(CategoryRef::from(&cat_ref));
         ProductTemplate { 
             offering    : Some(offering), 
             components  : None }
@@ -37,4 +41,10 @@ impl ProductTemplate {
         Ok(String::from("Ok"))
     }
 
+}
+
+impl Into<ProductOffering> for ProductTemplate {
+    fn into(self) -> ProductOffering {
+        self.offering.unwrap()
+    }
 }
