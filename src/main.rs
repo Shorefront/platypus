@@ -8,6 +8,7 @@ mod common;
 use common::config::Config;
 use tmflib::tmf620::category::{Category,CategoryRef};
 use tmflib::tmf620::catalog::Catalog;
+use tmflib::tmf620::product_offering::ProductOffering;
 
 use crate::template::{product::ProductTemplate, component::ComponentTemplate};
 
@@ -23,17 +24,12 @@ fn main() {
 
     let _cfg = Config::new();
 
-    let component1 = ComponentTemplate::new(String::from("Access"));
-    let component2 = ComponentTemplate::new(String::from("Service"));
-    let template = ProductTemplate::new(String::from("Fixed_Internet_Template"));
-    let catalog = Catalog::new().name(String::from("Templates"));
-    let access_category = Category::new(String::from("Access"));
-    let service_category = Category::new(String::from("Service"));
-    let _result = template.add_components(&mut vec![component1,component2]);
-    let _result = catalog.add_category(CategoryRef::from(access_category));
-    let _result = catalog.add_category(CategoryRef::from(service_category));
-    
-    //let _result = catalog.add(template);
-    //let _result = template.add_component(component2);
-    
+    // We wish to create a template
+    let prod_template = ProductTemplate::new(String::from("MyTemplate"));
+    // Then we wish to add this template to our catalogue
+    let catalog = Catalog::new();
+    // Convert template into offer for storage
+    let po : ProductOffering = prod_template.into();
+    //let _result = catalog.add_po(po);
+    dbg!(catalog);
 }
