@@ -39,6 +39,6 @@ fn main() {
     dbg!(po);
 
     // Create a customer
-    let cust = Customer::new(String::from("Shorefront Consulting"));
+    let cust = Customer::new(String::from("Optus Administration"));
     dbg!(cust);
 }
