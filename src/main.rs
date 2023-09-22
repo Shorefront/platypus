@@ -6,11 +6,12 @@ mod template;
 mod common;
 
 use common::config::Config;
-use tmflib::tmf620::category::{Category,CategoryRef};
-use tmflib::tmf620::catalog::Catalog;
+use tmflib::tmf629::customer::Customer;
 use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf620::tmf620_catalog_management::TMF620CatalogueManagement;
 
-use crate::template::{product::ProductTemplate, component::ComponentTemplate};
+use crate::template::component::ComponentTemplate;
+use crate::template::product::ProductTemplate;
 
 #[warn(missing_docs)]
 
@@ -25,11 +26,19 @@ fn main() {
     let _cfg = Config::new();
 
     // We wish to create a template
-    let prod_template = ProductTemplate::new(String::from("MyTemplate"));
+    let mut prod_template = ProductTemplate::new(String::from("MyTemplate"));
+    // Create a component template for our product template
+    let comp_template = ComponentTemplate::new(String::from("ComponentTemplate"));
+
+    let _result = prod_template.add_component(comp_template);
     // Then we wish to add this template to our catalogue
-    let catalog = Catalog::new();
+    let mut tmf620 = TMF620CatalogueManagement::new();
     // Convert template into offer for storage
     let po : ProductOffering = prod_template.into();
-    //let _result = catalog.add_po(po);
-    dbg!(catalog);
+    let _result = tmf620.add_offer(po.clone());
+    dbg!(po);
+
+    // Create a customer
+    let cust = Customer::new(String::from("Shorefront Consulting"));
+    dbg!(cust);
 }
