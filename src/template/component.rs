@@ -7,6 +7,7 @@ use tmflib::tmf620::{
     product_offering::ProductOffering, 
     category::{CategoryRef,Category}
 };
+use std::convert::Into;
 
 use super::TEMPLATE_CATEGORY;
 
@@ -35,5 +36,11 @@ impl ComponentTemplate {
             .with_category(CategoryRef::from(&cat))
         );
         self
+    }
+}
+
+impl Into<ProductOffering> for ComponentTemplate {
+    fn into(self) -> ProductOffering {
+        self.component.unwrap()
     }
 }
