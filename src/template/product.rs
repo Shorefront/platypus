@@ -25,9 +25,9 @@ impl ProductTemplate {
         }
     }
   
-    pub fn add_component(&mut self, components : ComponentTemplate) -> Result<String,String> {
+    pub fn with_component(mut self, components : ComponentTemplate) -> ProductTemplate {
         self.components.push(components);
-        Ok(String::from("Ok"))
+        self
     }
 
 }
