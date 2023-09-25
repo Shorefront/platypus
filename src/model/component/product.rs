@@ -40,10 +40,14 @@ impl Into<ProductOffering> for ProductComponent {
 
 
 // Instantiate a Product Component from a Product Template
+// A component template contains an offer 
 impl From<ComponentTemplate> for ProductComponent {
     fn from(ct : ComponentTemplate) -> ProductComponent {
          // Clone source template so we don't change it
-         let pc = ProductComponent::from_offer(ct.component.unwrap().offer);
+         let mut pc = ProductComponent::from_offer(ct.component.unwrap());
+         let comp_cat = Category::new(COMPONENT_CATEGORY.to_string());
+         
+         pc.offer.category = Some(vec![CategoryRef::from(&comp_cat)]);
          pc
     }
 }
