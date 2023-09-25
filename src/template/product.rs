@@ -7,17 +7,18 @@ use serde::{Deserialize,Serialize};
 use std::convert::Into;
 
 use super::component::ComponentTemplate;
+use super::TEMPLATE_CATEGORY;
 
 #[derive(Debug,Deserialize,Serialize)]
 pub struct ProductTemplate {
-    offering    : Option<ProductOffering>,
-    components  : Vec<super::component::ComponentTemplate>,
+    pub offering    : Option<ProductOffering>,
+    pub components  : Vec<super::component::ComponentTemplate>,
 }
 
 impl ProductTemplate {
     pub fn new(name : String) -> ProductTemplate {
         let offering = ProductOffering::new(name);
-        let cat_ref = Category::new(String::from("Templates"));
+        let cat_ref = Category::new(TEMPLATE_CATEGORY.to_string());
         let offering = offering.with_category(CategoryRef::from(&cat_ref));
         ProductTemplate { 
             offering    : Some(offering), 
