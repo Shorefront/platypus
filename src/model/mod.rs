@@ -1,3 +1,3 @@
 //! Model Modules
 //! 
-mod component;
+pub mod component;
