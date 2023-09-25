@@ -2,10 +2,16 @@
 //! 
 
 use serde::{Deserialize,Serialize};
-use tmflib::tmf620::{product_specification::ProductSpecification, product_offering::ProductOffering};
+use tmflib::tmf620::{
+    product_specification::ProductSpecification, 
+    product_offering::ProductOffering, 
+    category::{CategoryRef,Category}
+};
+
+use super::TEMPLATE_CATEGORY;
 
 /// A Component Template defines how to build a component
-#[derive(Debug,Deserialize,Serialize)]
+#[derive(Clone,Debug,Deserialize,Serialize)]
 pub struct ComponentTemplate {
     pub name : String,
     pub component : Option<ProductOffering>,
@@ -22,8 +28,12 @@ impl ComponentTemplate {
 
     /// Add specification to this component
     pub fn with_specification(mut self, specification : ProductSpecification) -> ComponentTemplate {
+        let cat = Category::new(TEMPLATE_CATEGORY.to_string());
+        // Create a ProductOffering to hold the component specification
         self.component = Some(ProductOffering::new(self.name.clone())
-            .with_specification(specification));
+            .with_specification(specification)
+            .with_category(CategoryRef::from(&cat))
+        );
         self
     }
 }
