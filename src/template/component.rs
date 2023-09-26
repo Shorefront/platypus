@@ -15,6 +15,7 @@ use super::TEMPLATE_CATEGORY;
 #[derive(Clone,Debug,Deserialize,Serialize)]
 pub struct ComponentTemplate {
     pub name : String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub component : Option<ProductOffering>,
 }
 
