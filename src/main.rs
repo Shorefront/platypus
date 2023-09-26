@@ -10,8 +10,6 @@ use actix_web::{post,web,App, HttpResponse,HttpServer, Responder};
 
 use common::config::Config;
 use tmflib::tmf620::product_offering::ProductOffering;
-use tmflib::tmf620::product_specification::{ProductSpecification, ProductSpecificationCharacteristic};
-use tmflib::tmf620::tmf620_catalog_management::TMF620CatalogueManagement;
 use tmflib::tmf648::quote::Quote;
 
 use crate::template::component::ComponentTemplate;
