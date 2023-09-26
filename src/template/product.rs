@@ -12,19 +12,22 @@ use super::TEMPLATE_CATEGORY;
 
 #[derive(Debug,Deserialize,Serialize)]
 pub struct ProductTemplate {
+    pub name        : String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub offering    : Option<ProductOffering>,
     pub components  : Vec<super::component::ComponentTemplate>,
 }
 
 impl ProductTemplate {
     pub fn new(name : String) -> ProductTemplate {
-        let offering = ProductOffering::new(name);
+        let offering = ProductOffering::new(name.clone());
         let cat_ref = Category::new(TEMPLATE_CATEGORY.to_string());
         let mut offering = offering.with_category(CategoryRef::from(&cat_ref));
         // All ProductTemplate are bundles
         offering.is_bundle = true;
         offering.bundled_product_offering = Some(vec![]);
         ProductTemplate { 
+            name        : name.clone(),
             offering    : Some(offering), 
             components  : vec![]
         }
