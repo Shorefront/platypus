@@ -6,8 +6,16 @@ mod template;
 mod common;
 
 use actix_web::middleware::Logger;
-use actix_web::{post,web,App, HttpResponse,HttpServer, Responder};
+use actix_web::{get,post,web,App, HttpResponse,HttpServer, Responder};
 
+// SurrealDB
+use serde::Deserialize;
+use surrealdb::engine::local::Mem;
+use surrealdb::engine::local::Db;
+use surrealdb::sql::Thing;
+use surrealdb::Surreal;
+
+// TMFLIB
 use common::config::Config;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf629::customer::Customer;
@@ -18,6 +26,12 @@ use crate::template::component::ComponentTemplate;
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
 use crate::template::product::ProductTemplate;
+
+#[derive(Debug,Deserialize)]
+struct Record {
+    #[allow(dead_code)]
+    id: Option<Thing>,
+}
 
 #[post("/compose/template/product")]
 pub async fn template_product_handler(
@@ -50,12 +64,25 @@ pub async fn tmf620_handler(
 
 #[post("/tmflib/tmf629/customer")]
 pub async fn tmf629_create_handler(
-    body : web::Json<Customer>
+    body : web::Json<Customer>,
+    db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
     data.generate_code();
     data.status = Some(CUST_STATUS.to_string());
-    HttpResponse::Ok().json(data)
+    let created : Result<Vec<Thing>,_> = db.create("customer").content(data.clone()).await;
+    match created {
+        Ok(r) => HttpResponse::Ok().json(r),
+        Err(e) => HttpResponse::BadRequest().json(e),
+    }
+    
+}
+
+#[get("/tmflib/tmf629/customer/{id}")]
+pub async fn tmf629_get_handler(
+
+) -> impl Responder {
+    HttpResponse::Ok()
 }
 
 #[post("/tmflib/tmf648/quote")]
@@ -75,12 +102,17 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init();
 
+    let db = Surreal::new::<Mem>(()).await.expect("Could not create DB");
+
+    db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
+
     info!("Starting {pkg} v{ver}");
 
     let _cfg = Config::new();
    
     HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(db.clone()))
             .service(tmf620_handler)
             .service(tmf629_create_handler)
             .service(tmf648_create_handler)
