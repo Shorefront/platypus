@@ -69,13 +69,10 @@ pub async fn tmf629_create_handler(
 ) -> impl Responder {
     let mut data = body.into_inner();
     data.generate_code();
+    // Since this a new customer we have to regenerate the href
+    data.generate_href();
     data.status = Some(CUST_STATUS.to_string());
-    let created : Result<Vec<Thing>,_> = db.create("customer").content(data.clone()).await;
-    match created {
-        Ok(r) => HttpResponse::Ok().json(r),
-        Err(e) => HttpResponse::BadRequest().json(e),
-    }
-    
+    HttpResponse::Ok().json(data)
 }
 
 #[get("/tmflib/tmf629/customer/{id}")]
