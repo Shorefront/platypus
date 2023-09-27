@@ -10,6 +10,8 @@ use actix_web::{post,web,App, HttpResponse,HttpServer, Responder};
 
 use common::config::Config;
 use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf629::customer::Customer;
+use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
 
 use crate::template::component::ComponentTemplate;
@@ -46,6 +48,16 @@ pub async fn tmf620_handler(
     HttpResponse::Ok().json(new_offer)
 }
 
+#[post("/tmflib/tmf629/customer")]
+pub async fn tmf629_create_handler(
+    body : web::Json<Customer>
+) -> impl Responder {
+    let mut data = body.into_inner();
+    data.generate_code();
+    data.status = Some(CUST_STATUS.to_string());
+    HttpResponse::Ok().json(data)
+}
+
 #[post("/tmflib/tmf648/quote")]
 pub async fn tmf648_create_handler(
     body : web::Json<Quote>
@@ -70,6 +82,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .service(tmf620_handler)
+            .service(tmf629_create_handler)
             .service(tmf648_create_handler)
             .service(template_component_handler)
             .service(template_product_handler)
