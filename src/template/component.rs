@@ -7,6 +7,7 @@ use tmflib::tmf620::{
     product_offering::ProductOffering, 
     category::{CategoryRef,Category}
 };
+use crate::model::component::product::ProductComponent;
 use std::convert::Into;
 
 use super::TEMPLATE_CATEGORY;
@@ -37,6 +38,10 @@ impl ComponentTemplate {
             .with_category(CategoryRef::from(&cat))
         );
         self
+    }
+
+    pub fn instantiate(&self) -> ProductComponent {
+        ProductComponent::from(self.clone())
     }
 }
 
