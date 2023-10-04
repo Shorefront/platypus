@@ -8,6 +8,10 @@ mod common;
 use actix_web::middleware::Logger;
 use actix_web::{get,post,web,App, HttpResponse,HttpServer, Responder};
 
+use log::error;
+
+use std::sync::Mutex;
+
 // SurrealDB
 use serde::Deserialize;
 use surrealdb::engine::local::Mem;
@@ -17,6 +21,8 @@ use surrealdb::Surreal;
 
 // TMFLIB
 use common::config::Config;
+//use tmflib::tmf620::catalog::Catalog;
+use tmflib::tmf620::category::Category;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
@@ -63,6 +69,25 @@ pub async fn tmf620_handler(
     HttpResponse::Ok().json(new_offer)
 }
 
+#[post("/tmflib/tmf620/category")]
+pub async fn tmf620_category_create(
+    body : web::Json<Category>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+) -> impl Responder {
+    //let tmf620 = tmf620.into_inner();
+    let data = body.into_inner();  
+    // Need to generate new id / href as we're creating
+    match tmf620.lock().expect("Could not lock db").add_category(data).await {
+        Ok(_r) => HttpResponse::Ok(),
+        Err(e) => {
+            error!("Error: {e}");
+            HttpResponse::BadRequest()
+        },
+    }
+    
+}
+
+
 #[post("/tmflib/tmf629/customer")]
 pub async fn tmf629_create_handler(
     body : web::Json<Customer>,
@@ -104,7 +129,7 @@ async fn main() -> std::io::Result<()> {
 
     db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
 
-    let _tmf620 = TMF620CatalogManagement::new();
+    let tmf620 = TMF620CatalogManagement::new(db.clone());
 
     info!("Starting {pkg} v{ver}");
 
@@ -113,7 +138,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db.clone()))
+            .app_data(web::Data::new(Mutex::new(tmf620.clone())))
             .service(tmf620_handler)
+            .service(tmf620_category_create)
             .service(tmf629_create_handler)
             .service(tmf648_create_handler)
             .service(template_component_handler)
