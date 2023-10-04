@@ -10,7 +10,7 @@ use std::convert::Into;
 use super::component::ComponentTemplate;
 use super::TEMPLATE_CATEGORY;
 
-#[derive(Debug,Deserialize,Serialize)]
+#[derive(Clone, Debug,Deserialize,Serialize)]
 pub struct ProductTemplate {
     pub name        : String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -44,10 +44,26 @@ impl ProductTemplate {
         self
     }
 
+    /// Generate a new product based off a product template, converting each component template into a component
+    pub fn instantiate(self) -> ProductOffering {
+        // Step1: Create ProductOffering from template
+        // Step2: Instantiate each component template into a component
+        // Does that even make sense? Surely we match components from the existing catalogue first?
+        let mut offering : ProductOffering = self.clone().into();
+        self.components.iter().for_each(|c| {
+            let po : ProductOffering = c.clone().into();
+            let bundle = BundledProductOffering::from(po);
+            offering.bundled_product_offering.as_mut().unwrap().push(bundle);
+        });
+        offering
+        
+    }
+
 }
 
 impl Into<ProductOffering> for ProductTemplate {
     fn into(self) -> ProductOffering {
-        self.offering.unwrap()
+        // Use clone here to ensure originating template is unchanged
+        self.offering.unwrap().clone()
     }
 }
