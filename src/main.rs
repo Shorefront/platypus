@@ -26,6 +26,7 @@ use crate::template::component::ComponentTemplate;
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
 use crate::template::product::ProductTemplate;
+use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 
 #[derive(Debug,Deserialize)]
 struct Record {
@@ -65,7 +66,7 @@ pub async fn tmf620_handler(
 #[post("/tmflib/tmf629/customer")]
 pub async fn tmf629_create_handler(
     body : web::Json<Customer>,
-    db   : web::Data<Surreal<Db>>
+    _db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
     data.generate_code();
@@ -102,6 +103,8 @@ async fn main() -> std::io::Result<()> {
     let db = Surreal::new::<Mem>(()).await.expect("Could not create DB");
 
     db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
+
+    let _tmf620 = TMF620CatalogManagement::new();
 
     info!("Starting {pkg} v{ver}");
 
