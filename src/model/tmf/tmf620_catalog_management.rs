@@ -39,11 +39,11 @@ impl TMF620CatalogManagement {
     }
 
     pub async fn add_category(&mut self, category : Category) -> Result<String,surrealdb::Error> {
-        self.categories.push(category);
+        //self.categories.push(category);
 
         // Also push into db
         let records : Vec<Record> = self.db.create("category").await?;
         dbg!(records);
-        Ok("Category added".into())
+        Ok(format!("Category {} added",category.name.as_ref().unwrap()).into())
     }
 }
