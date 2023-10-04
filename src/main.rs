@@ -21,6 +21,7 @@ use surrealdb::Surreal;
 
 // TMFLIB
 use common::config::Config;
+use common::error::PlatypusError;
 //use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::category::Category;
 use tmflib::tmf620::product_offering::ProductOffering;
@@ -78,10 +79,18 @@ pub async fn tmf620_category_create(
     let data = body.into_inner();  
     // Need to generate new id / href as we're creating
     match tmf620.lock().expect("Could not lock db").add_category(data).await {
-        Ok(_r) => HttpResponse::Ok(),
+        Ok(r) => {
+            let msg = PlatypusError {
+                message : r.clone(),
+            };
+            HttpResponse::Ok().json(msg)
+        },
         Err(e) => {
             error!("Error: {e}");
-            HttpResponse::BadRequest()
+            let msg = PlatypusError {
+                message : e.to_string(),
+            };
+            HttpResponse::BadRequest().json(msg)
         },
     }
     
