@@ -44,8 +44,14 @@ impl Into<ProductOffering> for ProductComponent {
 impl From<ComponentTemplate> for ProductComponent {
     fn from(ct : ComponentTemplate) -> ProductComponent {
          // Clone source template so we don't change it
-         let mut pc = ProductComponent::from_offer(ct.component.unwrap());
+         let mut pc = ProductComponent::from_offer(ct.component.clone().unwrap());
          let comp_cat = Category::new(COMPONENT_CATEGORY.to_string());
+
+         // We need to create a link from ComponentTemplate to ProductComponent
+         // We will do this using ProductOfferRelationship
+        let remote_po : ProductOffering = ct.into();
+
+         pc.offer.link_po(remote_po, "Template", "template");
          
          pc.offer.category = Some(vec![CategoryRef::from(&comp_cat)]);
          pc
