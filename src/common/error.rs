@@ -3,4 +3,6 @@
 use serde::{Deserialize,Serialize};
 
 #[derive(Deserialize,Serialize)]
-pub struct PlatypusError {}
+pub struct PlatypusError {
+   pub message : String,
+}
