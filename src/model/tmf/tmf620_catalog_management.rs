@@ -44,13 +44,14 @@ impl TMF620CatalogManagement {
 
         // Also push into db
         let record = CategoryRecord {
-            id : None,
+            id : Some(Thing {
+                tb: "category".into(),
+                id: category.id.clone().unwrap().into(),
+            }),
             category,
         };
         let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
 
-        let more_records: Vec<CategoryRecord> = self.db.select("category").await?;
-        dbg!(more_records);
         Ok(format!("Category added").into())
     }
 
@@ -58,9 +59,22 @@ impl TMF620CatalogManagement {
         // Get all category records
         let get_records : Vec<CategoryRecord> = self.db.select("category").await?;
         let mut output : Vec<Category> = vec![];
+
+        // Need to generate a vec of sub_categories
         get_records.iter().for_each(|cat| {
             output.push(cat.category.clone());
         });
         Ok(output)
+    }
+
+    pub async fn get_category(&self, id : String) -> Option<Category> {
+        let get_records = self.db.query("SELECT * FROM type::table($table) WHERE id = $id")
+            .bind(("table","category"))
+            .bind(("id",format!("category:{}",id)))
+            .await.expect("Could not retrieve category from DB");
+        dbg!(get_records);
+        // Enrich get_records.categoyr to include sub_categories
+        
+        None
     }
 }
