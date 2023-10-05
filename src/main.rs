@@ -89,6 +89,28 @@ pub async fn tmf620_category_list(
     }
 }
 
+#[get("/tmflib/tmf620/category/{id}")]
+pub async fn tmf620_category_get(
+    path : web::Path<String>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    let id = path.into_inner();
+    info!("Querying for category {}",id);
+    match tmf620.lock().expect("Could not lock DB").get_category(id.clone()).await {
+        Some(r) => {
+            
+            HttpResponse::Ok().json(r.clone())
+        },
+        None => {
+            error!("Not Results for id: {}",id.clone());
+            let msg = PlatypusError {
+                message : format!("No results for id: {}",id),
+            };
+            HttpResponse::BadRequest().json(msg)
+        },  
+    }    
+}
+
 #[post("/tmflib/tmf620/category")]
 pub async fn tmf620_category_create(
     body : web::Json<Category>,
@@ -168,6 +190,7 @@ async fn main() -> std::io::Result<()> {
             .service(tmf620_handler)
             .service(tmf620_category_create)
             .service(tmf620_category_list)
+            .service(tmf620_category_get)
             .service(tmf629_create_handler)
             .service(tmf648_create_handler)
             .service(template_component_handler)
