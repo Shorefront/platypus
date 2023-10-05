@@ -70,20 +70,38 @@ pub async fn tmf620_handler(
     HttpResponse::Ok().json(new_offer)
 }
 
+#[get("/tmflib/tmf620/category")]
+pub async fn tmf620_category_list(
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    match tmf620.lock().expect("Could not lock DB").get_categories().await {
+        Ok(r) => {
+            
+            HttpResponse::Ok().json(r.clone())
+        },
+        Err(e) => {
+            error!("Error: {e}");
+            let msg = PlatypusError {
+                message : e.to_string(),
+            };
+            HttpResponse::BadRequest().json(msg)
+        },  
+    }
+}
+
 #[post("/tmflib/tmf620/category")]
 pub async fn tmf620_category_create(
     body : web::Json<Category>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
 ) -> impl Responder {
     //let tmf620 = tmf620.into_inner();
-    let data = body.into_inner();  
+    let mut data = body.into_inner(); 
     // Need to generate new id / href as we're creating
-    match tmf620.lock().expect("Could not lock db").add_category(data).await {
+    data.generate_id();
+    match tmf620.lock().expect("Could not lock db").add_category(data.clone()).await {
         Ok(r) => {
-            let msg = PlatypusError {
-                message : r.clone(),
-            };
-            HttpResponse::Ok().json(msg)
+            
+            HttpResponse::Ok().json(data.clone())
         },
         Err(e) => {
             error!("Error: {e}");
@@ -146,10 +164,10 @@ async fn main() -> std::io::Result<()> {
    
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(db.clone()))
             .app_data(web::Data::new(Mutex::new(tmf620.clone())))
             .service(tmf620_handler)
             .service(tmf620_category_create)
+            .service(tmf620_category_list)
             .service(tmf629_create_handler)
             .service(tmf648_create_handler)
             .service(template_component_handler)

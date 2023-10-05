@@ -22,9 +22,10 @@ pub struct TMF620CatalogManagement {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct Record {
+struct CategoryRecord {
     #[allow(dead_code)]
-    id: Thing,
+    id: Option<Thing>,
+    category : Category,
 }
 
 impl TMF620CatalogManagement {
@@ -42,8 +43,24 @@ impl TMF620CatalogManagement {
         //self.categories.push(category);
 
         // Also push into db
-        let records : Vec<Record> = self.db.create("category").await?;
-        dbg!(records);
-        Ok(format!("Category {} added",category.name.as_ref().unwrap()).into())
+        let record = CategoryRecord {
+            id : None,
+            category,
+        };
+        let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
+
+        let more_records: Vec<CategoryRecord> = self.db.select("category").await?;
+        dbg!(more_records);
+        Ok(format!("Category added").into())
+    }
+
+    pub async fn get_categories(&self) -> Result<Vec<Category>,surrealdb::Error> {
+        // Get all category records
+        let get_records : Vec<CategoryRecord> = self.db.select("category").await?;
+        let mut output : Vec<Category> = vec![];
+        get_records.iter().for_each(|cat| {
+            output.push(cat.category.clone());
+        });
+        Ok(output)
     }
 }
