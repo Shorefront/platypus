@@ -1,5 +1,7 @@
 //! TMF620 Catalog Management Module
 
+use std::process::id;
+
 use tmflib::tmf620::category::Category;
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
@@ -11,6 +13,8 @@ use surrealdb::Surreal;
 use surrealdb::engine::local::Db;
 use surrealdb::sql::Thing;
 
+use log::{error,info,debug};
+
 #[derive(Debug,Clone)]
 pub struct TMF620CatalogManagement {
     // Use of vectors here is very simplistic, ideally need a hash.
@@ -21,7 +25,7 @@ pub struct TMF620CatalogManagement {
     pub specifications: Vec<ProductSpecification>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct CategoryRecord {
     #[allow(dead_code)]
     id: Option<Thing>,
@@ -59,7 +63,7 @@ impl TMF620CatalogManagement {
         // Get all category records
         let get_records : Vec<CategoryRecord> = self.db.select("category").await?;
         let mut output : Vec<Category> = vec![];
-
+        dbg!(&get_records);
         // Need to generate a vec of sub_categories
         get_records.iter().for_each(|cat| {
             output.push(cat.category.clone());
@@ -67,14 +71,16 @@ impl TMF620CatalogManagement {
         Ok(output)
     }
 
-    pub async fn get_category(&self, id : String) -> Option<Category> {
-        let get_records = self.db.query("SELECT * FROM type::table($table) WHERE id = $id")
-            .bind(("table","category"))
-            .bind(("id",format!("category:{}",id)))
-            .await.expect("Could not retrieve category from DB");
-        dbg!(get_records);
-        // Enrich get_records.categoyr to include sub_categories
-        
-        None
+    pub async fn get_category(&self, id : String) -> Result<Option<Category>,surrealdb::Error> {
+        //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
+        //let name : &str = "Root";
+        let query = format!("SELECT * FROM category WHERE category.id = '{}'",id);
+        let mut output = self.db.query(query).await?;
+        let result : Vec<CategoryRecord> = output.take(0)?;
+        let cat = result.first().cloned().map(|cat| {
+            cat.category
+        });
+        dbg!(&cat);
+        Ok(cat)
     }
 }

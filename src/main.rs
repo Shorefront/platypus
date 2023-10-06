@@ -97,12 +97,12 @@ pub async fn tmf620_category_get(
     let id = path.into_inner();
     info!("Querying for category {}",id);
     match tmf620.lock().expect("Could not lock DB").get_category(id.clone()).await {
-        Some(r) => {
+        Ok(r) => {
             
             HttpResponse::Ok().json(r.clone())
         },
-        None => {
-            error!("Not Results for id: {}",id.clone());
+        Err(e) => {
+            error!("No Results for id: {}, {}",id.clone(),e);
             let msg = PlatypusError {
                 message : format!("No results for id: {}",id),
             };
@@ -174,15 +174,15 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init();
 
+    info!("Starting {pkg} v{ver}");
+
     let db = Surreal::new::<Mem>(()).await.expect("Could not create DB");
 
     db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
 
     let tmf620 = TMF620CatalogManagement::new(db.clone());
 
-    info!("Starting {pkg} v{ver}");
-
-    let _cfg = Config::new();
+    
    
     HttpServer::new(move || {
         App::new()
