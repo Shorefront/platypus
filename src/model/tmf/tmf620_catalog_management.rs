@@ -2,7 +2,7 @@
 
 use std::process::id;
 
-use tmflib::tmf620::category::Category;
+use tmflib::tmf620::category::{Category, CategoryRef};
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_specification::ProductSpecification;
@@ -74,13 +74,28 @@ impl TMF620CatalogManagement {
     pub async fn get_category(&self, id : String) -> Result<Option<Category>,surrealdb::Error> {
         //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
         //let name : &str = "Root";
-        let query = format!("SELECT * FROM category WHERE category.id = '{}'",id);
+        let query = format!("SELECT * FROM category:{}",id);
         let mut output = self.db.query(query).await?;
         let result : Vec<CategoryRecord> = output.take(0)?;
-        let cat = result.first().cloned().map(|cat| {
+        let mut cat = result.first().cloned().map(|cat| {
             cat.category
         });
-        dbg!(&cat);
+        // Now enrich with any records where parentId = id
+        let sub_query = format!("SELECT * FROM category where category.parentId = '{}'",id);
+        let mut response = self.db.query(sub_query).await?;
+        let vec : Vec<CategoryRecord> = response.take(0)?;
+        let mut sub_category : Vec<CategoryRef> = vec![];
+        vec.iter().for_each(|cr| {
+            // Take each category record and
+            // Extract the category
+            // Convert to CategoryRef
+            // Add to Vec
+            let cat = cr.clone().category;
+            let cat_ref = CategoryRef::from(&cat);
+            sub_category.push(cat_ref);
+        });
+        
+        cat.as_mut().unwrap().sub_category = Some(sub_category);
         Ok(cat)
     }
 }
