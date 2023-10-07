@@ -77,7 +77,7 @@ impl TMF620CatalogManagement {
         // Get all category records
         let get_records : Vec<CategoryRecord> = self.db.select("category").await?;
         let mut output : Vec<Category> = vec![];
-        dbg!(&get_records);
+        
         // Need to generate a vec of sub_categories
         get_records.iter().for_each(|cat| {
             output.push(cat.category.clone());
