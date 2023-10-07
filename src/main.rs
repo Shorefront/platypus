@@ -122,7 +122,7 @@ pub async fn tmf620_category_create(
     data.generate_id();
     match tmf620.lock().expect("Could not lock db").add_category(data.clone()).await {
         Ok(r) => {
-            
+            info!("add_category: {}",r);
             HttpResponse::Ok().json(data.clone())
         },
         Err(e) => {
@@ -182,7 +182,7 @@ async fn main() -> std::io::Result<()> {
 
     let tmf620 = TMF620CatalogManagement::new(db.clone());
 
-    
+    let _config = Config::new();
    
     HttpServer::new(move || {
         App::new()
