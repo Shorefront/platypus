@@ -1,7 +1,5 @@
 //! TMF620 Catalog Management Module
 
-use std::process::id;
-
 use tmflib::tmf620::category::{Category, CategoryRef};
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
@@ -9,11 +7,11 @@ use tmflib::tmf620::product_specification::ProductSpecification;
 
 use serde::{Deserialize,Serialize};
 
+use log::error;
+
 use surrealdb::Surreal;
 use surrealdb::engine::local::Db;
 use surrealdb::sql::Thing;
-
-use log::{error,info,debug};
 
 #[derive(Debug,Clone)]
 pub struct TMF620CatalogManagement {
@@ -43,8 +41,24 @@ impl TMF620CatalogManagement {
         }
     }
 
-    pub async fn add_category(&mut self, category : Category) -> Result<String,surrealdb::Error> {
-        //self.categories.push(category);
+    pub async fn add_category(&mut self, mut category : Category) -> Result<String,surrealdb::Error> {
+        
+        if !category.is_root && category.parent_id.is_some() {
+            let parent_id = category.parent_id.as_ref().unwrap().clone();
+            // Need to check if parentId is pointing to a valid parent
+            let parent_query = format!("SELECT * FROM category:{}",parent_id);
+            let mut parent_resp = self.db.query(parent_query).await?;
+            let parent : Vec<CategoryRecord> = parent_resp.take(0).unwrap();
+            if parent.len() == 0 {
+                // Throw error, parent not found
+                error!("ParentId {} not found for child {}",&parent_id,category.id.clone().unwrap());
+            }
+        }
+
+        // Simiarly, if flagged as root, cannot also have parent_id
+        if category.is_root {
+            category.parent_id = None;
+        }
 
         // Also push into db
         let record = CategoryRecord {
@@ -52,11 +66,11 @@ impl TMF620CatalogManagement {
                 tb: "category".into(),
                 id: category.id.clone().unwrap().into(),
             }),
-            category,
+            category: category.clone(),
         };
         let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
 
-        Ok(format!("Category added").into())
+        Ok(format!("Category added").to_string())
     }
 
     pub async fn get_categories(&self) -> Result<Vec<Category>,surrealdb::Error> {
