@@ -26,6 +26,13 @@ pub struct TMF620CatalogManagement {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+struct CatalogRecord {
+    #[allow(dead_code)]
+    id: Option<Thing>,
+    catalog: Catalog,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct CategoryRecord {
     #[allow(dead_code)]
     id: Option<Thing>,
@@ -43,7 +50,20 @@ impl TMF620CatalogManagement {
         }
     }
 
-    pub async fn add_category(&mut self, mut category : Category) -> Result<String,PlatypusError> {
+    pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Catalog,PlatypusError> {
+        let record = CatalogRecord {
+            id : Some(Thing {
+                tb: String::from("catalog"),
+                id: catalog.clone().id.unwrap().clone().into(),
+            }),
+            catalog: catalog.clone(),
+        };
+        let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
+
+        Ok(catalog.clone())
+    }
+
+    pub async fn add_category(&mut self, mut category : Category) -> Result<Category,PlatypusError> {
         
         if !category.is_root && category.parent_id.is_some() {
             let parent_id = category.parent_id.as_ref().unwrap().clone();
@@ -74,7 +94,7 @@ impl TMF620CatalogManagement {
         };
         let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
 
-        Ok(format!("Category added").to_string())
+        Ok(category)
     }
 
     pub async fn get_categories(&self) -> Result<Vec<Category>,PlatypusError> {
@@ -112,6 +132,8 @@ impl TMF620CatalogManagement {
             let cat_ref = CategoryRef::from(&cat);
             sub_category.push(cat_ref);
         });
+
+        // Now enrich with offers that have parentId = id
         
         cat.as_mut().unwrap().sub_category = Some(sub_category);
         Ok(cat)
