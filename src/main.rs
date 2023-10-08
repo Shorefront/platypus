@@ -22,7 +22,7 @@ use surrealdb::Surreal;
 // TMFLIB
 use common::config::Config;
 use common::error::PlatypusError;
-//use tmflib::tmf620::catalog::Catalog;
+use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::category::Category;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf629::customer::Customer;
@@ -122,8 +122,7 @@ pub async fn tmf620_category_create(
     data.generate_id();
     match tmf620.lock().expect("Could not lock db").add_category(data.clone()).await {
         Ok(r) => {
-            info!("add_category: {}",r);
-            HttpResponse::Ok().json(data.clone())
+            HttpResponse::Ok().json(r)
         },
         Err(e) => {
             error!("Error: {e}");
@@ -132,8 +131,25 @@ pub async fn tmf620_category_create(
             };
             HttpResponse::BadRequest().json(msg)
         },
+    }   
+}
+
+#[post("/tmflib/tmf620/catalog")]
+pub async fn tmf620_catalog_create(
+    body : web::Json<Catalog>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+) -> impl Responder {
+    let data = body.into_inner();
+    // We should use a trait on Catalog to ensure it has id and this func
+    //data.generate_id();
+    match tmf620.lock().expect("Could not lock DB").add_catalog(data.clone()).await {
+        Ok(r) => {
+            HttpResponse::Ok().json(r)
+        },
+        Err(e) => {
+            HttpResponse::BadGateway().json(e)
+        }
     }
-    
 }
 
 
@@ -191,6 +207,7 @@ async fn main() -> std::io::Result<()> {
             .service(tmf620_category_create)
             .service(tmf620_category_list)
             .service(tmf620_category_get)
+            .service(tmf620_catalog_create)
             .service(tmf629_create_handler)
             .service(tmf648_create_handler)
             .service(template_component_handler)
