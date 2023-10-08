@@ -13,6 +13,8 @@ use surrealdb::Surreal;
 use surrealdb::engine::local::Db;
 use surrealdb::sql::Thing;
 
+use crate::common::error::PlatypusError;
+
 #[derive(Debug,Clone)]
 pub struct TMF620CatalogManagement {
     // Use of vectors here is very simplistic, ideally need a hash.
@@ -41,7 +43,7 @@ impl TMF620CatalogManagement {
         }
     }
 
-    pub async fn add_category(&mut self, mut category : Category) -> Result<String,surrealdb::Error> {
+    pub async fn add_category(&mut self, mut category : Category) -> Result<String,PlatypusError> {
         
         if !category.is_root && category.parent_id.is_some() {
             let parent_id = category.parent_id.as_ref().unwrap().clone();
@@ -51,7 +53,9 @@ impl TMF620CatalogManagement {
             let parent : Vec<CategoryRecord> = parent_resp.take(0).unwrap();
             if parent.len() == 0 {
                 // Throw error, parent not found
-                error!("ParentId {} not found for child {}",&parent_id,category.id.clone().unwrap());
+                let msg = format!("ParentId {} not found for child {}",&parent_id,category.id.clone().unwrap());
+                error!("add_category: {msg}");
+                return Err(PlatypusError { message: msg, })
             }
         }
 
@@ -73,7 +77,7 @@ impl TMF620CatalogManagement {
         Ok(format!("Category added").to_string())
     }
 
-    pub async fn get_categories(&self) -> Result<Vec<Category>,surrealdb::Error> {
+    pub async fn get_categories(&self) -> Result<Vec<Category>,PlatypusError> {
         // Get all category records
         let get_records : Vec<CategoryRecord> = self.db.select("category").await?;
         let mut output : Vec<Category> = vec![];
@@ -85,7 +89,7 @@ impl TMF620CatalogManagement {
         Ok(output)
     }
 
-    pub async fn get_category(&self, id : String) -> Result<Option<Category>,surrealdb::Error> {
+    pub async fn get_category(&self, id : String) -> Result<Option<Category>,PlatypusError> {
         //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
         //let name : &str = "Root";
         let query = format!("SELECT * FROM category:{}",id);
