@@ -28,6 +28,7 @@ use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
+use tmflib::HasId;
 
 use crate::template::component::ComponentTemplate;
 //use crate::template::product::ProductTemplate;
@@ -140,16 +141,14 @@ pub async fn tmf620_catalog_create(
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
 ) -> impl Responder {
     let data = body.into_inner();
+    let result = tmf620.lock().unwrap().add_any(data).await;
+    match result {
+        Ok(_r) => HttpResponse::Ok(),
+        Err(_e) => HttpResponse::BadRequest(),
+    }
     // We should use a trait on Catalog to ensure it has id and this func
     //data.generate_id();
-    match tmf620.lock().expect("Could not lock DB").add_catalog(data.clone()).await {
-        Ok(r) => {
-            HttpResponse::Ok().json(r)
-        },
-        Err(e) => {
-            HttpResponse::BadGateway().json(e)
-        }
-    }
+    
 }
 
 
