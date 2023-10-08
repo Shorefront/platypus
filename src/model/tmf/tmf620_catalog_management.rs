@@ -4,6 +4,7 @@ use tmflib::tmf620::category::{Category, CategoryRef};
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_specification::ProductSpecification;
+use tmflib::HasId;
 
 use serde::{Deserialize,Serialize};
 
@@ -39,6 +40,13 @@ struct CategoryRecord {
     category : Category,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct GenericRecord<T> {
+    #[allow(dead_code)]
+    id: Option<Thing>,
+    item : T,
+}
+
 impl TMF620CatalogManagement {
     pub fn new(db : Surreal<Db>) -> TMF620CatalogManagement {
         TMF620CatalogManagement { 
@@ -48,6 +56,20 @@ impl TMF620CatalogManagement {
             offers: vec![],
             specifications: vec![],
         }
+    }
+
+    pub async fn add_any<T : HasId + Clone + Serialize>(&mut self, mut item : T) -> Result<T,PlatypusError> {
+        // We only know that item implements the HasId trait which means we have an Id.
+        let id = item.get_id();
+        let record = GenericRecord::<T> {
+            id : Some(Thing {
+                tb: "unknown".to_string(),
+                id: id.into()
+            }),
+            item,
+        };
+        let _insert_records : Vec<GenericRecord<T>> = self.db.create("category").content(record).await?;
+        Err(PlatypusError { message: String::from("Not implemented") })
     }
 
     pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Catalog,PlatypusError> {
