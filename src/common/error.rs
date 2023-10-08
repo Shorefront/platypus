@@ -6,3 +6,15 @@ use serde::{Deserialize,Serialize};
 pub struct PlatypusError {
    pub message : String,
 }
+
+impl std::fmt::Display for PlatypusError {
+   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+       write!(f,"Platypus Error: {}",self.message)
+   }
+}
+
+impl From<surrealdb::Error> for PlatypusError {
+   fn from(value: surrealdb::Error) -> Self {
+       PlatypusError { message: value.to_string(), }
+   }
+}
