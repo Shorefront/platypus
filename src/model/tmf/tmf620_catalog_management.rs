@@ -61,14 +61,14 @@ impl TMF620CatalogManagement {
     pub async fn add_any<T : HasId + Clone + Serialize>(&mut self, mut item : T) -> Result<T,PlatypusError> {
         // We only know that item implements the HasId trait which means we have an Id.
         let id = item.get_id();
-        let record = GenericRecord::<T> {
+        let _record = GenericRecord::<T> {
             id : Some(Thing {
                 tb: "unknown".to_string(),
                 id: id.into()
             }),
             item,
         };
-        let _insert_records : Vec<GenericRecord<T>> = self.db.create("category").content(record).await?;
+        //let _insert_records : Vec<GenericRecord<T>> = self.db.create("category").content(record).await.unwrap();
         Err(PlatypusError { message: String::from("Not implemented") })
     }
 
