@@ -16,10 +16,11 @@ pub struct TMF<T : HasId> {
     item : T,
 }
 
-pub fn tmf_payload<T : HasId, Serialize, Deserialize, Clone>(item : T) -> TMF<T> {
+/// Geneate a TMF payload for storing in the database
+pub fn tmf_payload<T : HasId + Serialize + Clone>(item : T) -> TMF<T> {
     TMF {
         id : Some(Thing {
-            tb : item.get_href(),
+            tb : T::get_class(),
             id : item.get_id().into(),
         }),
         item,
