@@ -146,14 +146,11 @@ pub async fn tmf620_catalog_create(
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
 ) -> impl Responder {
     let data = body.into_inner();
-    let result = tmf620.lock().unwrap().add_any(data).await;
+    let result = tmf620.lock().unwrap().add_catalog(data).await;
     match result {
-        Ok(_r) => HttpResponse::Ok(),
-        Err(_e) => HttpResponse::BadRequest(),
-    }
-    // We should use a trait on Catalog to ensure it has id and this func
-    //data.generate_id();
-    
+        Ok(r) => HttpResponse::Ok().json(r),
+        Err(e) => HttpResponse::BadRequest().json(e),
+    }   
 }
 
 
