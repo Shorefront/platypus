@@ -60,14 +60,11 @@ impl TMF620CatalogManagement {
         }
     }
 
+    pub async fn add_any<T : HasId>(&self, item : T) -> Result<Vec<TMF<T>>,PlatypusError> {
+        Err(PlatypusError::from("not implemented"))
+    }
+
     pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Vec<TMF<Catalog>>,PlatypusError> {
-        let record = CatalogRecord {
-            id : Some(Thing {
-                tb: String::from("catalog"),
-                id: catalog.clone().id.unwrap().clone().into(),
-            }),
-            catalog: catalog.clone(),
-        };
         let payload = tmf_payload(catalog);
         let class = Catalog::get_class();
         let insert_records : Vec<TMF<Catalog>> = self.db.create(class).content(payload).await?;
@@ -75,7 +72,7 @@ impl TMF620CatalogManagement {
         Ok(insert_records)
     }
 
-    pub async fn add_category(&mut self, mut category : Category) -> Result<Category,PlatypusError> {
+    pub async fn add_category(&mut self, mut category : Category) -> Result<TMF<Category>,PlatypusError> {
         
         if !category.is_root && category.parent_id.is_some() {
             let parent_id = category.parent_id.as_ref().unwrap().clone();
@@ -96,17 +93,10 @@ impl TMF620CatalogManagement {
             category.parent_id = None;
         }
 
-        // Also push into db
-        let record = CategoryRecord {
-            id : Some(Thing {
-                tb: "category".into(),
-                id: category.id.clone().unwrap().into(),
-            }),
-            category: category.clone(),
-        };
-        let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
+        let payload = tmf_payload(category);
+        let insert_records : Vec<TMF<Category>> = self.db.create(Category::get_class()).content(payload).await?;
 
-        Ok(category)
+        Ok(insert_records.first().unwrap().clone())
     }
 
     pub async fn get_categories(&self) -> Result<Vec<Category>,PlatypusError> {
