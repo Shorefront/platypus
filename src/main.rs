@@ -1,3 +1,6 @@
+//! Platypus Priary Module
+
+#![warn(missing_docs)]
 
 use log::info;
 
@@ -35,6 +38,8 @@ use crate::template::component::ComponentTemplate;
 //use crate::model::component::product::ProductComponent;
 use crate::template::product::ProductTemplate;
 use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
+
+
 
 #[derive(Debug,Deserialize)]
 struct Record {
@@ -159,8 +164,8 @@ pub async fn tmf629_create_handler(
 ) -> impl Responder {
     let mut data = body.into_inner();
     data.generate_code();
-    // Since this a new customer we have to regenerate the href
-    data.generate_href();
+    // Since this a new customer we have to regenerate the id / href
+    data.generate_id();
     data.status = Some(CUST_STATUS.to_string());
     HttpResponse::Ok().json(data)
 }
@@ -197,11 +202,12 @@ async fn main() -> std::io::Result<()> {
 
     let tmf620 = TMF620CatalogManagement::new(db.clone());
 
-    let _config = Config::new();
+    let config = Config::new();
    
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(Mutex::new(tmf620.clone())))
+            .app_data(web::Data::new(Mutex::new(config.clone())))
             .service(tmf620_handler)
             .service(tmf620_category_create)
             .service(tmf620_category_list)
