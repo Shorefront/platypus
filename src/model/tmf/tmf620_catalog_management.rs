@@ -8,6 +8,8 @@ use tmflib::HasId;
 
 use serde::{Deserialize,Serialize};
 
+use super::{TMF,tmf_payload};
+
 use log::error;
 
 use surrealdb::Surreal;
@@ -58,21 +60,7 @@ impl TMF620CatalogManagement {
         }
     }
 
-    pub async fn add_any<T : HasId + Clone + Serialize>(&mut self, mut item : T) -> Result<T,PlatypusError> {
-        // We only know that item implements the HasId trait which means we have an Id.
-        let id = item.get_id();
-        let _record = GenericRecord::<T> {
-            id : Some(Thing {
-                tb: "unknown".to_string(),
-                id: id.into()
-            }),
-            item,
-        };
-        //let _insert_records : Vec<GenericRecord<T>> = self.db.create("category").content(record).await.unwrap();
-        Err(PlatypusError { message: String::from("Not implemented") })
-    }
-
-    pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Catalog,PlatypusError> {
+    pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Vec<TMF<Catalog>>,PlatypusError> {
         let record = CatalogRecord {
             id : Some(Thing {
                 tb: String::from("catalog"),
@@ -80,9 +68,11 @@ impl TMF620CatalogManagement {
             }),
             catalog: catalog.clone(),
         };
-        let _insert_records : Vec<CategoryRecord> = self.db.create("category").content(record).await?;
+        let payload = tmf_payload(catalog);
+        let class = Catalog::get_class();
+        let insert_records : Vec<TMF<Catalog>> = self.db.create(class).content(payload).await?;
 
-        Ok(catalog.clone())
+        Ok(insert_records)
     }
 
     pub async fn add_category(&mut self, mut category : Category) -> Result<Category,PlatypusError> {
