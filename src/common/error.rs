@@ -18,3 +18,9 @@ impl From<surrealdb::Error> for PlatypusError {
        PlatypusError { message: value.to_string(), }
    }
 }
+
+impl From<&str> for PlatypusError {
+   fn from(value: &str) -> Self {
+       PlatypusError { message: value.to_owned() }
+   }
+}
