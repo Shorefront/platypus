@@ -8,8 +8,6 @@ use tmflib::HasId;
 
 use serde::{Deserialize,Serialize};
 
-use super::{TMF,tmf_payload};
-
 use log::error;
 
 use surrealdb::Surreal;
@@ -17,6 +15,7 @@ use surrealdb::engine::local::Db;
 use surrealdb::sql::Thing;
 
 use crate::common::error::PlatypusError;
+use super::{tmf_payload,TMF};
 
 #[derive(Debug,Clone)]
 pub struct TMF620CatalogManagement {
@@ -60,8 +59,10 @@ impl TMF620CatalogManagement {
         }
     }
 
-    pub async fn add_any<T : HasId>(&self, item : T) -> Result<Vec<TMF<T>>,PlatypusError> {
-        Err(PlatypusError::from("not implemented"))
+    pub async fn add_any<'a, T : HasId + Serialize + Clone + Deserialize<'static>>(&self, item : T) -> Result<Vec<TMF<T>>,PlatypusError> {
+        let payload = tmf_payload(item);
+        let insert_records : Vec<TMF<T>> = self.db.create(T::get_class()).content(payload).await?;
+        Ok(insert_records)
     }
 
     pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Vec<TMF<Catalog>>,PlatypusError> {

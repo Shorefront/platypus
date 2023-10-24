@@ -22,7 +22,7 @@ pub struct TMF<T : HasId> {
 }
 
 /// Geneate a TMF payload for storing in the database
-pub fn tmf_payload<T : HasId + Serialize + Clone>(item : T) -> TMF<T> {
+pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
     TMF {
         id : Some(Thing {
             tb : T::get_class(),
