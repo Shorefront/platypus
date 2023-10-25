@@ -28,6 +28,8 @@ use common::error::PlatypusError;
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::category::Category;
 use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf632::individual::Individual;
+use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
@@ -38,6 +40,7 @@ use crate::template::component::ComponentTemplate;
 //use crate::model::component::product::ProductComponent;
 use crate::template::product::ProductTemplate;
 use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
+use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
 
 
 
@@ -174,6 +177,45 @@ pub async fn tmf629_get_handler(
     HttpResponse::Ok()
 }
 
+#[get("/tmflib/tmf632/{object}")]
+pub async fn tmf632_get_handler(
+    path : web::Path<String>,
+) -> impl Responder {
+    match path.as_str() {
+        "individual" => todo!(),
+        "organization" => todo!(),
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
+    }  
+}
+
+#[post("/tmflib/tmf632/{object}")]
+pub async fn tmf632_create_handler(
+    path : web::Path<String>,
+    raw: web::Bytes,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+) -> impl Responder {
+    let object = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    match object.as_str() {
+        "individual" => {
+            // Create individual object
+            let individual : Individual = serde_json::from_str(json.as_str()).unwrap();
+            let records = tmf632.lock().unwrap().add_individual(individual.clone()).await;
+            match records {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => HttpResponse::BadRequest().json(e),
+            } 
+        },
+        "organization" => {
+            let organization : Organization = serde_json::from_str(json.as_str()).unwrap();
+            HttpResponse::Ok().json(organization)
+        }
+        _ => {
+            HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
+        }
+    } 
+}
+
 #[post("/tmflib/tmf648/quote")]
 pub async fn tmf648_create_handler(
     body : web::Json<Quote>
@@ -198,12 +240,18 @@ async fn main() -> std::io::Result<()> {
     db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
 
     let tmf620 = TMF620CatalogManagement::new(db.clone());
+    let tmf632 = TMF632PartyManagement::new(db.clone());
 
     let config = Config::new();
+
+    // Extract port crom config, default if not found
+    let port = config.get("PLATYPUS_PORT").unwrap_or("8000".to_string());
+    let port = port.parse::<u16>().unwrap();
    
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(Mutex::new(tmf620.clone())))
+            .app_data(web::Data::new(Mutex::new(tmf632.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
             .service(tmf620_handler)
             .service(tmf620_category_create)
@@ -211,12 +259,14 @@ async fn main() -> std::io::Result<()> {
             .service(tmf620_category_get)
             .service(tmf620_catalog_create)
             .service(tmf629_create_handler)
+            .service(tmf632_create_handler)
+            .service(tmf632_get_handler)           
             .service(tmf648_create_handler)
             .service(template_component_handler)
             .service(template_product_handler)
             .wrap(Logger::default())
     })
-        .bind(("0.0.0.0",8000))?
+        .bind(("0.0.0.0",port))?
         .run()
         .await
 }
