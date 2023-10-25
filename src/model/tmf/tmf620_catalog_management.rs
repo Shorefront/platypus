@@ -59,12 +59,6 @@ impl TMF620CatalogManagement {
         }
     }
 
-    pub async fn add_any<'a, T : HasId + Serialize + Clone + Deserialize<'static>>(&self, item : T) -> Result<Vec<TMF<T>>,PlatypusError> {
-        let payload = tmf_payload(item);
-        let insert_records : Vec<TMF<T>> = self.db.create(T::get_class()).content(payload).await?;
-        Ok(insert_records)
-    }
-
     pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Vec<TMF<Catalog>>,PlatypusError> {
         let payload = tmf_payload(catalog);
         let class = Catalog::get_class();
