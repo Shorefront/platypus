@@ -14,7 +14,7 @@ pub mod tmf632_party_management;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
     id : Option<Thing>,
-    item : T,
+    pub item : T,
 }
 
 /// Geneate a TMF payload for storing in the database
