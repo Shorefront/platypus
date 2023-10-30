@@ -74,30 +74,34 @@ pub async fn tmf620_list_handler(
     path : web::Path<String>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    let _object = path.into_inner();
-    match tmf620.lock().expect("Could not lock DB").get_categories().await {
-        Ok(r) => {
-            
-            HttpResponse::Ok().json(r.clone())
+    let object = path.into_inner();
+    match object.as_str() {
+        "productSpecification" => {
+            let output = tmf620.lock().unwrap().get_specifications().await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
         },
-        Err(e) => {
-            error!("Error: {e}");
-            let msg = PlatypusError {
-                message : e.to_string(),
-            };
-            HttpResponse::BadRequest().json(msg)
-        },  
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
     }
-    
 }
 
 /// Get a specific object
 #[get("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_get_handler(
-    path : web::Path<String>,
+    path : web::Path<(String,String)>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    HttpResponse::BadRequest().json(PlatypusError::from("Not implemented"))
+    let (object,id) = path.into_inner();
+    let result = match object.as_str() {
+        "productSpecification" => tmf620.lock().unwrap().get_specification(id).await,
+        _ => Err(PlatypusError::from("Invalid Object"))
+    };
+    match result {
+        Ok(o) => HttpResponse::Ok().json(o),
+        Err(e) => HttpResponse::InternalServerError().json(e),          
+    }
 }
 
 /// Create an object
