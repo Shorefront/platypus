@@ -4,7 +4,7 @@ use tmflib::tmf620::category::{Category, CategoryRef};
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_specification::ProductSpecification;
-use tmflib::HasId;
+use tmflib::{HasId,HasName};
 
 use serde::{Deserialize,Serialize};
 
@@ -114,7 +114,26 @@ impl TMF620CatalogManagement {
         Ok(output)
     }
 
-    pub async fn get_category(&self, id : String) -> Result<Option<Category>,PlatypusError> {
+    pub async fn get_specifications(&self) -> Result<Vec<ProductSpecification>,PlatypusError> {
+        // Get all specifications
+        let get_records : Vec<TMF<ProductSpecification>> = self.db.select(ProductSpecification::get_class()).await?;
+        let output = get_records.iter().map(|ps| {
+            ps.clone().item
+        }).collect();
+        Ok(output)
+    }
+
+    pub async fn get_specification(&self, id : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
+        let query = format!("SELECT * FROM {}:{}",ProductSpecification::get_class(),id);
+        let mut output = self.db.query(query).await?;
+        let result : Vec<TMF<ProductSpecification>> = output.take(0)?;
+        let cat = result.iter().map(|tmf| {
+            tmf.clone().item
+        }).collect();
+        Ok(cat)
+    }
+
+    pub async fn get_category(&self,id : String) -> Result<Option<Category>,PlatypusError> {
         //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
         //let name : &str = "Root";
         let query = format!("SELECT * FROM category:{}",id);
