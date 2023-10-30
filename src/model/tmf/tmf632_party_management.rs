@@ -1,5 +1,6 @@
 //! Party Management Module
 
+use serde::Deserialize;
 use surrealdb::Surreal;
 use surrealdb::engine::local::Db;
 use tmflib::{tmf632::individual::Individual, HasId};
@@ -39,7 +40,7 @@ impl TMF632PartyManagement {
         }
         Ok(true) 
     }
-    pub async fn add_individual(&self, individual : Individual) -> Result<TMF<Individual>,PlatypusError> {
+    pub async fn add_individual(&self, individual : Individual) -> Result<Individual,PlatypusError> {
         match self.validate_individual(&individual) {
             Ok(_) => debug!("Individual validated"),
             Err(e) => {
@@ -50,6 +51,17 @@ impl TMF632PartyManagement {
         let payload = tmf_payload(individual);
         let insert_records : Vec<TMF<Individual>> = self.db.create(Individual::get_class()).content(payload).await?;
         let record = insert_records.first().unwrap();
-        Ok(record.clone())
+        Ok(record.item.clone())
+    }
+
+    pub async fn get_individuals(&self) -> Result<Vec<Individual>,PlatypusError> {
+        let get_records : Vec<TMF<Individual>> = self.db.select(Individual::get_class()).await?;
+        let mut output : Vec<Individual> = vec![];
+        
+        // Need to generate a vec of sub_categories
+        get_records.iter().for_each(|ir| {
+            output.push(ir.item.clone());
+        });
+        Ok(output)
     }
 }
