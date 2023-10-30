@@ -67,9 +67,17 @@ impl TMF620CatalogManagement {
         Ok(insert_records)
     }
 
-    pub async fn add_category(&mut self, mut category : Category) -> Result<TMF<Category>,PlatypusError> {
+    pub async fn add_specification(&mut self, specification: ProductSpecification) -> Result<Vec<TMF<ProductSpecification>>,PlatypusError> {
+        let payload = tmf_payload(specification);
+        let class = ProductSpecification::get_class();
+        let insert_records : Vec<TMF<ProductSpecification>> = self.db.create(class).content(payload).await?;
+
+        Ok(insert_records)
+    }
+
+    pub async fn add_category(&mut self, mut category : Category) -> Result<Category,PlatypusError> {
         
-        if !category.is_root && category.parent_id.is_some() {
+        if !category.root() && category.parent_id.is_some() {
             let parent_id = category.parent_id.as_ref().unwrap().clone();
             // Need to check if parentId is pointing to a valid parent
             let parent_query = format!("SELECT * FROM category:{}",parent_id);
@@ -84,14 +92,14 @@ impl TMF620CatalogManagement {
         }
 
         // Simiarly, if flagged as root, cannot also have parent_id
-        if category.is_root {
+        if category.root() {
             category.parent_id = None;
         }
 
         let payload = tmf_payload(category);
         let insert_records : Vec<TMF<Category>> = self.db.create(Category::get_class()).content(payload).await?;
-
-        Ok(insert_records.first().unwrap().clone())
+        let output = insert_records.first().unwrap().clone().item;
+        Ok(output)
     }
 
     pub async fn get_categories(&self) -> Result<Vec<Category>,PlatypusError> {
