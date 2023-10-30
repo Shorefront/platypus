@@ -9,7 +9,7 @@ mod template;
 mod common;
 
 use actix_web::middleware::Logger;
-use actix_web::{get,post,web,App, HttpResponse,HttpServer, Responder};
+use actix_web::{get,post,patch,delete,web,App, HttpResponse,HttpServer, Responder};
 
 use log::error;
 
@@ -27,7 +27,7 @@ use common::config::Config;
 use common::error::PlatypusError;
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::category::Category;
-use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf620::product_specification::ProductSpecification;
 use tmflib::tmf632::individual::Individual;
 use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
@@ -68,18 +68,86 @@ pub async fn template_component_handler(
     HttpResponse::Ok().json(data)
 }
 
-#[post("/tmflib/tmf620/offer")]
-pub async fn tmf620_handler(
-    body : web::Json<ProductOffering>
+/// Get a list
+#[get("/tmf-api/productCatalogManagement/v4/{object}")]
+pub async fn tmf620_list_handler(
+    path : web::Path<String>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    let data = body.into_inner();
-
-    // Since this is a create, we need to generate the Id / Href
-    let new_offer = ProductOffering::from(data);
-    HttpResponse::Ok().json(new_offer)
+    let _object = path.into_inner();
+    match tmf620.lock().expect("Could not lock DB").get_categories().await {
+        Ok(r) => {
+            
+            HttpResponse::Ok().json(r.clone())
+        },
+        Err(e) => {
+            error!("Error: {e}");
+            let msg = PlatypusError {
+                message : e.to_string(),
+            };
+            HttpResponse::BadRequest().json(msg)
+        },  
+    }
+    
 }
 
-#[get("/tmflib/tmf620/category")]
+/// Get a specific object
+#[get("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
+pub async fn tmf620_get_handler(
+    path : web::Path<String>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    HttpResponse::BadRequest().json(PlatypusError::from("Not implemented"))
+}
+
+/// Create an object
+#[post("/tmf-api/productCatalogManagement/v4/{object}")]
+pub async fn tmf620_post_handler(
+    path : web::Path<String>,
+    raw: web::Bytes,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    let object = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let output = match object.as_str() {
+        // Create specification 
+        "productSpecification" => {
+            let mut specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
+            if specification.id.is_none() {
+                specification.generate_id();
+            }
+            tmf620.lock().unwrap().add_specification(specification).await
+        },
+        _ => {
+            Err(PlatypusError::from("Not implemented"))
+        }
+    };
+    match output {
+        Ok(out) => HttpResponse::Ok().json(out.first().unwrap().clone().item),
+        Err(e) => HttpResponse::BadRequest().json(e),
+    }
+}
+
+/// Update an object
+#[patch("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
+pub async fn tmf620_patch_handler(
+    path : web::Path<(String,String)>,
+    raw: web::Bytes,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    HttpResponse::BadRequest().json(PlatypusError::from("Not implemented")) 
+}
+
+/// Detele an object
+#[delete("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
+pub async fn tmf620_delete_handler(
+    path : web::Path<(String,String)>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    HttpResponse::BadRequest().json(PlatypusError::from("Not implemented"))
+}
+
+#[get("/tmf-api/productCatalogManagement/v4/category")]
 pub async fn tmf620_category_list(
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
@@ -98,7 +166,7 @@ pub async fn tmf620_category_list(
     }
 }
 
-#[get("/tmflib/tmf620/category/{id}")]
+#[get("/tmf-api/productCatalogManagement/v4/category/{id}")]
 pub async fn tmf620_category_get(
     path : web::Path<String>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
@@ -120,7 +188,7 @@ pub async fn tmf620_category_get(
     }    
 }
 
-#[post("/tmflib/tmf620/category")]
+#[post("/tmf-api/productCatalogManagement/v4/category")]
 pub async fn tmf620_category_create(
     body : web::Json<Category>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
@@ -143,7 +211,7 @@ pub async fn tmf620_category_create(
     }   
 }
 
-#[post("/tmflib/tmf620/catalog")]
+#[post("/tmf-api/productCatalogManagement/v4/catalog")]
 pub async fn tmf620_catalog_create(
     body : web::Json<Catalog>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
@@ -180,9 +248,16 @@ pub async fn tmf629_get_handler(
 #[get("/tmflib/tmf632/{object}")]
 pub async fn tmf632_get_handler(
     path : web::Path<String>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
 ) -> impl Responder {
     match path.as_str() {
-        "individual" => todo!(),
+        "individual" => {
+            let result = tmf632.lock().unwrap().get_individuals().await;
+            match result {
+                Ok(v) => HttpResponse::Ok().json(v),
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }   
+        },
         "organization" => todo!(),
         _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
     }  
@@ -199,7 +274,8 @@ pub async fn tmf632_create_handler(
     match object.as_str() {
         "individual" => {
             // Create individual object
-            let individual : Individual = serde_json::from_str(json.as_str()).unwrap();
+            let mut individual : Individual = serde_json::from_str(json.as_str()).unwrap();
+            individual.generate_id();
             let records = tmf632.lock().unwrap().add_individual(individual.clone()).await;
             match records {
                 Ok(r) => HttpResponse::Ok().json(r),
@@ -207,7 +283,8 @@ pub async fn tmf632_create_handler(
             } 
         },
         "organization" => {
-            let organization : Organization = serde_json::from_str(json.as_str()).unwrap();
+            let mut organization : Organization = serde_json::from_str(json.as_str()).unwrap();
+            organization.generate_id();
             HttpResponse::Ok().json(organization)
         }
         _ => {
@@ -253,17 +330,11 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(Mutex::new(tmf620.clone())))
             .app_data(web::Data::new(Mutex::new(tmf632.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
-            .service(tmf620_handler)
-            .service(tmf620_category_create)
-            .service(tmf620_category_list)
-            .service(tmf620_category_get)
-            .service(tmf620_catalog_create)
-            .service(tmf629_create_handler)
-            .service(tmf632_create_handler)
-            .service(tmf632_get_handler)           
-            .service(tmf648_create_handler)
-            .service(template_component_handler)
-            .service(template_product_handler)
+            .service(tmf620_post_handler)
+            .service(tmf620_list_handler)
+            .service(tmf620_get_handler)
+            .service(tmf620_patch_handler)
+            .service(tmf620_delete_handler)
             .wrap(Logger::default())
     })
         .bind(("0.0.0.0",port))?
