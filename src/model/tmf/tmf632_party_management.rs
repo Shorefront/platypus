@@ -1,6 +1,5 @@
 //! Party Management Module
 
-use serde::Deserialize;
 use surrealdb::Surreal;
 use surrealdb::engine::local::Db;
 use tmflib::{tmf632::individual::Individual, HasId};
