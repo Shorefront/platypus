@@ -24,7 +24,7 @@ impl ProductTemplate {
         let cat_ref = Category::new(TEMPLATE_CATEGORY.to_string());
         let mut offering = offering.with_category(CategoryRef::from(&cat_ref));
         // All ProductTemplate are bundles
-        offering.is_bundle = true;
+        offering.is_bundle = Some(true);
         offering.bundled_product_offering = Some(vec![]);
         ProductTemplate { 
             name        : name.clone(),
@@ -55,8 +55,7 @@ impl ProductTemplate {
             let bundle = BundledProductOffering::from(po);
             offering.bundled_product_offering.as_mut().unwrap().push(bundle);
         });
-        offering
-        
+        offering 
     }
 
 }
