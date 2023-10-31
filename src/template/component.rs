@@ -28,21 +28,6 @@ impl ComponentTemplate {
             component : None,
         }
     }
-
-    /// Add specification to this component
-    pub fn with_specification(mut self, specification : ProductSpecification) -> ComponentTemplate {
-        let cat = Category::new(TEMPLATE_CATEGORY.to_string());
-        // Create a ProductOffering to hold the component specification
-        self.component = Some(ProductOffering::new(self.name.clone())
-            .with_specification(specification)
-            .with_category(CategoryRef::from(&cat))
-        );
-        self
-    }
-
-    pub fn instantiate(&self) -> ProductComponent {
-        ProductComponent::from(self.clone())
-    }
 }
 
 impl Into<ProductOffering> for ComponentTemplate {
