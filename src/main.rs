@@ -12,6 +12,8 @@ use actix_web::middleware::Logger;
 use actix_web::{get,post,patch,delete,web,App, HttpResponse,HttpServer, Responder};
 
 use log::error;
+use tmflib::tmf620::product_offering::ProductOffering;
+use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 
 use std::sync::Mutex;
 
@@ -35,37 +37,15 @@ use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
 use tmflib::HasId;
 
-use crate::template::component::ComponentTemplate;
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
-use crate::template::product::ProductTemplate;
 use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
-
-
 
 #[derive(Debug,Deserialize)]
 struct Record {
     #[allow(dead_code)]
     id: Option<Thing>,
-}
-
-#[post("/compose/template/product")]
-pub async fn template_product_handler(
-    body : web::Json<ProductTemplate>
-) -> impl Responder {
-    let data = body.into_inner();
-
-    HttpResponse::Ok().json(data)
-}
-
-#[post("/compose/template/component")]
-pub async fn template_component_handler(
-    body : web::Json<ComponentTemplate>
-) -> impl Responder {
-    let data = body.into_inner();
-
-    HttpResponse::Ok().json(data)
 }
 
 /// Get a list
@@ -83,6 +63,14 @@ pub async fn tmf620_list_handler(
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         },
+        "productOffering" => {
+            let output = tmf620.lock().unwrap().get_offers().await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+            
+        }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
     }
 }
@@ -94,13 +82,22 @@ pub async fn tmf620_get_handler(
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
     let (object,id) = path.into_inner();
-    let result = match object.as_str() {
-        "productSpecification" => tmf620.lock().unwrap().get_specification(id).await,
-        _ => Err(PlatypusError::from("Invalid Object"))
-    };
-    match result {
-        Ok(o) => HttpResponse::Ok().json(o),
-        Err(e) => HttpResponse::InternalServerError().json(e),          
+    match object.as_str() {
+        "productSpecification" => {
+            let data = tmf620.lock().unwrap().get_specification(id).await;
+            match data {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),    
+            }
+        },
+        "productOffering" => {
+            let data = tmf620.lock().unwrap().get_offer(id).await;
+            match data {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),    
+            }
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
     }
 }
 
@@ -113,22 +110,56 @@ pub async fn tmf620_post_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let output = match object.as_str() {
+    match object.as_str() {
         // Create specification 
         "productSpecification" => {
             let mut specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
             if specification.id.is_none() {
                 specification.generate_id();
             }
-            tmf620.lock().unwrap().add_specification(specification).await
+            let result = tmf620.lock().unwrap().add_specification(specification).await;
+            match result {
+                Ok(r) => {
+                    //let json = serde_json::to_string(
+                    let item = r.first().unwrap().clone().item;
+                    HttpResponse::Ok().json(item)
+                },
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }
         },
-        _ => {
-            Err(PlatypusError::from("Not implemented"))
+        "productOffering" => {
+            let mut offering : ProductOffering = serde_json::from_str(json.as_str())
+                .expect("Could not parse ProductOffering");
+            if offering.id.is_none() {
+                offering.generate_id();
+            }
+            let result = tmf620.lock().unwrap().add_offering(offering).await;
+            match result {
+                Ok(r) => {
+                    let item = r.first().unwrap().clone().item;
+                    HttpResponse::Ok().json(item)
+                },
+                Err(e) => HttpResponse::BadGateway().json(e),
+            }
+        },
+        "productOfferingPrice" => {
+            let mut price : ProductOfferingPrice = serde_json::from_str(json.as_str())
+                .expect("Could not parse productOfferingPrice");
+            if price.id.is_none() {
+                price.generate_id();
+            }
+            let result = tmf620.lock().unwrap().add_price(price).await;
+            match result {
+                Ok(r) => {
+                    let item = r.first().unwrap().clone().item;
+                    HttpResponse::Ok().json(item)
+                },
+                Err(e) => HttpResponse::BadGateway().json(e),
+            }
         }
-    };
-    match output {
-        Ok(out) => HttpResponse::Ok().json(out.first().unwrap().clone().item),
-        Err(e) => HttpResponse::BadRequest().json(e),
+        _ => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
+        }
     }
 }
 
@@ -139,6 +170,7 @@ pub async fn tmf620_patch_handler(
     raw: web::Bytes,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
+    let (object,id) = path.into_inner();
     HttpResponse::BadRequest().json(PlatypusError::from("Not implemented")) 
 }
 
@@ -148,6 +180,7 @@ pub async fn tmf620_delete_handler(
     path : web::Path<(String,String)>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
+    let (object,id) = path.into_inner();
     HttpResponse::BadRequest().json(PlatypusError::from("Not implemented"))
 }
 
