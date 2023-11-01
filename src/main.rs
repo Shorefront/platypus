@@ -35,7 +35,7 @@ use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
-use tmflib::HasId;
+use tmflib::{HasId, HasLastUpdate};
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
@@ -117,6 +117,7 @@ pub async fn tmf620_post_handler(
             if specification.id.is_none() {
                 specification.generate_id();
             }
+            
             let result = tmf620.lock().unwrap().add_specification(specification).await;
             match result {
                 Ok(r) => {
@@ -133,6 +134,8 @@ pub async fn tmf620_post_handler(
             if offering.id.is_none() {
                 offering.generate_id();
             }
+            // Set last update for new records
+            offering.set_last_update(ProductOffering::get_timestamp());
             let result = tmf620.lock().unwrap().add_offering(offering).await;
             match result {
                 Ok(r) => {
@@ -148,6 +151,8 @@ pub async fn tmf620_post_handler(
             if price.id.is_none() {
                 price.generate_id();
             }
+            // Set last update for new records
+            price.set_last_update(ProductOfferingPrice::get_timestamp());
             let result = tmf620.lock().unwrap().add_price(price).await;
             match result {
                 Ok(r) => {
