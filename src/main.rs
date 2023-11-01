@@ -19,8 +19,9 @@ use std::sync::Mutex;
 
 // SurrealDB
 use serde::Deserialize;
-use surrealdb::engine::local::Mem;
+//use surrealdb::engine::local::Mem;
 use surrealdb::engine::local::Db;
+use surrealdb::engine::local::SpeeDb;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
@@ -69,7 +70,13 @@ pub async fn tmf620_list_handler(
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
-            
+        }
+        "productOfferingPrice" => {
+            let output = tmf620.lock().unwrap().get_prices().await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }    
         }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
     }
@@ -97,6 +104,13 @@ pub async fn tmf620_get_handler(
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
+        "productOfferingPrice" => {
+            let data = tmf620.lock().unwrap().get_price(id).await;
+            match data {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),    
+            }
+        },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
     }
 }
@@ -117,7 +131,8 @@ pub async fn tmf620_post_handler(
             if specification.id.is_none() {
                 specification.generate_id();
             }
-            
+            // Set last update for new records
+            specification.set_last_update(ProductSpecification::get_timestamp());
             let result = tmf620.lock().unwrap().add_specification(specification).await;
             match result {
                 Ok(r) => {
@@ -172,10 +187,10 @@ pub async fn tmf620_post_handler(
 #[patch("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_patch_handler(
     path : web::Path<(String,String)>,
-    raw: web::Bytes,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+    _raw: web::Bytes,
+    _tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    let (object,id) = path.into_inner();
+    let (_object,_id) = path.into_inner();
     HttpResponse::BadRequest().json(PlatypusError::from("Not implemented")) 
 }
 
@@ -183,9 +198,9 @@ pub async fn tmf620_patch_handler(
 #[delete("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_delete_handler(
     path : web::Path<(String,String)>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+    _tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    let (object,id) = path.into_inner();
+    let (_object,_id) = path.into_inner();
     HttpResponse::BadRequest().json(PlatypusError::from("Not implemented"))
 }
 
@@ -354,7 +369,7 @@ async fn main() -> std::io::Result<()> {
 
     info!("Starting {pkg} v{ver}");
 
-    let db = Surreal::new::<Mem>(()).await.expect("Could not create DB");
+    let db = Surreal::new::<SpeeDb>("/home/rruckley/build/platypus/tmf.db").await.expect("Could not create DB");
 
     db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
 
