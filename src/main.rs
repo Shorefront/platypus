@@ -122,7 +122,7 @@ pub async fn tmf620_post_handler(
                 Ok(r) => {
                     //let json = serde_json::to_string(
                     let item = r.first().unwrap().clone().item;
-                    HttpResponse::Ok().json(item)
+                    HttpResponse::Created().json(item)
                 },
                 Err(e) => HttpResponse::BadRequest().json(e),
             }
@@ -137,7 +137,7 @@ pub async fn tmf620_post_handler(
             match result {
                 Ok(r) => {
                     let item = r.first().unwrap().clone().item;
-                    HttpResponse::Ok().json(item)
+                    HttpResponse::Created().json(item)
                 },
                 Err(e) => HttpResponse::BadGateway().json(e),
             }
@@ -152,7 +152,7 @@ pub async fn tmf620_post_handler(
             match result {
                 Ok(r) => {
                     let item = r.first().unwrap().clone().item;
-                    HttpResponse::Ok().json(item)
+                    HttpResponse::Created().json(item)
                 },
                 Err(e) => HttpResponse::BadGateway().json(e),
             }
