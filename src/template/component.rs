@@ -2,15 +2,8 @@
 //! 
 
 use serde::{Deserialize,Serialize};
-use tmflib::tmf620::{
-    product_specification::ProductSpecification, 
-    product_offering::ProductOffering, 
-    category::{CategoryRef,Category}
-};
-use crate::model::component::product::ProductComponent;
+use tmflib::tmf620::product_offering::ProductOffering;
 use std::convert::Into;
-
-use super::TEMPLATE_CATEGORY;
 
 /// A Component Template defines how to build a component
 #[derive(Clone,Debug,Deserialize,Serialize)]
