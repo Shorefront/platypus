@@ -6,7 +6,7 @@ use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 use tmflib::tmf620::product_specification::ProductSpecification;
 use tmflib::HasId;
-use super::{store_tmf_item,get_tmf_item,get_tmf_items};
+use super::{store_tmf_item,get_tmf_item,get_tmf_items,delete_tmf_item,patch_tmf_item};
 
 use serde::{Deserialize,Serialize};
 
@@ -170,5 +170,29 @@ impl TMF620CatalogManagement
         
         cat.as_mut().unwrap().sub_category = Some(sub_category);
         Ok(cat)
+    }
+
+    pub async fn patch_specification(&self, id : String, patch : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
+        patch_tmf_item(self.db.clone(), id, patch).await
+    }
+
+    pub async fn patch_offering(&self, id : String, patch : String) -> Result<Vec<ProductOffering>, PlatypusError> {
+        patch_tmf_item(self.db.clone(), id, patch).await
+    }
+    
+    pub async fn patch_price(&self, id : String, patch : String) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
+        patch_tmf_item(self.db.clone(),id,patch).await
+    }
+
+    pub async fn delete_specification(&self, id : String) -> Result<bool,PlatypusError> {
+        delete_tmf_item::<ProductSpecification>(self.db.clone(), id).await
+    }
+
+    pub async fn delete_offering(&self, id : String) -> Result<bool, PlatypusError> {
+        delete_tmf_item::<ProductOffering>(self.db.clone(), id).await
+    }
+    
+    pub async fn delete_price(&self, id : String) -> Result<bool, PlatypusError> {
+        delete_tmf_item::<ProductOfferingPrice>(self.db.clone(),id).await
     }
 }
