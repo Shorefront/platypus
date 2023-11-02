@@ -60,3 +60,16 @@ pub async fn get_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(db :
     }).collect();
     Ok(offer)
 }
+
+pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(db : Surreal<Db>, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
+    Err(PlatypusError::from("Not implemented"))
+}
+
+pub async fn delete_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(db : Surreal<Db>, id : String) -> Result<bool,PlatypusError> {
+    let resource = format!("({},{})",T::get_class(),id);
+    let output : Result<Vec<TMF<T>>,_> = db.clone().delete(resource).await;
+    match output {
+        Ok(_) => Ok(true),
+        Err(e) => Err(PlatypusError::from(e)),
+    }
+}
