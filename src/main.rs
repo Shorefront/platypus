@@ -187,100 +187,81 @@ pub async fn tmf620_post_handler(
 #[patch("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_patch_handler(
     path : web::Path<(String,String)>,
-    _raw: web::Bytes,
-    _tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+    raw: web::Bytes,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    let (_object,_id) = path.into_inner();
-    HttpResponse::BadRequest().json(PlatypusError::from("Not implemented")) 
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    match object.as_str() {
+        "productSpecification" => {
+            match tmf620.lock().unwrap().patch_specification(id,json).await {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest().json(e)
+                },
+            }
+        },
+        "productOffering" => {
+            match tmf620.lock().unwrap().patch_offering(id,json).await {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
+                },
+            }
+        },
+        "productOfferingPrice"  => {
+            match tmf620.lock().unwrap().patch_price(id,json).await {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
+                },
+            }
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
+    } 
 }
 
 /// Detele an object
 #[delete("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_delete_handler(
     path : web::Path<(String,String)>,
-    _tmf620: web::Data<Mutex<TMF620CatalogManagement>>
-) -> impl Responder {
-    let (_object,_id) = path.into_inner();
-    HttpResponse::BadRequest().json(PlatypusError::from("Not implemented"))
-}
-
-#[get("/tmf-api/productCatalogManagement/v4/category")]
-pub async fn tmf620_category_list(
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
-    match tmf620.lock().expect("Could not lock DB").get_categories().await {
-        Ok(r) => {
-            
-            HttpResponse::Ok().json(r.clone())
+    let (object,id) = path.into_inner();
+    match object.as_str() {
+        "productSpecification" => {
+            match tmf620.lock().unwrap().delete_specification(id).await {
+                Ok(_b) => HttpResponse::NoContent(),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest()
+                },
+            }
         },
-        Err(e) => {
-            error!("Error: {e}");
-            let msg = PlatypusError {
-                message : e.to_string(),
-            };
-            HttpResponse::BadRequest().json(msg)
-        },  
-    }
-}
-
-#[get("/tmf-api/productCatalogManagement/v4/category/{id}")]
-pub async fn tmf620_category_get(
-    path : web::Path<String>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
-) -> impl Responder {
-    let id = path.into_inner();
-    info!("Querying for category {}",id);
-    match tmf620.lock().expect("Could not lock DB").get_category(id.clone()).await {
-        Ok(r) => {
-            
-            HttpResponse::Ok().json(r.clone())
+        "productOffering" => {
+            match tmf620.lock().unwrap().delete_offering(id).await {
+                Ok(_b) => HttpResponse::NoContent(),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest()
+                },
+            }
         },
-        Err(e) => {
-            error!("No Results for id: {}, {}",id.clone(),e);
-            let msg = PlatypusError {
-                message : format!("No results for id: {}",id),
-            };
-            HttpResponse::BadRequest().json(msg)
-        },  
-    }    
-}
-
-#[post("/tmf-api/productCatalogManagement/v4/category")]
-pub async fn tmf620_category_create(
-    body : web::Json<Category>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
-) -> impl Responder {
-    //let tmf620 = tmf620.into_inner();
-    let mut data = body.into_inner(); 
-    // Need to generate new id / href as we're creating
-    data.generate_id();
-    match tmf620.lock().expect("Could not lock db").add_category(data.clone()).await {
-        Ok(r) => {
-            HttpResponse::Ok().json(r)
+        "productOfferingPrice"  => {
+            match tmf620.lock().unwrap().delete_price(id).await {
+                Ok(_b) => HttpResponse::NoContent(),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest()
+                },
+            }
         },
-        Err(e) => {
-            error!("Error: {e}");
-            let msg = PlatypusError {
-                message : e.to_string(),
-            };
-            HttpResponse::BadRequest().json(msg)
-        },
-    }   
+        _ => HttpResponse::BadRequest(),
+    }  
 }
-
-#[post("/tmf-api/productCatalogManagement/v4/catalog")]
-pub async fn tmf620_catalog_create(
-    body : web::Json<Catalog>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
-) -> impl Responder {
-    let data = body.into_inner();
-    let result = tmf620.lock().unwrap().add_catalog(data).await;
-    match result {
-        Ok(r) => HttpResponse::Ok().json(r),
-        Err(e) => HttpResponse::BadRequest().json(e),
-    }   
-}
-
 
 #[post("/tmflib/tmf629/customer")]
 pub async fn tmf629_create_handler(
