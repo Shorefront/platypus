@@ -57,6 +57,20 @@ pub async fn tmf620_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     match object.as_str() {
+        "catalog" => {
+            let output = tmf620.lock().unwrap().get_catalogs().await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+        },
+        "category" => {
+            let output = tmf620.lock().unwrap().get_categories().await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+        },
         "productSpecification" => {
             let output = tmf620.lock().unwrap().get_specifications().await;
             match output {
@@ -126,11 +140,32 @@ pub async fn tmf620_post_handler(
     let json = String::from_utf8(raw.to_vec()).unwrap();
     match object.as_str() {
         // Create specification 
+        "category" => {
+            let category : Category = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.lock().unwrap().add_category(category).await;
+            match result {
+                Ok(r) => {
+                    //let json = serde_json::to_string(
+                    let item = r.first().unwrap().clone();
+                    HttpResponse::Created().json(item)
+                },
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }
+        },
+        "catalog" => {
+            let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.lock().unwrap().add_catalog(catalog).await;
+            match result {
+                Ok(r) => {
+                    //let json = serde_json::to_string(
+                    let item = r.first().unwrap().clone();
+                    HttpResponse::Created().json(item)
+                },
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }
+        }
         "productSpecification" => {
             let mut specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
-            if specification.id.is_none() {
-                specification.generate_id();
-            }
             // Set last update for new records
             specification.set_last_update(ProductSpecification::get_timestamp());
             let result = tmf620.lock().unwrap().add_specification(specification).await;
