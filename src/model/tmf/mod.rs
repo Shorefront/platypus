@@ -33,8 +33,9 @@ pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T
 }
 
 /// Generate function to store into a db.
-pub async fn store_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned>(db : Surreal<Db>,item : T) -> Result<Vec<T>,PlatypusError> {
+pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned>(db : Surreal<Db>,mut item : T) -> Result<Vec<T>,PlatypusError> {
     let class = T::get_class();
+    item.generate_id();
     let payload = tmf_payload(item);
     let insert_records : Vec<TMF<T>> = db.create(class).content(payload).await?;
     let output = insert_records.into_iter().map(|tmf| {
@@ -55,14 +56,24 @@ pub async fn get_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(db :
     let query = format!("SELECT * FROM {}:{}",T::get_class(),id);
     let mut output = db.query(query).await?;
     let result : Vec<TMF<T>> = output.take(0)?;
-    let offer = result.iter().map(|tmf| {
+    let item = result.iter().map(|tmf| {
         tmf.clone().item
     }).collect();
-    Ok(offer)
+    Ok(item)
 }
 
 pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(db : Surreal<Db>, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
-    Err(PlatypusError::from("Not implemented"))
+    let resource = format!("({},{})",T::get_class(),id);
+    let result : Result<Vec<TMF<T>>,_> = db.update(resource)
+        .merge(patch).await;
+    match result {
+        Ok(r) => {
+            Ok(r.into_iter().map(|tmf| {
+                tmf.item
+            }).collect())
+        },
+        Err(e) => Err(PlatypusError::from(e))
+    }
 }
 
 pub async fn delete_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(db : Surreal<Db>, id : String) -> Result<bool,PlatypusError> {
