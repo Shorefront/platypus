@@ -21,9 +21,11 @@ use std::sync::Mutex;
 use serde::Deserialize;
 //use surrealdb::engine::local::Mem;
 use surrealdb::engine::local::Db;
-use surrealdb::engine::local::SpeeDb;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
+
+// New Persistence struct
+use common::persist::Persistence;
 
 // TMFLIB
 use common::config::Config;
@@ -104,6 +106,20 @@ pub async fn tmf620_get_handler(
 ) -> impl Responder {
     let (object,id) = path.into_inner();
     match object.as_str() {
+        "catalog" => {
+            let output = tmf620.lock().unwrap().get_catalog(id).await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+        },
+        "category" => {
+            let output = tmf620.lock().unwrap().get_category(id).await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+        },
         "productSpecification" => {
             let data = tmf620.lock().unwrap().get_specification(id).await;
             match data {
@@ -385,12 +401,10 @@ async fn main() -> std::io::Result<()> {
 
     info!("Starting {pkg} v{ver}");
 
-    let db = Surreal::new::<SpeeDb>("/home/rruckley/build/platypus/tmf.db").await.expect("Could not create DB");
+    let persist = Persistence::new().await;
 
-    db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
-
-    let tmf620 = TMF620CatalogManagement::new(db.clone());
-    let tmf632 = TMF632PartyManagement::new(db.clone());
+    let tmf620 = TMF620CatalogManagement::new(persist.clone());
+    let tmf632 = TMF632PartyManagement::new(persist.clone());
 
     let config = Config::new();
 

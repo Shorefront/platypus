@@ -5,22 +5,21 @@ use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 use tmflib::tmf620::product_specification::ProductSpecification;
-use super::{create_tmf_item,get_tmf_item,get_tmf_items,delete_tmf_item,patch_tmf_item};
 
 use serde::{Deserialize,Serialize};
 
 use log::error;
 
-use surrealdb::Surreal;
-use surrealdb::engine::local::Db;
 use surrealdb::sql::Thing;
 
 use crate::common::error::PlatypusError;
+use crate::common::persist::Persistence;
 
 #[derive(Debug,Clone)]
 pub struct TMF620CatalogManagement {
     // Use of vectors here is very simplistic, ideally need a hash.
-    db : Surreal<Db>,
+    //db : Surreal<Db>,
+    persist : Persistence,
     pub categories: Vec<Category>,
     pub catalogs: Vec<Catalog>,
     pub offers: Vec<ProductOffering>,
@@ -50,9 +49,9 @@ struct GenericRecord<T> {
 
 impl TMF620CatalogManagement 
     {
-    pub fn new(db : Surreal<Db>) -> TMF620CatalogManagement {
+    pub fn new(persist : Persistence) -> TMF620CatalogManagement {
         TMF620CatalogManagement { 
-            db,
+            persist,
             categories: vec![], 
             catalogs: vec![],
             offers: vec![],
@@ -61,22 +60,22 @@ impl TMF620CatalogManagement
     }
 
     pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Vec<Catalog>,PlatypusError> {
-        create_tmf_item(self.db.clone(), catalog).await
+        self.persist.create_tmf_item(catalog).await
     }
 
     pub async fn add_specification(&mut self, mut specification: ProductSpecification) -> Result<Vec<ProductSpecification>,PlatypusError> {
         // New record, needs appropriate status
         specification.status("New");
-        create_tmf_item(self.db.clone(), specification).await
+        self.persist.create_tmf_item(specification).await
     }
 
     pub async fn add_offering(&mut self, mut offering : ProductOffering) -> Result<Vec<ProductOffering>,PlatypusError> {
         offering.status("New");
-        create_tmf_item(self.db.clone(), offering).await
+        self.persist.create_tmf_item(offering).await
     }
 
     pub async fn add_price(&mut self, price: ProductOfferingPrice) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
-        create_tmf_item(self.db.clone(),price).await
+        self.persist.create_tmf_item(price).await
     }
 
     pub async fn add_category(&mut self, mut category : Category) -> Result<Vec<Category>,PlatypusError> {
@@ -85,7 +84,7 @@ impl TMF620CatalogManagement
             let parent_id = category.parent_id.as_ref().unwrap().clone();
             // Need to check if parentId is pointing to a valid parent
             let parent_query = format!("SELECT * FROM category:{}",parent_id);
-            let mut parent_resp = self.db.query(parent_query).await?;
+            let mut parent_resp = self.persist.db.query(parent_query).await?;
             let parent : Vec<CategoryRecord> = parent_resp.take(0).unwrap();
             if parent.len() == 0 {
                 // Throw error, parent not found
@@ -100,55 +99,55 @@ impl TMF620CatalogManagement
             category.parent_id = None;
         }
 
-        create_tmf_item(self.db.clone(), category).await
+        self.persist.create_tmf_item(category).await
     }
 
     pub async fn get_catalogs(&self) -> Result<Vec<Catalog>,PlatypusError> {
-        get_tmf_items(self.db.clone()).await
+        self.persist.get_tmf_items().await
     }
 
     pub async fn get_categories(&self) -> Result<Vec<Category>,PlatypusError> {
         // Get all category records
-        get_tmf_items(self.db.clone()).await
+        self.persist.get_tmf_items().await
     }
 
     pub async fn get_specifications(&self) -> Result<Vec<ProductSpecification>,PlatypusError> {
         // Get all specifications
-        get_tmf_items(self.db.clone()).await
+        self.persist.get_tmf_items().await
     }
 
     pub async fn get_specification(&self, id : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
-        get_tmf_item(self.db.clone(),id).await
+        self.persist.get_tmf_item(id).await
     }
 
     pub async fn get_offers(&self) -> Result<Vec<ProductOffering>,PlatypusError> {
-        get_tmf_items(self.db.clone()).await
+        self.persist.get_tmf_items().await
     }
 
     pub async fn get_offer(&self, id : String) -> Result<Vec<ProductOffering>,PlatypusError> {
-        get_tmf_item(self.db.clone(),id).await
+        self.persist.get_tmf_item(id).await
     }
 
     pub async fn get_prices(&self) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
-        get_tmf_items(self.db.clone()).await
+        self.persist.get_tmf_items().await
     }
 
     pub async fn get_price(&self, id : String) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
-        get_tmf_item(self.db.clone(),id).await
+        self.persist.get_tmf_item(id).await
     }
 
     pub async fn get_category(&self,id : String) -> Result<Option<Category>,PlatypusError> {
         //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
         //let name : &str = "Root";
         let query = format!("SELECT * FROM category:{}",id);
-        let mut output = self.db.query(query).await?;
+        let mut output = self.persist.db.query(query).await?;
         let result : Vec<CategoryRecord> = output.take(0)?;
         let mut cat = result.first().cloned().map(|cat| {
             cat.category
         });
         // Now enrich with any records where parentId = id
         let sub_query = format!("SELECT * FROM category where category.parentId = '{}'",id);
-        let mut response = self.db.query(sub_query).await?;
+        let mut response = self.persist.db.query(sub_query).await?;
         let vec : Vec<CategoryRecord> = response.take(0)?;
         let mut sub_category : Vec<CategoryRef> = vec![];
         vec.iter().for_each(|cr| {
@@ -167,27 +166,31 @@ impl TMF620CatalogManagement
         Ok(cat)
     }
 
+    pub async fn get_catalog(&self, id : String) -> Result<Vec<Catalog>,PlatypusError>  {
+        self.persist.get_tmf_item(id).await
+    }
+    
     pub async fn patch_specification(&self, id : String, patch : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
-        patch_tmf_item(self.db.clone(), id, patch).await
+        self.persist.patch_tmf_item(id, patch).await
     }
 
     pub async fn patch_offering(&self, id : String, patch : String) -> Result<Vec<ProductOffering>, PlatypusError> {
-        patch_tmf_item(self.db.clone(), id, patch).await
+        self.persist.patch_tmf_item(id, patch).await
     }
     
     pub async fn patch_price(&self, id : String, patch : String) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
-        patch_tmf_item(self.db.clone(),id,patch).await
+        self.persist.patch_tmf_item(id,patch).await
     }
 
     pub async fn delete_specification(&self, id : String) -> Result<bool,PlatypusError> {
-        delete_tmf_item::<ProductSpecification>(self.db.clone(), id).await
+        self.persist.delete_tmf_item::<ProductSpecification>(id).await
     }
 
     pub async fn delete_offering(&self, id : String) -> Result<bool, PlatypusError> {
-        delete_tmf_item::<ProductOffering>(self.db.clone(), id).await
+        self.persist.delete_tmf_item::<ProductOffering>(id).await
     }
     
     pub async fn delete_price(&self, id : String) -> Result<bool, PlatypusError> {
-        delete_tmf_item::<ProductOfferingPrice>(self.db.clone(),id).await
+        self.persist.delete_tmf_item::<ProductOfferingPrice>(id).await
     }
 }
