@@ -1,9 +1,7 @@
 //! Party Management Module
 
-use surrealdb::Surreal;
-use surrealdb::engine::local::Db;
 use tmflib::{tmf632::individual::Individual, HasId};
-use crate::common::error::PlatypusError;
+use crate::common::{error::PlatypusError, persist::Persistence};
 
 use super::{tmf_payload,TMF};
 
@@ -11,18 +9,18 @@ use log::{debug,error};
 
 #[derive(Clone, Debug)]
 pub struct TMF632PartyManagement {
-    db : Surreal<Db>,
+    persist : Persistence,
 }
 
 impl TMF632PartyManagement {
-    pub fn new(db : Surreal<Db>) -> TMF632PartyManagement {
+    pub fn new(persist : Persistence) -> TMF632PartyManagement {
         TMF632PartyManagement {
-            db,
+            persist,
         }
     }
     fn party_exists(&self, party_id : String) -> Result<String,PlatypusError> {
         // Confirm if the party exists in the DB
-        Ok(party_id.clone())
+        Ok(party_id)
     }
     fn validate_individual(&self, individual : &Individual) -> Result<bool,PlatypusError> {
         let mut err_count = 0;
@@ -48,13 +46,13 @@ impl TMF632PartyManagement {
             }
         };
         let payload = tmf_payload(individual);
-        let insert_records : Vec<TMF<Individual>> = self.db.create(Individual::get_class()).content(payload).await?;
+        let insert_records : Vec<TMF<Individual>> = self.persist.db.create(Individual::get_class()).content(payload).await?;
         let record = insert_records.first().unwrap();
         Ok(record.item.clone())
     }
 
     pub async fn get_individuals(&self) -> Result<Vec<Individual>,PlatypusError> {
-        let get_records : Vec<TMF<Individual>> = self.db.select(Individual::get_class()).await?;
+        let get_records : Vec<TMF<Individual>> = self.persist.db.select(Individual::get_class()).await?;
         let mut output : Vec<Individual> = vec![];
         
         // Need to generate a vec of sub_categories
