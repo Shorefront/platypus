@@ -166,8 +166,11 @@ impl TMF620CatalogManagement
         Ok(cat)
     }
 
-    pub async fn get_catalog(&self, id : String) -> Result<Vec<Catalog>,PlatypusError>  {
-        self.persist.get_tmf_item(id).await
+    pub async fn get_catalog(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<Catalog>,PlatypusError>  {
+        match fields {
+            Some(f) => self.persist.get_tmf_item_fields(id, f).await,
+            None => self.persist.get_tmf_item(id).await
+        }
     }
     
     pub async fn patch_specification(&self, id : String, patch : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
