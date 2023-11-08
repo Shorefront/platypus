@@ -1,6 +1,6 @@
 [package]
 name = "platypus"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Ryan Ruckley <rruckley@gmail.com>"]
 description = "API layer on top of TMF620 to provide product composition"
@@ -8,8 +8,8 @@ repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
 
 [dependencies]
-actix-web = { version = "4.4.0", features = ["rustls"]}
-env_logger = "0.10.0"
+actix-web = { version = "4.4", features = ["rustls"]}
+env_logger = "0.10"
 log = "0.4.20"
 serde = "1.0.188"
 serde_json = "1.0.107"
