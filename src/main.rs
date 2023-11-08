@@ -98,16 +98,28 @@ pub async fn tmf620_list_handler(
     }
 }
 
+/// Fields for filtering output
+#[derive(Debug, Deserialize)]
+pub struct Fields {
+    /// Specific set of fields delimited by comma
+    fields : Option<String>,
+}
+
 /// Get a specific object
 #[get("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_get_handler(
     path : web::Path<(String,String)>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    query : web::Query<Fields>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
+    let query = query.into_inner();
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalog(id).await;
+            let output = match query.fields {
+                Some(f) => tmf620.lock().unwrap().get_catalog(id,Some(vec![])).await,
+                None => tmf620.lock().unwrap().get_catalog(id,None).await,
+            };
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
