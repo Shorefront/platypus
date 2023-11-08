@@ -5,6 +5,8 @@ use surrealdb::engine::local::SpeeDb;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
+use log::debug;
+
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::HasId;
@@ -57,10 +59,21 @@ impl Persistence {
         let query = format!("SELECT * FROM {}:{}",T::get_class(),id);
         let mut output = self.db.query(query).await?;
         let result : Vec<TMF<T>> = output.take(0)?;
+        debug!("JSON: {}",serde_json::to_string(&result).unwrap());
         let item = result.iter().map(|tmf| {
             tmf.clone().item
         }).collect();
         Ok(item)
+    }
+
+    pub async fn get_tmf_item_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, _fields : Vec<String>) -> Result<Vec<T>,PlatypusError> {
+        let query = format!("SELECT item.id, item.href FROM {}:{}",T::get_class(),id);
+        let mut output = self.db.query(query).await?;
+        let result : Vec<TMF<T>> = output.take(0)?;
+        let item = result.iter().map(|tmf| {
+            tmf.clone().item
+        }).collect();
+        Ok(item)    
     }
 
     /// Generate function to store into a db.
