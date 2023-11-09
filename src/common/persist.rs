@@ -66,8 +66,14 @@ impl Persistence {
         Ok(item)
     }
 
-    pub async fn get_tmf_item_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, _fields : Vec<String>) -> Result<Vec<T>,PlatypusError> {
-        let query = format!("SELECT item.id, item.href FROM {}:{}",T::get_class(),id);
+    pub async fn get_tmf_item_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, fields : Vec<String>) -> Result<Vec<T>,PlatypusError> {
+        // Generate additional fields from vec
+        let fields : Vec<String> = fields.into_iter().map(|f| {
+            // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
+            format!("item.{f}")
+        }).collect();
+        let field_query = fields.join(", ");
+        let query = format!("SELECT item.id, item.href, {} FROM {}:{}",field_query, T::get_class(),id);
         let mut output = self.db.query(query).await?;
         let result : Vec<TMF<T>> = output.take(0)?;
         let item = result.iter().map(|tmf| {
