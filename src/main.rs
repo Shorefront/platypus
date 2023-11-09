@@ -11,7 +11,7 @@ mod common;
 use actix_web::middleware::Logger;
 use actix_web::{get,post,patch,delete,web,App, HttpResponse,HttpServer, Responder};
 
-use log::error;
+use log::{debug,error};
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 
@@ -105,6 +105,19 @@ pub struct Fields {
     fields : Option<String>,
 }
 
+fn query_to_fields(fields : Option<String>) -> Option<Vec<String>> {
+    match fields {
+        Some(f) => {
+            let mut output : Vec<String> = vec![];
+            f.split(',').into_iter().for_each(|f| {
+                output.push(f.to_owned());
+            });
+            Some(output)
+        },
+        None => None,
+    }
+}
+
 /// Get a specific object
 #[get("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_get_handler(
@@ -113,13 +126,11 @@ pub async fn tmf620_get_handler(
     query : web::Query<Fields>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
-    let query = query.into_inner();
+    let query_fields = query.into_inner();
+    let fields = query_to_fields(query_fields.fields);
     match object.as_str() {
         "catalog" => {
-            let output = match query.fields {
-                Some(f) => tmf620.lock().unwrap().get_catalog(id,Some(vec![])).await,
-                None => tmf620.lock().unwrap().get_catalog(id,None).await,
-            };
+            let output = tmf620.lock().unwrap().get_catalog(id,fields).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
