@@ -36,7 +36,7 @@ impl Persistence {
 
 impl Persistence {
     /// Geneate a TMF payload for storing in the database
-    pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
+    fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
         TMF {
             id : Some(Thing {
                 tb : T::get_class(),
