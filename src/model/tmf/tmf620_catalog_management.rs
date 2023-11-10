@@ -102,41 +102,50 @@ impl TMF620CatalogManagement
         self.persist.create_tmf_item(category).await
     }
 
-    pub async fn get_catalogs(&self) -> Result<Vec<Catalog>,PlatypusError> {
-        self.persist.get_tmf_items().await
+    pub async fn get_catalogs(&self, fields : Option<Vec<String>>) -> Result<Vec<Catalog>,PlatypusError> {
+        self.persist.get_items(fields).await
     }
 
-    pub async fn get_categories(&self) -> Result<Vec<Category>,PlatypusError> {
+    pub async fn get_categories(&self, fields : Option<Vec<String>>) -> Result<Vec<Category>,PlatypusError> {
         // Get all category records
-        self.persist.get_tmf_items().await
+        self.persist.get_items(fields).await
     }
 
-    pub async fn get_specifications(&self) -> Result<Vec<ProductSpecification>,PlatypusError> {
+    pub async fn get_specifications(&self, fields : Option<Vec<String>>) -> Result<Vec<ProductSpecification>,PlatypusError> {
         // Get all specifications
-        self.persist.get_tmf_items().await
+        self.persist.get_items(fields).await
     }
 
-    pub async fn get_specification(&self, id : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
-        self.persist.get_tmf_item(id).await
+    pub async fn get_specification(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<ProductSpecification>,PlatypusError> {
+        self.persist.get_item(id,fields).await
     }
 
-    pub async fn get_offers(&self) -> Result<Vec<ProductOffering>,PlatypusError> {
-        self.persist.get_tmf_items().await
+    pub async fn get_offers(&self, fields : Option<Vec<String>>) -> Result<Vec<ProductOffering>,PlatypusError> {
+        self.persist.get_items(fields).await  
     }
 
-    pub async fn get_offer(&self, id : String) -> Result<Vec<ProductOffering>,PlatypusError> {
-        self.persist.get_tmf_item(id).await
+    pub async fn get_offer(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<ProductOffering>,PlatypusError> {
+        match fields {
+            Some(f) => self.persist.get_tmf_item_fields(id, f).await,
+            None => self.persist.get_tmf_item(id).await
+        }
     }
 
-    pub async fn get_prices(&self) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
-        self.persist.get_tmf_items().await
+    pub async fn get_prices(&self, fields : Option<Vec<String>>) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
+        match fields {
+            Some(f) => self.persist.get_tmf_items_fields(f).await,
+            None => self.persist.get_tmf_items().await
+        }
     }
 
-    pub async fn get_price(&self, id : String) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
-        self.persist.get_tmf_item(id).await
+    pub async fn get_price(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
+        match fields {
+            Some(f) => self.persist.get_tmf_item_fields(id, f).await,
+            None => self.persist.get_tmf_item(id).await
+        }
     }
 
-    pub async fn get_category(&self,id : String) -> Result<Option<Category>,PlatypusError> {
+    pub async fn get_category(&self,id : String, _fields : Option<Vec<String>>) -> Result<Option<Category>,PlatypusError> {
         //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
         //let name : &str = "Root";
         let query = format!("SELECT * FROM category:{}",id);
@@ -166,8 +175,11 @@ impl TMF620CatalogManagement
         Ok(cat)
     }
 
-    pub async fn get_catalog(&self, id : String) -> Result<Vec<Catalog>,PlatypusError>  {
-        self.persist.get_tmf_item(id).await
+    pub async fn get_catalog(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<Catalog>,PlatypusError>  {
+        match fields {
+            Some(f) => self.persist.get_tmf_item_fields(id, f).await,
+            None => self.persist.get_tmf_item(id).await
+        }
     }
     
     pub async fn patch_specification(&self, id : String, patch : String) -> Result<Vec<ProductSpecification>,PlatypusError> {

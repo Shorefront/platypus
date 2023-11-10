@@ -13,16 +13,6 @@ pub struct ComponentTemplate {
     pub component : Option<ProductOffering>,
 }
 
-impl ComponentTemplate {
-    /// Create a new component template
-    pub fn new(name : String) -> ComponentTemplate {
-        ComponentTemplate { 
-            name ,
-            component : None,
-        }
-    }
-}
-
 impl Into<ProductOffering> for ComponentTemplate {
     fn into(self) -> ProductOffering {
         self.component.unwrap()
