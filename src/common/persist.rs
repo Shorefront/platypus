@@ -55,6 +55,44 @@ impl Persistence {
         Ok(output)
     }
 
+    pub async fn get_tmf_items_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, fields : Vec<String>) -> Result<Vec<T>,PlatypusError> {
+        // Generate additional fields from vec
+        let field_query = match fields.is_empty() {
+            false => {
+                let fields : Vec<String> = fields.into_iter().map(|f| {
+                    // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
+                    format!("item.{f}")
+                }).collect();
+                format!(",{}",fields.join(","))
+            },
+            true => {
+                String::new()
+            }
+        };
+        
+        let query = format!("SELECT item.id, item.href {} FROM {}",field_query, T::get_class());
+        let mut output = self.db.query(query).await?;
+        let result : Vec<TMF<T>> = output.take(0)?;
+        let item = result.iter().map(|tmf| {
+            tmf.clone().item
+        }).collect();
+        Ok(item)    
+    }
+
+    pub async fn get_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<T>,PlatypusError> {
+        match fields {
+            Some(f) => self.get_tmf_item_fields(id, f).await,
+            None => self.get_tmf_item(id).await
+        }
+    }
+
+    pub async fn get_items<T : HasId + Serialize + Clone + DeserializeOwned>(&self, fields : Option<Vec<String>>) -> Result<Vec<T>,PlatypusError> {
+        match fields {
+            Some(f) => self.get_tmf_items_fields(f).await,
+            None => self.get_tmf_items().await
+        }
+    }
+
     pub async fn get_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self,id : String) -> Result<Vec<T>,PlatypusError> {
         let query = format!("SELECT * FROM {}:{}",T::get_class(),id);
         let mut output = self.db.query(query).await?;
@@ -68,12 +106,20 @@ impl Persistence {
 
     pub async fn get_tmf_item_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, fields : Vec<String>) -> Result<Vec<T>,PlatypusError> {
         // Generate additional fields from vec
-        let fields : Vec<String> = fields.into_iter().map(|f| {
-            // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
-            format!("item.{f}")
-        }).collect();
-        let field_query = fields.join(", ");
-        let query = format!("SELECT item.id, item.href, {} FROM {}:{}",field_query, T::get_class(),id);
+        let field_query = match fields.is_empty() {
+            false => {
+                let fields : Vec<String> = fields.into_iter().map(|f| {
+                    // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
+                    format!("item.{f}")
+                }).collect();
+                format!(",{}",fields.join(","))
+            },
+            true => {
+                String::new()
+            }
+        };
+        
+        let query = format!("SELECT item.id, item.href {} FROM {}:{}",field_query, T::get_class(),id);
         let mut output = self.db.query(query).await?;
         let result : Vec<TMF<T>> = output.take(0)?;
         let item = result.iter().map(|tmf| {
