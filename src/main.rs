@@ -107,6 +107,7 @@ pub async fn tmf620_list_handler(
 pub struct Fields {
     /// Specific set of fields delimited by comma
     fields : Option<String>,
+    limit : Option<u16>,
 }
 
 fn query_to_fields(fields : Option<String>) -> Option<Vec<String>> {
