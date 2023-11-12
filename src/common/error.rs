@@ -29,8 +29,11 @@ impl From<&str> for PlatypusError {
 pub struct TMFError {
    code: String,
    reason: String,
+   #[serde(skip_serializing_if = "Option::is_none")]
    message: Option<String>,
+   #[serde(skip_serializing_if = "Option::is_none")]
    status: Option<String>,
+   #[serde(skip_serializing_if = "Option::is_none")]
    reference_error: Option<String>,
 }
 
@@ -42,12 +45,26 @@ impl TMFError {
          ..Default::default()
       }
    }
+   pub fn message(mut self, message : String) -> TMFError {
+      self.message = Some(message);
+      self
+   }
+
+   pub fn status(mut self, status : String) -> TMFError {
+      self.status = Some(status);
+      self
+   }
+
+   pub fn reference_error(mut self, reference: String) -> TMFError { 
+      self.reference_error = Some(reference);
+      self
+   }
 }
 
 impl From<PlatypusError> for TMFError {
    fn from(value: PlatypusError) -> Self {
        TMFError { 
-         code: "PERR001".into(), 
+         code: "PLAT001".into(), 
          reason: value.message, 
          message: None, 
          status: None, 
