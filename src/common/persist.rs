@@ -10,6 +10,7 @@ use log::debug;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::HasId;
+use crate::QueryOptions;
 use super::error::PlatypusError;
 
 /// Generic TMF struct for DB
@@ -46,8 +47,26 @@ impl Persistence {
         }
     }
 
+    fn query_to_fields(fields : Option<String>) -> Option<Vec<String>> {
+        match fields {
+            Some(f) => {
+                // Detect a 'none' case
+                let mut output : Vec<String> = vec![];
+                if f == "none" || f == "" {
+                    return Some(output);
+                };
+                f.split(',').into_iter().for_each(|f| {
+                    output.push(f.to_owned());
+                });
+                Some(output)
+            },
+            None => None,
+        }
+    }
+
     /// List objects of a particular type
-    pub async fn get_tmf_items<T : HasId + Serialize + Clone + DeserializeOwned>(&self) -> Result<Vec<T>,PlatypusError> {
+    pub async fn get_tmf_items<T : HasId + Serialize + Clone + DeserializeOwned>(&self,query_opts : QueryOptions) -> Result<Vec<T>,PlatypusError> {
+        let _limit = query_opts.limit;
         let insert_records : Vec<TMF<T>> = self.db.select(T::get_class()).await?;
         let output = insert_records.into_iter().map(|tmf| {
             tmf.item.clone()
@@ -55,22 +74,31 @@ impl Persistence {
         Ok(output)
     }
 
-    pub async fn get_tmf_items_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, fields : Vec<String>) -> Result<Vec<T>,PlatypusError> {
+    pub async fn get_tmf_items_fields<T : HasId + Serialize + Clone + DeserializeOwned>(&self, query_opts : QueryOptions) -> Result<Vec<T>,PlatypusError> {
         // Generate additional fields from vec
-        let field_query = match fields.is_empty() {
-            false => {
-                let fields : Vec<String> = fields.into_iter().map(|f| {
+        let field_query = match Persistence::query_to_fields(query_opts.fields) {
+            Some(f) => {
+                let fields : Vec<String> = f.into_iter().map(|f| {
                     // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
                     format!("item.{f}")
                 }).collect();
                 format!(",{}",fields.join(","))
             },
-            true => {
+            None => {
                 String::new()
             }
         };
+        let limit = match query_opts.limit {
+            Some(l) => format!("LIMIT BY {}",l),
+            None => format!(""),
+        };
+
+        let offset = match query_opts.offset {
+            Some(o) => format!("START AT {}",o),
+            None => format!(""),
+        };
         
-        let query = format!("SELECT item.id, item.href {} FROM {}",field_query, T::get_class());
+        let query = format!("SELECT item.id, item.href {} FROM {} {} {}",field_query, T::get_class(),limit,offset);
         let mut output = self.db.query(query).await?;
         let result : Vec<TMF<T>> = output.take(0)?;
         let item = result.iter().map(|tmf| {
@@ -79,18 +107,18 @@ impl Persistence {
         Ok(item)    
     }
 
-    pub async fn get_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, fields : Option<Vec<String>>) -> Result<Vec<T>,PlatypusError> {
-        match fields {
+    pub async fn get_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, query_opts : QueryOptions) -> Result<Vec<T>,PlatypusError> {
+        match Persistence::query_to_fields(query_opts.fields) {
             Some(f) => self.get_tmf_item_fields(id, f).await,
             None => self.get_tmf_item(id).await
         }
     }
 
-    pub async fn get_items<T : HasId + Serialize + Clone + DeserializeOwned>(&self, fields : Option<Vec<String>>) -> Result<Vec<T>,PlatypusError> {
-        match fields {
-            Some(f) => self.get_tmf_items_fields(f).await,
-            None => self.get_tmf_items().await
-        }
+    pub async fn get_items<T : HasId + Serialize + Clone + DeserializeOwned>(&self, query_opts : QueryOptions) -> Result<Vec<T>,PlatypusError> {
+        match query_opts.clone().fields {
+            Some(f) => self.get_tmf_items_fields(query_opts.clone()).await,
+            None => self.get_tmf_items(query_opts.clone()).await,
+        }  
     }
 
     pub async fn get_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self,id : String) -> Result<Vec<T>,PlatypusError> {
