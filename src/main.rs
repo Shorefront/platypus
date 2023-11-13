@@ -45,10 +45,13 @@ use tmflib::{HasId, HasLastUpdate};
 use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
 
-#[derive(Debug,Deserialize)]
-struct Record {
-    #[allow(dead_code)]
-    id: Option<Thing>,
+/// Fields for filtering output
+#[derive(Clone, Debug, Deserialize)]
+pub struct QueryOptions {
+    /// Specific set of fields delimited by comma
+    fields : Option<String>,
+    limit : Option<u16>,
+    offset : Option<u16>,
 }
 
 /// Get a list
@@ -56,43 +59,42 @@ struct Record {
 pub async fn tmf620_list_handler(
     path : web::Path<String>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
-    query : web::Query<Fields>,
+    query : web::Query<QueryOptions>,
 ) -> impl Responder {
     let object = path.into_inner();
-    let query_fields = query.into_inner();
-    let fields = query_to_fields(query_fields.fields);
+    let query_opts = query.into_inner();
 
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalogs(fields).await;
+            let output = tmf620.lock().unwrap().get_catalogs(query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         },
         "category" => {
-            let output = tmf620.lock().unwrap().get_categories(fields).await;
+            let output = tmf620.lock().unwrap().get_categories(query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         },
         "productSpecification" => {
-            let output = tmf620.lock().unwrap().get_specifications(fields).await;
+            let output = tmf620.lock().unwrap().get_specifications(query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         },
         "productOffering" => {
-            let output = tmf620.lock().unwrap().get_offers(fields).await;
+            let output = tmf620.lock().unwrap().get_offers(query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         }
         "productOfferingPrice" => {
-            let output = tmf620.lock().unwrap().get_prices(fields).await;
+            let output = tmf620.lock().unwrap().get_prices(query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
@@ -102,72 +104,47 @@ pub async fn tmf620_list_handler(
     }
 }
 
-/// Fields for filtering output
-#[derive(Debug, Deserialize)]
-pub struct Fields {
-    /// Specific set of fields delimited by comma
-    fields : Option<String>,
-    limit : Option<u16>,
-}
-
-fn query_to_fields(fields : Option<String>) -> Option<Vec<String>> {
-    match fields {
-        Some(f) => {
-            // Detect a 'none' case
-            let mut output : Vec<String> = vec![];
-            if f == "none" || f == "" {
-                return Some(output);
-            };
-            f.split(',').into_iter().for_each(|f| {
-                output.push(f.to_owned());
-            });
-            Some(output)
-        },
-        None => None,
-    }
-}
-
 /// Get a specific object
 #[get("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_get_handler(
     path : web::Path<(String,String)>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
-    query : web::Query<Fields>,
+    query : web::Query<QueryOptions>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
-    let query_fields = query.into_inner();
-    let fields = query_to_fields(query_fields.fields);
+    let query_opts = query.into_inner();
+    
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalog(id,fields).await;
+            let output = tmf620.lock().unwrap().get_catalog(id,query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         },
         "category" => {
-            let output = tmf620.lock().unwrap().get_category(id,fields).await;
+            let output = tmf620.lock().unwrap().get_category(id,query_opts).await;
             match output {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }
         },
         "productSpecification" => {
-            let data = tmf620.lock().unwrap().get_specification(id,fields).await;
+            let data = tmf620.lock().unwrap().get_specification(id,query_opts).await;
             match data {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
         "productOffering" => {
-            let data = tmf620.lock().unwrap().get_offer(id,fields).await;
+            let data = tmf620.lock().unwrap().get_offer(id,query_opts).await;
             match data {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
         "productOfferingPrice" => {
-            let data = tmf620.lock().unwrap().get_price(id,fields).await;
+            let data = tmf620.lock().unwrap().get_price(id,query_opts).await;
             match data {
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),    
