@@ -19,9 +19,7 @@ use std::sync::Mutex;
 
 // SurrealDB
 use serde::Deserialize;
-//use surrealdb::engine::local::Mem;
 use surrealdb::engine::local::Db;
-use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
 // New Persistence struct
