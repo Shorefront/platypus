@@ -5,6 +5,7 @@ use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 use tmflib::tmf620::product_specification::ProductSpecification;
+use tmflib::{HasId,HasName};
 
 use crate::QueryOptions;
 

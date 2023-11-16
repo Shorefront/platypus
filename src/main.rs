@@ -50,6 +50,8 @@ pub struct QueryOptions {
     fields : Option<String>,
     limit : Option<u16>,
     offset : Option<u16>,
+    /// Filter on name
+    name : Option<String>,
 }
 
 /// Get a list
