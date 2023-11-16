@@ -125,7 +125,10 @@ impl Persistence {
     }
 
     pub async fn get_items<T : HasId + Serialize + Clone + DeserializeOwned>(&self, query_opts : QueryOptions) -> Result<Vec<T>,PlatypusError> {
-        self.get_tmf_items_fields(query_opts.clone()).await 
+        match Persistence::query_to_fields(query_opts.clone()) {
+            Some(_f) => self.get_tmf_items_fields(query_opts.clone()).await,
+            None => self.get_tmf_items(query_opts).await,
+        }
     }
 
     pub async fn get_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self,id : String) -> Result<Vec<T>,PlatypusError> {
