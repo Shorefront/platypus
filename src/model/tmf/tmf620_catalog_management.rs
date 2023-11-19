@@ -146,7 +146,7 @@ impl TMF620CatalogManagement
     pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
         let result : Vec<Category> = self.persist.get_item(id,query_opts.clone()).await?;
         let mut first = result.first().as_mut().unwrap().clone();
-        let parent_id = first.id.unwrap().clone();
+        let parent_id = first.id.clone().unwrap();
         let children = self.get_child_category(parent_id, query_opts).await?;
         // Map through children converting to CategoryRef and appending onto cat
         let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
