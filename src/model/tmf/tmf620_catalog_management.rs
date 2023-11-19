@@ -5,7 +5,6 @@ use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 use tmflib::tmf620::product_specification::ProductSpecification;
-use tmflib::{HasId,HasName};
 
 use crate::QueryOptions;
 
@@ -139,34 +138,23 @@ impl TMF620CatalogManagement
         self.persist.get_item(id,query_opts).await
     }
 
-    pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Option<Category>,PlatypusError> {
-        //let output : Vec<CategoryRecord>  = self.db.select("catagory").range(id(id)).await.unwrap();
-        //let name : &str = "Root";
-        let query = format!("SELECT * FROM category:{}",id);
-        let mut output = self.persist.db.query(query).await?;
-        let result : Vec<CategoryRecord> = output.take(0)?;
-        let mut cat = result.first().cloned().map(|cat| {
-            cat.category
-        });
-        // Now enrich with any records where parentId = id
-        let sub_query = format!("SELECT * FROM category where category.parentId = '{}'",id);
-        let mut response = self.persist.db.query(sub_query).await?;
-        let vec : Vec<CategoryRecord> = response.take(0)?;
-        let mut sub_category : Vec<CategoryRef> = vec![];
-        vec.iter().for_each(|cr| {
-            // Take each category record and
-            // Extract the category
-            // Convert to CategoryRef
-            // Add to Vec
-            let cat = cr.clone().category;
-            let cat_ref = CategoryRef::from(&cat);
-            sub_category.push(cat_ref);
-        });
+    pub async fn get_child_category(&self, parent_id : String, query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
+        // Look for categories with common parent_id
+        self.persist.get_items_filter(format!("item.parent_id = {}",parent_id), query_opts).await
+    }
 
-        // Now enrich with offers that have parentId = id
+    pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
+        let result : Vec<Category> = self.persist.get_item(id,query_opts.clone()).await?;
+        let mut first = result.first().as_mut().unwrap().clone();
+        let parent_id = first.id.unwrap().clone();
+        let children = self.get_child_category(parent_id, query_opts).await?;
+        // Map through children converting to CategoryRef and appending onto cat
+        let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
+            CategoryRef::from(&c)
+        }).collect();
+        first.sub_category.as_mut().unwrap().append(&mut kids);
         
-        cat.as_mut().unwrap().sub_category = Some(sub_category);
-        Ok(cat)
+        Ok(vec![first.clone()])
     }
 
     pub async fn get_catalog(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError>  {
