@@ -399,7 +399,49 @@ pub async fn tmf648_create_handler(
     HttpResponse::Ok().json(data)
 }
 
-#[warn(missing_docs)]
+/// Create an Geographic Site object
+#[post("/tmf-api/geographicSiteManagement/v4/{object}")]
+pub async fn tmf674_post_handler(
+    path : web::Path<String>,
+    raw: web::Bytes,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+) -> impl Responder {
+    let object = path.into_inner();
+    match object {
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
+    }
+}
+
+/// Get a list
+#[get("/tmf-api/geographicSiteManagement/v4/{object}")]
+pub async fn tmf674_list_handler(
+    path : web::Path<String>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let object = path.into_inner();
+    let query_opts = query.into_inner();
+
+    match object.as_str() {
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
+    }
+}
+
+/// Get a specific object
+#[get("/tmf-api/geographicSiteManagement/v4/{object}/{id}")]
+pub async fn tmf674_get_handler(
+    path : web::Path<(String,String)>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let query_opts = query.into_inner();
+    
+    match object.as_str() {
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
+    }
+}
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -431,6 +473,9 @@ async fn main() -> std::io::Result<()> {
             .service(tmf620_get_handler)
             .service(tmf620_patch_handler)
             .service(tmf620_delete_handler)
+            .service(tmf674_post_handler)
+            .service(tmf674_list_handler)
+            .service(tmf674_get_handler)
             .wrap(Logger::default())
     })
         .bind(("0.0.0.0",port))?
