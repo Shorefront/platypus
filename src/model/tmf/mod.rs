@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 use tmflib::HasId;
 
 pub mod tmf620_catalog_management;
-pub mod tmf622_product_order_manaagement;
+pub mod tmf622_product_order_management;
 pub mod tmf632_party_management;
+pub mod tmf674_geographic_site;
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
