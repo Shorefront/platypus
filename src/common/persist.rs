@@ -218,11 +218,12 @@ impl Persistence {
     }
 
     pub async fn delete_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String) -> Result<bool,PlatypusError> {
-        let resource = format!("({},{})",T::get_class(),id);
-        let output : Result<Vec<TMF<T>>,_> = self.db.clone().delete(resource).await;
-        match output {
-            Ok(_) => Ok(true),
-            Err(e) => Err(PlatypusError::from(e)),
+        //let resource = format!("({},{})",T::get_class(),id);
+        // Need to generate a tuple, not just a string with brackets!
+        let result : Option<TMF<T>> = self.db.clone().delete((T::get_class(),id)).await?;
+        match result {
+            Some(_r) => Ok(true),
+            None => Err(PlatypusError::from("Issue Deleting object")),
         }
     }
 }
