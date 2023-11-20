@@ -292,6 +292,24 @@ pub async fn tmf620_delete_handler(
 ) -> impl Responder {
     let (object,id) = path.into_inner();
     match object.as_str() {
+        "catalog" => {
+            match tmf620.lock().unwrap().delete_catalog(id).await {
+                Ok(_b) => HttpResponse::NoContent(),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest()
+                },     
+            }    
+        },
+        "category" => {
+            match tmf620.lock().unwrap().delete_category(id).await {
+                Ok(_b) => HttpResponse::NoContent(),
+                Err(e) => {
+                    error!("Could not delete: {e}");
+                    HttpResponse::BadRequest()
+                },     
+            }    
+        },
         "productSpecification" => {
             match tmf620.lock().unwrap().delete_specification(id).await {
                 Ok(_b) => HttpResponse::NoContent(),
