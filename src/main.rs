@@ -253,8 +253,29 @@ pub async fn tmf620_patch_handler(
     let (object,id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
     match object.as_str() {
+        "catalog" => {
+            let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
+            match tmf620.lock().unwrap().patch_catalog(id,catalog).await {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => {
+                    error!("Could not patch: {e}");
+                    HttpResponse::BadRequest().json(e)
+                },
+            }    
+        },
+        "catagory" => {
+            let category : Category = serde_json::from_str(json.as_str()).unwrap();
+            match tmf620.lock().unwrap().patch_category(id,category).await {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => {
+                    error!("Could not patch: {e}");
+                    HttpResponse::BadRequest().json(e)
+                },
+            }
+        }
         "productSpecification" => {
-            match tmf620.lock().unwrap().patch_specification(id,json).await {
+            let product_specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
+            match tmf620.lock().unwrap().patch_specification(id,product_specification).await {
                 Ok(r) => HttpResponse::Ok().json(r),
                 Err(e) => {
                     error!("Could not delete: {e}");
@@ -263,7 +284,8 @@ pub async fn tmf620_patch_handler(
             }
         },
         "productOffering" => {
-            match tmf620.lock().unwrap().patch_offering(id,json).await {
+            let product_offering : ProductOffering = serde_json::from_str(json.as_str()).unwrap();
+            match tmf620.lock().unwrap().patch_offering(id,product_offering).await {
                 Ok(r) => HttpResponse::Ok().json(r),
                 Err(e) => {
                     error!("Could not delete: {e}");
@@ -272,7 +294,8 @@ pub async fn tmf620_patch_handler(
             }
         },
         "productOfferingPrice"  => {
-            match tmf620.lock().unwrap().patch_price(id,json).await {
+            let product_offering_price : ProductOfferingPrice = serde_json::from_str(json.as_str()).unwrap();
+            match tmf620.lock().unwrap().patch_price(id,product_offering_price).await {
                 Ok(r) => HttpResponse::Ok().json(r),
                 Err(e) => {
                     error!("Could not delete: {e}");
