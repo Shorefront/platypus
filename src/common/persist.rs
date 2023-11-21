@@ -203,7 +203,7 @@ impl Persistence {
         Ok(output)
     }
 
-    pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
+    pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : T) -> Result<Vec<T>,PlatypusError> {
         let result : Option<TMF<T>> = self.db.update((T::get_class(),id))
             .merge(patch).await?;
         match result {
