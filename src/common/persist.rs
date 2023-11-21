@@ -204,16 +204,11 @@ impl Persistence {
     }
 
     pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
-        let resource = format!("({},{})",T::get_class(),id);
-        let result : Result<Vec<TMF<T>>,_> = self.db.update(resource)
-            .merge(patch).await;
+        let result : Option<TMF<T>> = self.db.update((T::get_class(),id))
+            .merge(patch).await?;
         match result {
-            Ok(r) => {
-                Ok(r.into_iter().map(|tmf| {
-                    tmf.item
-                }).collect())
-            },
-            Err(e) => Err(PlatypusError::from(e))
+            Some(r) => Ok(vec![r.item]),
+            None => Err(PlatypusError::from(format!("Error patching object: {}",T::get_class()).as_str())),
         }
     }
 
