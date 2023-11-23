@@ -2,6 +2,7 @@
 //! 
 use surrealdb::engine::local::Db;
 use surrealdb::engine::local::SpeeDb;
+use surrealdb::opt::PatchOp;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
@@ -206,6 +207,7 @@ impl Persistence {
     pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : T) -> Result<Vec<T>,PlatypusError> {
         let result : Option<TMF<T>> = self.db.update((T::get_class(),id))
             .merge(patch).await?;
+            //.patch(patch_op).await?;
         match result {
             Some(r) => Ok(vec![r.item]),
             None => Err(PlatypusError::from(format!("Error patching object: {}",T::get_class()).as_str())),
