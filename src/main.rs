@@ -41,6 +41,7 @@ use tmflib::{HasId, HasLastUpdate};
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
 use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
+use crate::model::tmf::tmf629_customer_management::TMF629CustomerManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
 
 /// Fields for filtering output
@@ -104,6 +105,28 @@ pub async fn tmf620_list_handler(
     }
 }
 
+/// Get a list
+#[get("/tmf-api/customerManagement/v4/{object}")]
+pub async fn tmf629_list_handler(
+    path : web::Path<String>,
+    tmf629: web::Data<Mutex<TMF629CustomerManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let object = path.into_inner();
+    let query_opts = query.into_inner();
+
+    match object.as_str() {
+        "customer" => {
+            let output = tmf629.lock().unwrap().get_customers(query_opts).await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }    
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
+    }
+}
+
 /// Get a specific object
 #[get("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_get_handler(
@@ -150,6 +173,28 @@ pub async fn tmf620_get_handler(
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
+    }
+}
+
+/// Get a specific object
+#[get("/tmf-api/customerManagement/v4/{object}/{id}")]
+pub async fn tmf629_get_handler(
+    path : web::Path<(String,String)>,
+    tmf629: web::Data<Mutex<TMF629CustomerManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let query_opts = query.into_inner();
+    
+    match object.as_str() {
+        "customer" => {
+            let output = tmf629.lock().unwrap().get_customer(id,query_opts).await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+        }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
     }
 }
@@ -240,6 +285,37 @@ pub async fn tmf620_post_handler(
         _ => {
             HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
         }
+    }
+}
+
+/// Create an object
+#[post("/tmf-api/customerManagement/v4/{object}")]
+pub async fn tmf629_post_handler(
+    path : web::Path<String>,
+    raw: web::Bytes,
+    tmf629: web::Data<Mutex<TMF629CustomerManagement>>
+) -> impl Responder {
+    let object = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    match object.as_str() {
+        "customer" => {
+            let mut customer : Customer = serde_json::from_str(json.as_str())
+                .expect("Could not parse customer");
+            if customer.id.is_none() {
+                customer.generate_id();
+            }
+            let result = tmf629.lock().unwrap().add_customer(customer).await;
+            match result {
+                Ok(r) => {
+                    let item = r.first().unwrap().clone();
+                    HttpResponse::Created().json(item)
+                },
+                Err(e) => HttpResponse::BadGateway().json(e),
+            }
+        }
+        _ => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
+        }    
     }
 }
 
@@ -354,13 +430,6 @@ pub async fn tmf629_create_handler(
     HttpResponse::Ok().json(data)
 }
 
-#[get("/tmflib/tmf629/customer/{id}")]
-pub async fn tmf629_get_handler(
-
-) -> impl Responder {
-    HttpResponse::Ok()
-}
-
 #[get("/tmflib/tmf632/{object}")]
 pub async fn tmf632_get_handler(
     path : web::Path<String>,
@@ -431,6 +500,7 @@ async fn main() -> std::io::Result<()> {
     let persist = Persistence::new().await;
 
     let tmf620 = TMF620CatalogManagement::new(persist.clone());
+    let tmf629 = TMF629CustomerManagement::new(persist.clone());
     let tmf632 = TMF632PartyManagement::new(persist.clone());
 
     let config = Config::new();
@@ -442,6 +512,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(Mutex::new(tmf620.clone())))
+            .app_data(web::Data::new(Mutex::new(tmf629.clone())))
             .app_data(web::Data::new(Mutex::new(tmf632.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
             .service(tmf620_post_handler)
@@ -449,6 +520,9 @@ async fn main() -> std::io::Result<()> {
             .service(tmf620_get_handler)
             .service(tmf620_patch_handler)
             .service(tmf620_delete_handler)
+            .service(tmf629_post_handler)
+            .service(tmf629_list_handler)
+            .service(tmf629_get_handler)
             .wrap(Logger::default())
     })
         .bind(("0.0.0.0",port))?
