@@ -347,9 +347,10 @@ pub async fn tmf629_create_handler(
     _db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
-    data.generate_code();
     // Since this a new customer we have to regenerate the id / href
     data.generate_id();
+    // Now that we have an id, we can generate a new code.
+    data.generate_code(None);
     data.status = Some(CUST_STATUS.to_string());
     HttpResponse::Ok().json(data)
 }
