@@ -1,11 +1,16 @@
 [package]
 name = "platypus"
-version = "0.1.3"
+version = "0.1.5"
 edition = "2021"
 authors = ["Ryan Ruckley <rruckley@gmail.com>"]
 description = "API layer on top of TMF620 to provide product composition"
 repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
+
+[features]
+core = []
+composable = ["core"]
+default = ["core"]
 
 [dependencies]
 actix-web = { version = "4.4", features = ["rustls"]}
