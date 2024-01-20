@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
 
-pub mod tmf620_catalog_management;
+pub mod tmf620;
 pub mod tmf622_product_order_manaagement;
 pub mod tmf632_party_management;
 
