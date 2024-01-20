@@ -15,6 +15,8 @@ use log::error;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 
+use crate::model::tmf::tmf620::config_tmf620;
+
 use std::sync::Mutex;
 
 // SurrealDB
@@ -40,8 +42,8 @@ use tmflib::{HasId, HasLastUpdate};
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
-use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
+use crate::model::tmf::tmf620::tmf620_catalog_management::TMF620CatalogManagement;
 
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
@@ -59,10 +61,14 @@ pub struct QueryOptions {
 pub async fn tmf620_list_handler(
     path : web::Path<String>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
     query : web::Query<QueryOptions>,
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
+    let persist = persist.lock().unwrap();
+    // Now have to pass persistence into tmf module here
+    tmf620.lock().unwrap().persist(persist.clone());
 
     match object.as_str() {
         "catalog" => {
@@ -430,9 +436,7 @@ async fn main() -> std::io::Result<()> {
     info!("Starting {pkg} v{ver}");
 
     let persist = Persistence::new().await;
-
-    let tmf620 = TMF620CatalogManagement::new(persist.clone());
-    let tmf632 = TMF632PartyManagement::new(persist.clone());
+    let tmf632 = TMF632PartyManagement::new(persist.clone());    
 
     let config = Config::new();
 
@@ -442,9 +446,10 @@ async fn main() -> std::io::Result<()> {
    
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(Mutex::new(tmf620.clone())))
+            .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(tmf632.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
+            .configure(config_tmf620)
             .service(tmf620_post_handler)
             .service(tmf620_list_handler)
             .service(tmf620_get_handler)
