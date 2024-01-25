@@ -1,9 +1,6 @@
 ARG RUST_VERSION=1.75
 FROM rust:${RUST_VERSION}-slim-bullseye as build
 
-# Build environment proxy
-ARG http_proxy http://203.202.141.90:3128
-
 COPY . .
 
 RUN apt update \
@@ -11,8 +8,6 @@ RUN apt update \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
 RUN cargo build --release
-
-ARG http_proxy http://203.202.141.90:3128
 
 RUN apt update \
     && apt install --yes ca-certificates gettext-base libssl1.1 --no-install-recommends \
