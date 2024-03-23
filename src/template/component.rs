@@ -22,7 +22,7 @@ impl ComponentTemplate {
 
     pub fn name(mut self, name : impl Into<String>) -> ComponentTemplate {
         self.name = name.into();
-        let cat = Category::new(TEMPLATE_CATEGORY.into());
+        let cat = Category::new(TEMPLATE_CATEGORY.to_string());
         let offering = ProductOffering::new(self.name.clone())
             .with_category(CategoryRef::from(&cat));
         self.component = Some(offering);
