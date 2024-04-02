@@ -1,4 +1,4 @@
-//! Platypus Priary Module
+//! Platypus Primary Module
 
 #![warn(missing_docs)]
 
