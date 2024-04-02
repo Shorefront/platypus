@@ -44,7 +44,7 @@ use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
 
 /// Fields for filtering output
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Default, Debug, Deserialize)]
 pub struct QueryOptions {
     /// Specific set of fields delimited by comma
     fields : Option<String>,
@@ -52,6 +52,11 @@ pub struct QueryOptions {
     offset : Option<u16>,
     /// Filter on name
     name : Option<String>,
+    // Reference Handling
+    // Depth to expand references to.
+    depth : Option<u8>,
+    // Specific references to expand.
+    expand: Option<String>,
 }
 
 /// Get a list
