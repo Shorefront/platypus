@@ -233,7 +233,6 @@ impl Persistence {
 }
 
 mod tests {
-    use std::env;
 
     #[test]
     fn test_env_variable() {
