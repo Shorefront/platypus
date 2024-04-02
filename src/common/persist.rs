@@ -236,9 +236,9 @@ mod tests {
 
     #[test]
     fn test_env_variable() {
-        env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
+        std::env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
 
-        let db_path = env::var("PLATYPUS_DB_PATH")
+        let db_path = std::env::var("PLATYPUS_DB_PATH")
             .unwrap_or_else(|_| String::from("/home/rruckley/build/platypus/tmf.db"));
 
         assert_eq!(db_path, "/test/db/path");
