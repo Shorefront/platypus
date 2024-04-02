@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// TMFLIB
-use tmflib::tmf622::product_order::ProductOrder;
+use tmflib::tmf622::product_order_v4::ProductOrder;
 use tmflib::tmf622::product_order_item::ProductOrderItem;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
