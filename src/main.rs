@@ -5,6 +5,7 @@
 use log::info;
 
 mod model;
+#[cfg(feature = "composable")]
 mod template;
 mod common;
 
