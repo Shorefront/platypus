@@ -5,6 +5,7 @@
 use log::info;
 
 mod model;
+#[cfg(feature = "composable")]
 mod template;
 mod common;
 
@@ -37,6 +38,11 @@ use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
 use tmflib::{HasId, HasLastUpdate};
+
+#[cfg(feature = "composable")]
+use crate::model::component::*;
+#[cfg(feature = "composable")]
+use crate::template::*;
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;

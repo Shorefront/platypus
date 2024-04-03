@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 use tmflib::HasId;
 
 pub mod tmf620_catalog_management;
-pub mod tmf622_product_order_manaagement;
+#[cfg(features = "v4")]
+pub mod tmf622_product_order_management;
+#[cfg(features = "v5")]
+pub mod tmf622_product_order_management_v5;
 pub mod tmf632_party_management;
 
 /// Generic TMF struct for DB
