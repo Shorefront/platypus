@@ -91,7 +91,14 @@ impl TMF620CatalogManagement
     }
 
     pub async fn get_catalogs(&self, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError> {
-        self.persist.get_items(query_opts).await
+        match query_opts.depth {
+            Some(d) => {
+                let out = self.persist.get_items(query_opts).await?;
+                /// Since we have a depth, we need to hydrate each of the references
+                Ok(out)
+            },
+            None => self.persist.get_items(query_opts).await
+        }  
     }
 
     pub async fn get_categories(&self, query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
