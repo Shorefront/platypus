@@ -105,8 +105,20 @@ pub async fn tmf620_list_handler(
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }    
-        }
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
+        },
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        "hub" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
+        },
+        "listener" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object}")),
     }
 }
 
@@ -156,7 +168,13 @@ pub async fn tmf620_get_handler(
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
     }
 }
 
@@ -242,7 +260,19 @@ pub async fn tmf620_post_handler(
                 },
                 Err(e) => HttpResponse::BadGateway().json(e),
             }
-        }
+        },
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        "hub" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
+        },
+        "listener" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
+        },
         _ => {
             HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
         }
@@ -286,7 +316,7 @@ pub async fn tmf620_patch_handler(
                 },
             }
         },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
     } 
 }
 
