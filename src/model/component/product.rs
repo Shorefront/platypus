@@ -3,6 +3,7 @@
 use serde::{Deserialize,Serialize};
 use tmflib::tmf620::category::{Category,CategoryRef};
 use tmflib::tmf620::product_offering::ProductOffering;
+
 use crate::template::component::ComponentTemplate;
 
 use std::convert::Into;

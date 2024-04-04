@@ -37,30 +37,6 @@ pub struct TMFError {
    reference_error: Option<String>,
 }
 
-impl TMFError {
-   pub fn new(code : &str, reason : &str) -> TMFError {
-      TMFError { 
-         code: code.to_owned(), 
-         reason: reason.to_owned(), 
-         ..Default::default()
-      }
-   }
-   pub fn message(mut self, message : String) -> TMFError {
-      self.message = Some(message);
-      self
-   }
-
-   pub fn status(mut self, status : String) -> TMFError {
-      self.status = Some(status);
-      self
-   }
-
-   pub fn reference_error(mut self, reference: String) -> TMFError { 
-      self.reference_error = Some(reference);
-      self
-   }
-}
-
 impl From<PlatypusError> for TMFError {
    fn from(value: PlatypusError) -> Self {
        TMFError { 
