@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 /// TMFLIB
 ///
-#[cfg(feature = "v4")]
+#[cfg(feature = "tmf622_v4")]
 use tmflib::tmf622::product_order_v4::ProductOrder;
 
-#[cfg(feature = "v5")]
+#[cfg(feature = "tmf622_v5")]
 use tmflib::tmf622::product_order_v5::ProductOrder;
 
 use tmflib::tmf622::product_order_item::ProductOrderItem;
