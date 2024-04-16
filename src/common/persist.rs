@@ -198,6 +198,7 @@ impl Persistence {
     /// Generate function to store into a db.
     pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
         let class = T::get_class();
+        // Should only generate a new id if one has not been supplied
         item.generate_id();
         let payload = Persistence::tmf_payload(item);
         let insert_records : Vec<TMF<T>> = self.db.create(class).content(payload).await?;
