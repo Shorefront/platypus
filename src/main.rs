@@ -36,7 +36,6 @@ use tmflib::tmf632::individual::Individual;
 use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
-use tmflib::tmf648::quote::Quote;
 use tmflib::{HasId, HasLastUpdate};
 
 #[cfg(feature = "composable")]
