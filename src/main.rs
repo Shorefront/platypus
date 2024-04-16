@@ -1,10 +1,11 @@
-//! Platypus Priary Module
+//! Platypus Primary Module
 
 #![warn(missing_docs)]
 
 use log::info;
 
 mod model;
+#[cfg(feature = "composable")]
 mod template;
 mod common;
 
@@ -37,6 +38,11 @@ use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
 use tmflib::tmf648::quote::Quote;
 use tmflib::{HasId, HasLastUpdate};
+
+#[cfg(feature = "composable")]
+use crate::model::component::*;
+#[cfg(feature = "composable")]
+use crate::template::*;
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
@@ -347,9 +353,10 @@ pub async fn tmf629_create_handler(
     _db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
-    data.generate_code();
     // Since this a new customer we have to regenerate the id / href
     data.generate_id();
+    // Now that we have an id, we can generate a new code.
+    data.generate_code(None);
     data.status = Some(CUST_STATUS.to_string());
     HttpResponse::Ok().json(data)
 }
