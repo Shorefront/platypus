@@ -41,8 +41,8 @@ impl From<PlatypusError> for TMFError {
    fn from(value: PlatypusError) -> Self {
        TMFError { 
          code: "PLAT001".into(), 
-         reason: value.message, 
-         message: None, 
+         reason: value.message.clone(), 
+         message: Some(format!("PLAT001: {}",value.message.clone())), 
          status: None, 
          reference_error: None 
       }
