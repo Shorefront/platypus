@@ -8,6 +8,7 @@ use surrealdb::Surreal;
 use log::debug;
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use tmflib::Uri;
 
 use crate::QueryOptions;
 use super::error::PlatypusError;
@@ -22,9 +23,19 @@ pub struct TMF<T : HasId> {
     pub item : T,
 }
 
+#[derive(Clone,Debug,Default,Deserialize,Serialize)]
+pub struct NotificationEndpoint {
+    id: String,
+    domain : String,
+    filter : Option<String>,
+    callback: Uri,
+    query: Option<String>,
+}
+
 #[derive(Clone,Debug)]
 pub struct Persistence {
     pub db : Surreal<Db>,
+    pub callback : Vec<NotificationEndpoint>,
 }
 
 impl Persistence {
@@ -35,11 +46,33 @@ impl Persistence {
             .await
             .expect("Could not open DB connection");
         db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
-        Persistence { db }
+        Persistence { 
+            db,
+            callback : vec![],
+        }
     }
-}
 
-impl Persistence {
+    pub async fn upsert_callback(&mut self, callback : NotificationEndpoint) {
+        // Nothing to return for now. 
+        // This is naive as it will result in duplicate entries. 
+        // Need to do a find first and if found, replace else append.
+        let callbacks = self.get_callbacks(callback.domain.clone()).await;
+        if callbacks.len() == 0 {
+            self.callback.push(callback);
+        } else {
+            callbacks.first().replace(&&callback);
+        }
+        
+    }
+
+    /// Get all callbacks for a particular domain
+    pub async fn get_callbacks(&self, domain : String) -> Vec<&NotificationEndpoint> {
+        // Return all callbacks that match
+        self.callback.iter().filter(|c| {
+            c.domain == domain
+        }).collect()
+    }
+
     /// Geneate a TMF payload for storing in the database
     fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
         TMF {
