@@ -2,6 +2,7 @@
 
 use tmflib::{tmf632::individual::Individual, HasId};
 use crate::common::{error::PlatypusError, persist::Persistence};
+use crate::QueryOptions;
 
 use super::{tmf_payload,TMF};
 
@@ -51,14 +52,11 @@ impl TMF632PartyManagement {
         Ok(record.item.clone())
     }
 
-    pub async fn get_individuals(&self) -> Result<Vec<Individual>,PlatypusError> {
-        let get_records : Vec<TMF<Individual>> = self.persist.db.select(Individual::get_class()).await?;
-        let mut output : Vec<Individual> = vec![];
-        
-        // Need to generate a vec of sub_categories
-        get_records.iter().for_each(|ir| {
-            output.push(ir.item.clone());
-        });
-        Ok(output)
+    pub async fn get_individuals(&self,query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
+        self.persist.get_items(query_opts).await
+    }
+
+    pub async fn get_individual(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
+        self.persist.get_item(id,query_opts).await
     }
 }
