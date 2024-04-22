@@ -29,24 +29,10 @@ pub struct TMF620CatalogManagement {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct CatalogRecord {
-    #[allow(dead_code)]
-    id: Option<Thing>,
-    catalog: Catalog,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 struct CategoryRecord {
     #[allow(dead_code)]
     id: Option<Thing>,
     category : Category,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct GenericRecord<T> {
-    #[allow(dead_code)]
-    id: Option<Thing>,
-    item : T,
 }
 
 impl TMF620CatalogManagement 
@@ -171,6 +157,14 @@ impl TMF620CatalogManagement
     
     pub async fn patch_price(&self, id : String, patch : String) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
         self.persist.patch_tmf_item(id,patch).await
+    }
+
+    pub async fn delete_category(&self, id : String) -> Result<bool, PlatypusError> {
+        self.persist.delete_tmf_item::<Category>(id).await
+    }
+
+    pub async fn delete_catalog(&self, id : String) -> Result<bool, PlatypusError> {
+        self.persist.delete_tmf_item::<Catalog>(id).await
     }
 
     pub async fn delete_specification(&self, id : String) -> Result<bool,PlatypusError> {
