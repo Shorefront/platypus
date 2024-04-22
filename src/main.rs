@@ -459,8 +459,15 @@ pub async fn tmf632_post_handler(
         },
         "organization" => {
             let mut organization : Organization = serde_json::from_str(json.as_str()).unwrap();
-            organization.generate_id();
-            HttpResponse::Ok().json(organization)
+            // If payload didn't come with an id, generate one.
+            if organization.id.is_none() {
+                organization.generate_id();
+            }
+            let records = tmf632.lock().unwrap().add_organization(organization.clone()).await;
+            match records {
+                Ok(r) => HttpResponse::Ok().json(r),
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }
         }
         _ => {
             HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
