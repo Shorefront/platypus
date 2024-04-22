@@ -8,6 +8,7 @@ use surrealdb::Surreal;
 use log::debug;
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use tmflib::common::event::Event;
 
 use crate::QueryOptions;
 use super::error::PlatypusError;
@@ -230,6 +231,14 @@ impl Persistence {
             Some(_r) => Ok(true),
             None => Err(PlatypusError::from("Issue Deleting object")),
         }
+    }
+
+    pub async fn send_tmf_event<T : Serialize + Clone + DeserializeOwned,U>(&self, event : Event<T, U>) -> Result<bool,PlatypusError> {
+        // First step, determine the domain of the event to filter hub entries
+        if event.description.is_some() {
+            debug!("Trying to send event: {}",event.description.unwrap());
+        };
+        Err(PlatypusError::from("Not implemented"))
     }
 }
 
