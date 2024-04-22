@@ -2,14 +2,13 @@
 //! 
 //! 
 
-use tmflib::{HasId, tmf674::geographic_site::GeographicSite};
 use crate::common::{error::PlatypusError, persist::Persistence};
 
-use super::{tmf_payload,TMF};
+// Optional modules
+#[cfg(feature = "tmf674_v4")]
+use tmflib::tmf674::geographic_site_v4::GeographicSite;
 
 use crate::QueryOptions;
-
-use log::{debug,error};
 
 #[derive(Clone, Debug)]
 pub struct TMF674GeographicSiteManagement {
