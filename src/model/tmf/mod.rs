@@ -21,14 +21,3 @@ pub struct TMF<T : HasId> {
     id : Option<Thing>,
     pub item : T,
 }
-
-/// Geneate a TMF payload for storing in the database
-pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
-    TMF {
-        id : Some(Thing {
-            tb : T::get_class(),
-            id : item.get_id().into(),
-        }),
-        item,
-    }
-}
