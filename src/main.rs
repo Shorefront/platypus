@@ -15,6 +15,12 @@ use actix_web::{get,post,patch,delete,web,App, HttpResponse,HttpServer, Responde
 use log::error;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
+#[cfg(feature = "tmf648_v4")]
+use tmflib::tmf648::quote::Quote;
+#[cfg(feature = "tmf674_v4")]
+use tmflib::tmf674::geographic_site_v4::GeographicSite;
+#[cfg(feature = "tmf674_v5")]
+use tmflib::tmf674::geographic_site_v5::GeographicSite;
 
 use std::sync::Mutex;
 
@@ -47,6 +53,7 @@ use crate::template::*;
 //use crate::model::component::product::ProductComponent;
 use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
+use crate::model::tmf::tmf674_geographic_site::TMF674GeographicSiteManagement;
 
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
@@ -468,6 +475,78 @@ pub async fn tmf632_post_handler(
     } 
 }
 
+#[post("/tmflib/tmf648/quote")]
+pub async fn tmf648_create_handler(
+    body : web::Json<Quote>
+) -> impl Responder {
+    let data = body.into_inner();
+    HttpResponse::Ok().json(data)
+}
+
+/// Create an Geographic Site object
+#[post("/tmf-api/geographicSiteManagement/v4/{object}")]
+pub async fn tmf674_post_handler(
+    path : web::Path<String>,
+    raw: web::Bytes,
+    tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>
+) -> impl Responder {
+    let object = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    match object.as_str() {
+        "site" => {
+            let site : GeographicSite = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf674.lock().unwrap().add_site(site).await;
+            match result {
+                Ok(r) => {
+                    //let json = serde_json::to_string(
+                    let item = r.first().unwrap().clone();
+                    HttpResponse::Created().json(item)
+                },
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
+    }
+}
+
+/// Get a list
+#[get("/tmf-api/geographicSiteManagement/v4/{object}")]
+pub async fn tmf674_list_handler(
+    path : web::Path<String>,
+    tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let object = path.into_inner();
+    let query_opts = query.into_inner();
+
+    match object.as_str() {
+        "site" => {
+            let output = tmf674.lock().unwrap().get_sites(query_opts).await;
+            match output {
+                Ok(o) => HttpResponse::Ok().json(o),
+                Err(e) => HttpResponse::InternalServerError().json(e),
+            }
+        }
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
+    }
+}
+
+/// Get a specific object
+#[get("/tmf-api/geographicSiteManagement/v4/{object}/{id}")]
+pub async fn tmf674_get_handler(
+    path : web::Path<(String,String)>,
+    _tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let (object,_id) = path.into_inner();
+    let _query_opts = query.into_inner();
+    
+    match object.as_str() {
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
+    }
+}
+
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let pkg = env!("CARGO_PKG_NAME");
@@ -481,6 +560,7 @@ async fn main() -> std::io::Result<()> {
 
     let tmf620 = TMF620CatalogManagement::new(persist.clone());
     let tmf632 = TMF632PartyManagement::new(persist.clone());
+    let tmf674 = TMF674GeographicSiteManagement::new(persist.clone());
 
     let config = Config::new();
 
@@ -492,12 +572,16 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(Mutex::new(tmf620.clone())))
             .app_data(web::Data::new(Mutex::new(tmf632.clone())))
+            .app_data(web::Data::new(Mutex::new(tmf674.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
             .service(tmf620_post_handler)
             .service(tmf620_list_handler)
             .service(tmf620_get_handler)
             .service(tmf620_patch_handler)
             .service(tmf620_delete_handler)
+            .service(tmf674_post_handler)
+            .service(tmf674_list_handler)
+            .service(tmf674_get_handler)
             .service(tmf632_post_handler)
             .service(tmf632_list_handler)
             .service(tmf632_get_handler)
