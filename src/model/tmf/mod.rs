@@ -4,7 +4,7 @@
 use surrealdb::sql::Thing;
 use serde::{Deserialize, Serialize};
 
-use tmflib::HasId;
+use tmflib::{HasId,Uri};
 
 #[cfg(feature = "tmf620_v4")]
 pub mod tmf620_catalog_management;
@@ -20,6 +20,12 @@ pub mod tmf632_party_management;
 pub struct TMF<T : HasId> {
     id : Option<Thing>,
     pub item : T,
+}
+
+pub struct CallBack {
+    id : String,
+    callback : Uri,
+    query: Option<String>,
 }
 
 /// Geneate a TMF payload for storing in the database
