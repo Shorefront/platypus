@@ -1,10 +1,15 @@
 //! Party Management Module
 
-use tmflib::{tmf632::individual::Individual, HasId};
+use tmflib::common::event::EventPayload;
+use tmflib::tmf632::individual::IndividualEventType;
+use tmflib::tmf632::organization::OrganizationEventType;
+use tmflib::tmf632::{
+        individual::Individual,
+        organization::Organization,
+    }
+;
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
-
-use super::{tmf_payload,TMF};
 
 use log::{debug,error};
 
@@ -38,7 +43,18 @@ impl TMF632PartyManagement {
         }
         Ok(true) 
     }
-    pub async fn add_individual(&self, individual : Individual) -> Result<Individual,PlatypusError> {
+
+    pub async fn add_organization(&mut self, organization : Organization) -> Result<Vec<Organization>,PlatypusError> {
+        let out = self.persist.create_tmf_item(organization.clone()).await;
+
+        // Generate an event
+        let event = organization.to_event(OrganizationEventType::OrganizationCreateEvent);
+        let _event_result = self.persist.send_tmf_event(event);
+
+        out
+    }
+
+    pub async fn add_individual(&mut self, individual : Individual) -> Result<Vec<Individual>,PlatypusError> {
         match self.validate_individual(&individual) {
             Ok(_) => debug!("Individual validated"),
             Err(e) => {
@@ -46,10 +62,14 @@ impl TMF632PartyManagement {
                 return Err(e);
             }
         };
-        let payload = tmf_payload(individual);
-        let insert_records : Vec<TMF<Individual>> = self.persist.db.create(Individual::get_class()).content(payload).await?;
-        let record = insert_records.first().unwrap();
-        Ok(record.item.clone())
+
+        let out = self.persist.create_tmf_item(individual.clone()).await;
+
+        // Now that we've added the record to the persistence layer we can generate a create event.
+        let event = individual.to_event(IndividualEventType::IndividualCreateEvent);
+        // Send event if anyone is listening for it.
+        let _event_result = self.persist.send_tmf_event(event).await;
+        out
     }
 
     pub async fn get_individuals(&self,query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
