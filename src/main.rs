@@ -20,8 +20,6 @@ use std::sync::Mutex;
 
 // SurrealDB
 use serde::Deserialize;
-use surrealdb::engine::local::Db;
-use surrealdb::Surreal;
 
 // New Persistence struct
 use common::persist::Persistence;
@@ -379,7 +377,6 @@ pub async fn tmf620_delete_handler(
 #[post("/tmflib/tmf629/customer")]
 pub async fn tmf629_create_handler(
     body : web::Json<Customer>,
-    _db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
     // Since this a new customer we have to regenerate the id / href
