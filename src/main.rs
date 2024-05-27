@@ -1,10 +1,11 @@
-//! Platypus Priary Module
+//! Platypus Primary Module
 
 #![warn(missing_docs)]
 
 use log::info;
 
 mod model;
+#[cfg(feature = "composable")]
 mod template;
 mod common;
 
@@ -35,8 +36,12 @@ use tmflib::tmf632::individual::Individual;
 use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
-use tmflib::tmf648::quote::Quote;
 use tmflib::{HasId, HasLastUpdate};
+
+#[cfg(feature = "composable")]
+use crate::model::component::*;
+#[cfg(feature = "composable")]
+use crate::template::*;
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
@@ -99,8 +104,20 @@ pub async fn tmf620_list_handler(
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }    
-        }
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
+        },
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        "hub" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
+        },
+        "listener" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object}")),
     }
 }
 
@@ -150,7 +167,13 @@ pub async fn tmf620_get_handler(
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
     }
 }
 
@@ -236,7 +259,19 @@ pub async fn tmf620_post_handler(
                 },
                 Err(e) => HttpResponse::BadGateway().json(e),
             }
-        }
+        },
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        "hub" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
+        },
+        "listener" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
+        },
         _ => {
             HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
         }
@@ -303,7 +338,7 @@ pub async fn tmf620_patch_handler(
                 },
             }
         },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
     } 
 }
 
@@ -370,9 +405,10 @@ pub async fn tmf629_create_handler(
     _db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
-    data.generate_code();
     // Since this a new customer we have to regenerate the id / href
     data.generate_id();
+    // Now that we have an id, we can generate a new code.
+    data.generate_code(None);
     data.status = Some(CUST_STATUS.to_string());
     HttpResponse::Ok().json(data)
 }
@@ -385,13 +421,15 @@ pub async fn tmf629_get_handler(
 }
 
 #[get("/tmflib/tmf632/{object}")]
-pub async fn tmf632_get_handler(
+pub async fn tmf632_list_handler(
     path : web::Path<String>,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    query : web::Query<QueryOptions>,
 ) -> impl Responder {
+    let query_opts = query.into_inner();
     match path.as_str() {
         "individual" => {
-            let result = tmf632.lock().unwrap().get_individuals().await;
+            let result = tmf632.lock().unwrap().get_individuals(query_opts).await;
             match result {
                 Ok(v) => HttpResponse::Ok().json(v),
                 Err(e) => HttpResponse::BadRequest().json(e),
@@ -402,8 +440,29 @@ pub async fn tmf632_get_handler(
     }  
 }
 
+/// Get a specific object
+#[get("/tmf-api/partyManagement/v4/{object}/{id}")]
+pub async fn tmf632_get_handler(
+    path : web::Path<(String,String)>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let query_opts = query.into_inner();
+    match object.as_str() {
+        "individual" => {
+            let result = tmf632.lock().unwrap().get_individual(id,query_opts).await;
+            match result {
+                Ok(v) => HttpResponse::Ok().json(v),
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }       
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))    
+    }
+}
+
 #[post("/tmflib/tmf632/{object}")]
-pub async fn tmf632_create_handler(
+pub async fn tmf632_post_handler(
     path : web::Path<String>,
     raw: web::Bytes,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
@@ -431,16 +490,6 @@ pub async fn tmf632_create_handler(
         }
     } 
 }
-
-#[post("/tmflib/tmf648/quote")]
-pub async fn tmf648_create_handler(
-    body : web::Json<Quote>
-) -> impl Responder {
-    let data = body.into_inner();
-    HttpResponse::Ok().json(data)
-}
-
-#[warn(missing_docs)]
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -472,6 +521,9 @@ async fn main() -> std::io::Result<()> {
             .service(tmf620_get_handler)
             .service(tmf620_patch_handler)
             .service(tmf620_delete_handler)
+            .service(tmf632_post_handler)
+            .service(tmf632_list_handler)
+            .service(tmf632_get_handler)
             .wrap(Logger::default())
     })
         .bind(("0.0.0.0",port))?
