@@ -36,7 +36,13 @@ use common::error::PlatypusError;
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::category::Category;
 use tmflib::tmf620::product_specification::ProductSpecification;
-use tmflib::tmf632::individual::Individual;
+#[cfg(feature = "tmf620_v4")]
+use tmflib::tmf632::individual_v4::Individual;
+#[cfg(feature = "tmf620_v4")]
+use tmflib::tmf632::organization_v4::Organization;
+#[cfg(feature = "tmf620_v5")]
+use tmflib::tmf632::individual_v5::Individual;
+#[cfg(feature = "tmf620_v5")]
 use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
