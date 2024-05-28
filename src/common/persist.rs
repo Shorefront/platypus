@@ -1,8 +1,6 @@
 //! Persistence Module
 //! 
-use surrealdb::engine::local::Db;
-use surrealdb::engine::local::SpeeDb;
-use surrealdb::opt::PatchOp;
+use surrealdb::engine::any::Any;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
@@ -14,8 +12,6 @@ use crate::QueryOptions;
 use super::error::PlatypusError;
 use tmflib::HasId;
 
-use std::env;
-
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
@@ -25,16 +21,16 @@ pub struct TMF<T : HasId> {
 
 #[derive(Clone,Debug)]
 pub struct Persistence {
-    pub db : Surreal<Db>,
+    pub db : Surreal<Any>,
 }
 
 impl Persistence {
     pub async fn new() -> Persistence {
-        let db_path = env::var("PLATYPUS_DB_PATH")
-            .unwrap_or_else(|_| String::from("/home/rruckley/build/platypus/tmf.db"));
-        let db = Surreal::new::<SpeeDb>(&db_path)
-            .await
-            .expect("Could not open DB connection");
+        use surrealdb::engine::any;
+
+        // Connect to the database
+        let db = any::connect("ws://192.168.0.92:8000/rpc").await.unwrap();
+
         db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
         Persistence { db }
     }
