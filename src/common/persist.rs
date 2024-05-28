@@ -1,7 +1,6 @@
 //! Persistence Module
 //! 
-use surrealdb::engine::local::Db;
-use surrealdb::engine::local::SpeeDb;
+use surrealdb::engine::any::Any;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
@@ -22,14 +21,16 @@ pub struct TMF<T : HasId> {
 
 #[derive(Clone,Debug)]
 pub struct Persistence {
-    pub db : Surreal<Db>,
+    pub db : Surreal<Any>,
 }
 
 impl Persistence {
     pub async fn new() -> Persistence {
-        let db = Surreal::new::<SpeeDb>("/home/rruckley/build/platypus/tmf.db")
-            .await
-            .expect("Could not open DB connection");
+        use surrealdb::engine::any;
+
+        // Connect to the database
+        let db = any::connect("ws://192.168.0.92:8000/rpc").await.unwrap();
+
         db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
         Persistence { db }
     }
@@ -194,6 +195,7 @@ impl Persistence {
     /// Generate function to store into a db.
     pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
         let class = T::get_class();
+        // Should only generate a new id if one has not been supplied
         item.generate_id();
         let payload = Persistence::tmf_payload(item);
         let insert_records : Vec<TMF<T>> = self.db.create(class).content(payload).await?;
@@ -225,6 +227,19 @@ impl Persistence {
             Some(_r) => Ok(true),
             None => Err(PlatypusError::from("Issue Deleting object")),
         }
+    }
+}
+
+mod tests {
+
+    #[test]
+    fn test_env_variable() {
+        std::env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
+
+        let db_path = std::env::var("PLATYPUS_DB_PATH")
+            .unwrap_or_else(|_| String::from("/home/rruckley/build/platypus/tmf.db"));
+
+        assert_eq!(db_path, "/test/db/path");
     }
 }
 

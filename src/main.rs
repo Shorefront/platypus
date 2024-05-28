@@ -5,6 +5,7 @@
 use log::info;
 
 mod model;
+#[cfg(feature = "composable")]
 mod template;
 mod common;
 
@@ -14,6 +15,12 @@ use actix_web::{get,post,patch,delete,web,App, HttpResponse,HttpServer, Responde
 use log::error;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
+#[cfg(feature = "tmf648_v4")]
+use tmflib::tmf648::quote::Quote;
+#[cfg(feature = "tmf674_v4")]
+use tmflib::tmf674::geographic_site_v4::GeographicSite;
+#[cfg(feature = "tmf674_v5")]
+use tmflib::tmf674::geographic_site_v5::GeographicSite;
 
 use crate::model::tmf::tmf620::config_tmf620;
 
@@ -21,8 +28,6 @@ use std::sync::Mutex;
 
 // SurrealDB
 use serde::Deserialize;
-use surrealdb::engine::local::Db;
-use surrealdb::Surreal;
 
 // New Persistence struct
 use common::persist::Persistence;
@@ -37,13 +42,18 @@ use tmflib::tmf632::individual::Individual;
 use tmflib::tmf632::organization::Organization;
 use tmflib::tmf629::customer::Customer;
 use tmflib::tmf629::customer::CUST_STATUS;
-use tmflib::tmf648::quote::Quote;
 use tmflib::{HasId, HasLastUpdate};
+
+#[cfg(feature = "composable")]
+use crate::model::component::*;
+#[cfg(feature = "composable")]
+use crate::template::*;
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
 use crate::model::tmf::tmf620::tmf620_catalog_management::TMF620CatalogManagement;
+use crate::model::tmf::tmf674_geographic_site::TMF674GeographicSiteManagement;
 
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
@@ -105,8 +115,20 @@ pub async fn tmf620_list_handler(
                 Ok(o) => HttpResponse::Ok().json(o),
                 Err(e) => HttpResponse::InternalServerError().json(e),
             }    
-        }
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object")),
+        },
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        "hub" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
+        },
+        "listener" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object}")),
     }
 }
 
@@ -156,11 +178,15 @@ pub async fn tmf620_get_handler(
                 Err(e) => HttpResponse::InternalServerError().json(e),    
             }
         },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))
+        "importJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
+        },
+        "exportJob" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
     }
 }
-
-
 
 /// Update an object
 #[patch("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
@@ -199,7 +225,7 @@ pub async fn tmf620_patch_handler(
                 },
             }
         },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
     } 
 }
 
@@ -263,7 +289,6 @@ pub async fn tmf620_delete_handler(
 #[post("/tmflib/tmf629/customer")]
 pub async fn tmf629_create_handler(
     body : web::Json<Customer>,
-    _db   : web::Data<Surreal<Db>>
 ) -> impl Responder {
     let mut data = body.into_inner();
     // Since this a new customer we have to regenerate the id / href
@@ -282,13 +307,15 @@ pub async fn tmf629_get_handler(
 }
 
 #[get("/tmflib/tmf632/{object}")]
-pub async fn tmf632_get_handler(
+pub async fn tmf632_list_handler(
     path : web::Path<String>,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    query : web::Query<QueryOptions>,
 ) -> impl Responder {
+    let query_opts = query.into_inner();
     match path.as_str() {
         "individual" => {
-            let result = tmf632.lock().unwrap().get_individuals().await;
+            let result = tmf632.lock().unwrap().get_individuals(query_opts).await;
             match result {
                 Ok(v) => HttpResponse::Ok().json(v),
                 Err(e) => HttpResponse::BadRequest().json(e),
@@ -299,8 +326,29 @@ pub async fn tmf632_get_handler(
     }  
 }
 
+/// Get a specific object
+#[get("/tmf-api/partyManagement/v4/{object}/{id}")]
+pub async fn tmf632_get_handler(
+    path : web::Path<(String,String)>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    query : web::Query<QueryOptions>,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let query_opts = query.into_inner();
+    match object.as_str() {
+        "individual" => {
+            let result = tmf632.lock().unwrap().get_individual(id,query_opts).await;
+            match result {
+                Ok(v) => HttpResponse::Ok().json(v),
+                Err(e) => HttpResponse::BadRequest().json(e),
+            }       
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))    
+    }
+}
+
 #[post("/tmflib/tmf632/{object}")]
-pub async fn tmf632_create_handler(
+pub async fn tmf632_post_handler(
     path : web::Path<String>,
     raw: web::Bytes,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
@@ -349,7 +397,9 @@ async fn main() -> std::io::Result<()> {
     info!("Starting {pkg} v{ver}");
 
     let persist = Persistence::new().await;
-    let tmf632 = TMF632PartyManagement::new(persist.clone());    
+    let tmf620 = TMF620CatalogManagement::new(persist.clone());
+    let tmf632 = TMF632PartyManagement::new(persist.clone());
+    let tmf674 = TMF674GeographicSiteManagement::new(persist.clone());
 
     let config = Config::new();
 
@@ -361,12 +411,19 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(tmf632.clone())))
+            .app_data(web::Data::new(Mutex::new(tmf674.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
             .configure(config_tmf620)
             .service(tmf620_list_handler)
             .service(tmf620_get_handler)
             .service(tmf620_patch_handler)
             .service(tmf620_delete_handler)
+            .service(tmf674_post_handler)
+            .service(tmf674_list_handler)
+            .service(tmf674_get_handler)
+            .service(tmf632_post_handler)
+            .service(tmf632_list_handler)
+            .service(tmf632_get_handler)
             .wrap(Logger::default())
     })
         .bind(("0.0.0.0",port))?
