@@ -22,6 +22,8 @@ use tmflib::tmf674::geographic_site_v4::GeographicSite;
 #[cfg(feature = "tmf674_v5")]
 use tmflib::tmf674::geographic_site_v5::GeographicSite;
 
+use crate::model::tmf::tmf620::config_tmf620;
+
 use std::sync::Mutex;
 
 // SurrealDB
@@ -49,8 +51,8 @@ use crate::template::*;
 
 //use crate::template::product::ProductTemplate;
 //use crate::model::component::product::ProductComponent;
-use crate::model::tmf::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf632_party_management::TMF632PartyManagement;
+use crate::model::tmf::tmf620::tmf620_catalog_management::TMF620CatalogManagement;
 use crate::model::tmf::tmf674_geographic_site::TMF674GeographicSiteManagement;
 
 /// Fields for filtering output
@@ -69,10 +71,14 @@ pub struct QueryOptions {
 pub async fn tmf620_list_handler(
     path : web::Path<String>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
     query : web::Query<QueryOptions>,
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
+    let persist = persist.lock().unwrap();
+    // Now have to pass persistence into tmf module here
+    tmf620.lock().unwrap().persist(persist.clone());
 
     match object.as_str() {
         "catalog" => {
@@ -179,107 +185,6 @@ pub async fn tmf620_get_handler(
             HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
         },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
-    }
-}
-
-/// Create an object
-#[post("/tmf-api/productCatalogManagement/v4/{object}")]
-pub async fn tmf620_post_handler(
-    path : web::Path<String>,
-    raw: web::Bytes,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
-) -> impl Responder {
-    let object = path.into_inner();
-    let json = String::from_utf8(raw.to_vec()).unwrap();
-    match object.as_str() {
-        // Create specification 
-        "category" => {
-            let category : Category = serde_json::from_str(json.as_str()).unwrap();
-            let result = tmf620.lock().unwrap().add_category(category).await;
-            match result {
-                Ok(r) => {
-                    //let json = serde_json::to_string(
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }
-        },
-        "catalog" => {
-            let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
-            let result = tmf620.lock().unwrap().add_catalog(catalog).await;
-            match result {
-                Ok(r) => {
-                    //let json = serde_json::to_string(
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }
-        }
-        "productSpecification" => {
-            let mut specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
-            // Set last update for new records
-            specification.set_last_update(ProductSpecification::get_timestamp());
-            let result = tmf620.lock().unwrap().add_specification(specification).await;
-            match result {
-                Ok(r) => {
-                    //let json = serde_json::to_string(
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }
-        },
-        "productOffering" => {
-            let mut offering : ProductOffering = serde_json::from_str(json.as_str())
-                .expect("Could not parse ProductOffering");
-            if offering.id.is_none() {
-                offering.generate_id();
-            }
-            // Set last update for new records
-            offering.set_last_update(ProductOffering::get_timestamp());
-            let result = tmf620.lock().unwrap().add_offering(offering).await;
-            match result {
-                Ok(r) => {
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadGateway().json(e),
-            }
-        },
-        "productOfferingPrice" => {
-            let mut price : ProductOfferingPrice = serde_json::from_str(json.as_str())
-                .expect("Could not parse productOfferingPrice");
-            if price.id.is_none() {
-                price.generate_id();
-            }
-            // Set last update for new records
-            price.set_last_update(ProductOfferingPrice::get_timestamp());
-            let result = tmf620.lock().unwrap().add_price(price).await;
-            match result {
-                Ok(r) => {
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadGateway().json(e),
-            }
-        },
-        "importJob" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
-        },
-        "exportJob" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
-        },
-        "hub" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
-        },
-        "listener" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
-        },
-        _ => {
-            HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
-        }
     }
 }
 
@@ -480,68 +385,6 @@ pub async fn tmf648_create_handler(
     HttpResponse::Ok().json(data)
 }
 
-/// Create an Geographic Site object
-#[post("/tmf-api/geographicSiteManagement/v4/{object}")]
-pub async fn tmf674_post_handler(
-    path : web::Path<String>,
-    raw: web::Bytes,
-    tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>
-) -> impl Responder {
-    let object = path.into_inner();
-    let json = String::from_utf8(raw.to_vec()).unwrap();
-    match object.as_str() {
-        "site" => {
-            let site : GeographicSite = serde_json::from_str(json.as_str()).unwrap();
-            let result = tmf674.lock().unwrap().add_site(site).await;
-            match result {
-                Ok(r) => {
-                    //let json = serde_json::to_string(
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }
-        },
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
-    }
-}
-
-/// Get a list
-#[get("/tmf-api/geographicSiteManagement/v4/{object}")]
-pub async fn tmf674_list_handler(
-    path : web::Path<String>,
-    tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>,
-    query : web::Query<QueryOptions>,
-) -> impl Responder {
-    let object = path.into_inner();
-    let query_opts = query.into_inner();
-
-    match object.as_str() {
-        "site" => {
-            let output = tmf674.lock().unwrap().get_sites(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
-        }
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
-    }
-}
-
-/// Get a specific object
-#[get("/tmf-api/geographicSiteManagement/v4/{object}/{id}")]
-pub async fn tmf674_get_handler(
-    path : web::Path<(String,String)>,
-    _tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>,
-    query : web::Query<QueryOptions>,
-) -> impl Responder {
-    let (object,_id) = path.into_inner();
-    let _query_opts = query.into_inner();
-    
-    match object.as_str() {
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF674: Invalid Object"))
-    }
-}
 
 
 #[actix_web::main]
@@ -554,7 +397,6 @@ async fn main() -> std::io::Result<()> {
     info!("Starting {pkg} v{ver}");
 
     let persist = Persistence::new().await;
-
     let tmf620 = TMF620CatalogManagement::new(persist.clone());
     let tmf632 = TMF632PartyManagement::new(persist.clone());
     let tmf674 = TMF674GeographicSiteManagement::new(persist.clone());
@@ -567,11 +409,11 @@ async fn main() -> std::io::Result<()> {
    
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(Mutex::new(tmf620.clone())))
+            .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(tmf632.clone())))
             .app_data(web::Data::new(Mutex::new(tmf674.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
-            .service(tmf620_post_handler)
+            .configure(config_tmf620)
             .service(tmf620_list_handler)
             .service(tmf620_get_handler)
             .service(tmf620_patch_handler)
