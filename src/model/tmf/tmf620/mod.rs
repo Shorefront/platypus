@@ -24,6 +24,11 @@ pub mod tmf620_catalog_management;
 
 // Place actix_web config functions here
 
+use crate::model::tmf::{
+    render_list_output,
+    render_post_output
+};
+
 /// Get a list
 #[get("/tmf-api/productCatalogManagement/v4/{object}")]
 pub async fn tmf620_list_handler(
@@ -41,38 +46,23 @@ pub async fn tmf620_list_handler(
     match object.as_str() {
         "catalog" => {
             let output = tmf620.lock().unwrap().get_catalogs(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            render_list_output(output)
         },
         "category" => {
             let output = tmf620.lock().unwrap().get_categories(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            render_list_output(output)
         },
         "productSpecification" => {
             let output = tmf620.lock().unwrap().get_specifications(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            render_list_output(output)
         },
         "productOffering" => {
             let output = tmf620.lock().unwrap().get_offers(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            render_list_output(output)
         }
         "productOfferingPrice" => {
             let output = tmf620.lock().unwrap().get_prices(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }    
+            render_list_output(output)   
         },
         "importJob" => {
             HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
@@ -103,10 +93,11 @@ pub async fn tmf620_get_handler(
     match object.as_str() {
         "catalog" => {
             let output = tmf620.lock().unwrap().get_catalog(id,query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            render_list_output(output)
+            // match output {
+            //     Ok(o) => HttpResponse::Ok().json(o),
+            //     Err(e) => HttpResponse::InternalServerError().json(e),
+            // }
         },
         "category" => {
             let output = tmf620.lock().unwrap().get_category(id,query_opts).await;
@@ -207,14 +198,15 @@ pub async fn tmf620_post_handler(
         "category" => {
             let category : Category = serde_json::from_str(json.as_str()).unwrap();
             let result = tmf620.add_category(category).await;
-            match result {
-                Ok(r) => {
-                    //let json = serde_json::to_string(
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }
+            render_post_output(result)
+            // match result {result
+            //     Ok(r) => {
+            //         //let json = serde_json::to_string(
+            //         let item = r.first().unwrap().clone();
+            //         HttpResponse::Created().json(item)
+            //     },
+            //     Err(e) => HttpResponse::BadRequest().json(e),
+            // }
         },
         "catalog" => {
             let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();

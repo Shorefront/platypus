@@ -13,6 +13,7 @@ use tmflib::HasId;
 use crate::common::error::PlatypusError;
 use crate::common::persist::Persistence;
 use crate::QueryOptions;
+use crate::model::tmf::render_list_output;
 
 #[cfg(feature = "tmf632_v4")]
 pub mod tmf632_party_management;
@@ -31,10 +32,7 @@ pub async fn tmf632_list_handler(
     match path.as_str() {
         "individual" => {
             let result = tmf632.get_individuals(query_opts).await;
-            match result {
-                Ok(v) => HttpResponse::Ok().json(v),
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }   
+            render_list_output(result) 
         },
         "organization" => todo!(),
         _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
@@ -53,10 +51,7 @@ pub async fn tmf632_get_handler(
     match object.as_str() {
         "individual" => {
             let result = tmf632.lock().unwrap().get_individual(id,query_opts).await;
-            match result {
-                Ok(v) => HttpResponse::Ok().json(v),
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }       
+            render_list_output(result)      
         },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))    
     }
