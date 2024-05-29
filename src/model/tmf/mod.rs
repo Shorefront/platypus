@@ -5,6 +5,8 @@ use surrealdb::sql::Thing;
 use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
+use crate::common::error::PlatypusError;
+use actix_web::HttpResponse;
 
 pub mod tmf620;
 #[cfg(feature = "tmf622_v4")]
@@ -14,6 +16,27 @@ pub mod tmf632;
 pub mod tmf648;
 #[cfg(feature = "tmf674_v4")]
 pub mod tmf674;
+
+pub fn render_list_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(o) => HttpResponse::Ok()
+            .append_header(("X-Total-Count",o.len()))
+            .json(o),
+        Err(e) => HttpResponse::InternalServerError().json(e),
+    }
+}
+
+pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(v) => {
+            let item = v.first().unwrap();
+            HttpResponse::Created()
+            .append_header(("Location",item.get_href()))
+            .json(item)
+        },
+        Err(e) => HttpResponse::BadRequest().json(e),   
+    }
+}
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
