@@ -1,6 +1,9 @@
 //! Party Management Module
 
-use tmflib::{tmf632::individual::Individual, HasId};
+#[cfg(feature= "tmf632_v4")]
+use tmflib::tmf632::individual_v4::Individual;
+use tmflib::HasId;
+
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
 

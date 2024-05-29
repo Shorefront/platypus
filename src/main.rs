@@ -19,9 +19,6 @@ use model::tmf::tmf632::config_tmf632;
 use model::tmf::tmf648::config_tmf648;
 use model::tmf::tmf674::config_tmf674;
 
-#[cfg(feature = "tmf648_v4")]
-use tmflib::tmf648::quote::Quote;
-
 use std::sync::Mutex;
 
 // SurrealDB
