@@ -12,15 +12,18 @@ mod common;
 use actix_web::middleware::Logger;
 use actix_web::{get,post,web,App, HttpResponse,HttpServer, Responder};
 
+#[cfg(feature = "tmf620_v4")]
 use model::tmf::tmf620::config_tmf620;
+#[cfg(feature = "tmf622_v4")]
 use model::tmf::tmf622::config_tmf622;
+#[cfg(feature = "tmf629_v4")]
 use model::tmf::tmf629::config_tmf629;
+#[cfg(feature = "tmf632_v4")]
 use model::tmf::tmf632::config_tmf632;
-use model::tmf::tmf648::config_tmf648;
-use model::tmf::tmf674::config_tmf674;
-
 #[cfg(feature = "tmf648_v4")]
-use tmflib::tmf648::quote::Quote;
+use model::tmf::tmf648::config_tmf648;
+#[cfg(feature = "tmf674_v4")]
+use model::tmf::tmf674::config_tmf674;
 
 use std::sync::Mutex;
 
