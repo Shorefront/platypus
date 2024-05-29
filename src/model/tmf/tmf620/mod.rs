@@ -26,6 +26,7 @@ pub mod tmf620_catalog_management;
 
 use crate::model::tmf::{
     render_list_output,
+    render_get_output,
     render_post_output
 };
 
@@ -41,27 +42,28 @@ pub async fn tmf620_list_handler(
     let query_opts = query.into_inner();
     let persist = persist.lock().unwrap();
     // Now have to pass persistence into tmf module here
-    tmf620.lock().unwrap().persist(persist.clone());
+    let mut tmf620 = tmf620.lock().unwrap();
+    tmf620.persist(persist.clone());
 
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalogs(query_opts).await;
+            let output = tmf620.get_catalogs(query_opts).await;
             render_list_output(output)
         },
         "category" => {
-            let output = tmf620.lock().unwrap().get_categories(query_opts).await;
+            let output = tmf620.get_categories(query_opts).await;
             render_list_output(output)
         },
         "productSpecification" => {
-            let output = tmf620.lock().unwrap().get_specifications(query_opts).await;
+            let output = tmf620.get_specifications(query_opts).await;
             render_list_output(output)
         },
         "productOffering" => {
-            let output = tmf620.lock().unwrap().get_offers(query_opts).await;
+            let output = tmf620.get_offers(query_opts).await;
             render_list_output(output)
         }
         "productOfferingPrice" => {
-            let output = tmf620.lock().unwrap().get_prices(query_opts).await;
+            let output = tmf620.get_prices(query_opts).await;
             render_list_output(output)   
         },
         "importJob" => {
@@ -85,47 +87,34 @@ pub async fn tmf620_list_handler(
 pub async fn tmf620_get_handler(
     path : web::Path<(String,String)>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
     query : web::Query<QueryOptions>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
     let query_opts = query.into_inner();
-    
+    let persist = persist.lock().unwrap();
+    let mut tmf620 = tmf620.lock().unwrap();
+    tmf620.persist(persist.clone());
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalog(id,query_opts).await;
-            render_list_output(output)
-            // match output {
-            //     Ok(o) => HttpResponse::Ok().json(o),
-            //     Err(e) => HttpResponse::InternalServerError().json(e),
-            // }
+            let output = tmf620.get_catalog(id,query_opts).await;
+            render_get_output(output)
         },
         "category" => {
-            let output = tmf620.lock().unwrap().get_category(id,query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_category(id,query_opts).await;
+            render_get_output(output)
         },
         "productSpecification" => {
-            let data = tmf620.lock().unwrap().get_specification(id,query_opts).await;
-            match data {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),    
-            }
+            let output = tmf620.get_specification(id,query_opts).await;
+            render_get_output(output)
         },
         "productOffering" => {
-            let data = tmf620.lock().unwrap().get_offer(id,query_opts).await;
-            match data {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),    
-            }
+            let output = tmf620.get_offer(id,query_opts).await;
+            render_get_output(output)
         },
         "productOfferingPrice" => {
-            let data = tmf620.lock().unwrap().get_price(id,query_opts).await;
-            match data {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),    
-            }
+            let output = tmf620.get_price(id,query_opts).await;
+            render_get_output(output)
         },
         "importJob" => {
             HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
