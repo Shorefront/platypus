@@ -26,6 +26,15 @@ pub fn render_list_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) 
     }
 }
 
+pub fn render_get_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(o) => HttpResponse::Ok()
+            .append_header(("X-Total-Count",o.len()))
+            .json(o),
+        Err(e) => HttpResponse::NotFound().json(e),
+    }
+}
+
 pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
     match output {
         Ok(v) => {
