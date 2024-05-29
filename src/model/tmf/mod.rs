@@ -6,17 +6,14 @@ use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
 
-
-#[cfg(feature = "tmf620_v4")]
-pub mod tmf620_catalog_management;
+pub mod tmf620;
 #[cfg(feature = "tmf622_v4")]
-pub mod tmf622_product_order_management;
-#[cfg(feature = "tmf622_v5")]
-pub mod tmf622_product_order_management_v5;
-#[cfg(feature = "tmf632_v4")]
-pub mod tmf632_party_management;
+pub mod tmf622;
+pub mod tmf629;
+pub mod tmf632;
+pub mod tmf648;
 #[cfg(feature = "tmf674_v4")]
-pub mod tmf674_geographic_site;
+pub mod tmf674;
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
