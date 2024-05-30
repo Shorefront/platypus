@@ -188,21 +188,12 @@ pub async fn tmf620_post_handler(
             let category : Category = serde_json::from_str(json.as_str()).unwrap();
             let result = tmf620.add_category(category).await;
             render_post_output(result)
-            // match result {result
-            //     Ok(r) => {
-            //         //let json = serde_json::to_string(
-            //         let item = r.first().unwrap().clone();
-            //         HttpResponse::Created().json(item)
-            //     },
-            //     Err(e) => HttpResponse::BadRequest().json(e),
-            // }
         },
         "catalog" => {
             let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
             let result = tmf620.add_catalog(catalog).await;
             match result {
                 Ok(r) => {
-                    //let json = serde_json::to_string(
                     let item = r.first().unwrap().clone();
                     HttpResponse::Created().json(item)
                 },
@@ -216,7 +207,6 @@ pub async fn tmf620_post_handler(
             let result = tmf620.add_specification(specification).await;
             match result {
                 Ok(r) => {
-                    //let json = serde_json::to_string(
                     let item = r.first().unwrap().clone();
                     HttpResponse::Created().json(item)
                 },
