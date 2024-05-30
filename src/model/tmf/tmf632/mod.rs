@@ -6,8 +6,14 @@ use tmf632_party_management::TMF632PartyManagement;
 use actix_web::{get,post,web, HttpResponse, Responder};
 
 // TMFLIB
-use tmflib::tmf632::individual::Individual;
-use tmflib::tmf632::organization::Organization;
+#[cfg(feature = "tmf632_v4")]
+use tmflib::tmf632::individual_v4::Individual;
+#[cfg(feature = "tmf632_v5")]
+use tmflib::tmf632::individual_v5::Individual;
+#[cfg(feature = "tmf632_v4")]
+use tmflib::tmf632::organization_v4::Organization;
+#[cfg(feature = "tmf632_v5")]
+use tmflib::tmf632::organization_v5::Organization;
 use tmflib::HasId;
 
 use crate::common::error::PlatypusError;
