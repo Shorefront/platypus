@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
 use crate::common::error::PlatypusError;
-use actix_web::HttpResponse;
+use actix_web::{http::header::ETAG, HttpResponse};
+use etag::EntityTag;
 
 pub mod tmf620;
 #[cfg(feature = "tmf622_v4")]
@@ -17,10 +18,13 @@ pub mod tmf648;
 #[cfg(feature = "tmf674_v4")]
 pub mod tmf674;
 
+pub const CONTENT_LANGUAGE : &str = "en_GB";
+
 pub fn render_list_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
     match output {
         Ok(o) => HttpResponse::Ok()
             .append_header(("X-Total-Count",o.len()))
+            .append_header(("Content-Language",CONTENT_LANGUAGE))
             .json(o),
         Err(e) => HttpResponse::InternalServerError().json(e),
     }
@@ -28,10 +32,24 @@ pub fn render_list_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) 
 
 pub fn render_get_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
     match output {
-        Ok(o) => HttpResponse::Ok()
-            .append_header(("X-Total-Count",o.len()))
-            .json(o),
-        Err(e) => HttpResponse::NotFound().json(e),
+        Ok(o) => {
+            // Should only be a single result in Vec<> for GET
+            let item = o.first();
+            match item {
+                Some(o) => {
+                    let json = serde_json::to_string(o).unwrap();
+                    let etag = EntityTag::from_data(json.as_bytes());
+                    HttpResponse::Ok()
+                    .append_header(("Content-Language",CONTENT_LANGUAGE))
+                    .append_header(("ETag",etag.to_string()))
+                    .json(o)
+                },
+                None => {
+                    HttpResponse::NotFound().json(PlatypusError::from("Object not found"))    
+                }
+            }
+        },
+        Err(e) => HttpResponse::InternalServerError().json(e),
     }
 }
 
@@ -41,6 +59,7 @@ pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypus
             let item = v.first().unwrap();
             HttpResponse::Created()
             .append_header(("Location",item.get_href()))
+            .append_header(("Content-Language",CONTENT_LANGUAGE))
             .json(item)
         },
         Err(e) => HttpResponse::BadRequest().json(e),   
