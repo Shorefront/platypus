@@ -184,12 +184,25 @@ impl Persistence {
         };
 
         let query = format!("SELECT item.id, item.href {} FROM {}:{}",field_query, T::get_class(),id);
-        let mut output = self.db.query(query).await?;
-        let result : Vec<TMF<T>> = output.take(0)?;
-        let item = result.iter().map(|tmf| {
-            tmf.clone().item
-        }).collect();
-        Ok(item)    
+        let mut output = self.db.query(query).with_stats().await?;
+       
+        //let result : Vec<TMF<T>> = output.take(0)?;
+        let data = output.take(0);
+        match data {
+            Some(o) => {
+                let (stats,result) = o;
+                let _execution_time = stats.execution_time;
+
+                let item_set: Vec<TMF<T>> = result?;
+                let item = item_set.iter().map(|tmf| {
+                    tmf.clone().item
+                }).collect();
+                Ok(item)
+            },
+            None => {
+                Err(PlatypusError::from("No results found."))
+            }
+        }
     }
 
     /// Generate function to store into a db.
