@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
 use crate::common::error::PlatypusError;
-use actix_web::{http::header::ETAG, HttpResponse};
+use actix_web::HttpResponse;
 use etag::EntityTag;
 
 pub mod tmf620;
