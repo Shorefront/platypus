@@ -47,16 +47,61 @@ use crate::template::*;
 //use crate::model::component::product::ProductComponent;
 
 /// Fields for filtering output
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Default, Debug, Deserialize)]
 pub struct QueryOptions {
     /// Specific set of fields delimited by comma
     fields : Option<String>,
     limit : Option<u16>,
     offset : Option<u16>,
-    /// Filter on name
-    name : Option<String>,
     /// JSONPath Filtering
     filter: Option<String>,
+    // Remaining fields
+    basic_filter: Vec<(String,String)>,
+}
+
+impl From<Vec<(String,String)>> for QueryOptions {
+    /// Function convert a Vec of tuples into a QueryOptions struct, extracting out known fields
+    /// and leaving the rest in a vector
+    fn from(value: Vec<(String,String)>) -> Self {
+        let mut fields = None;
+        let mut limit : Option<u16> = None;
+        let mut offset: Option<u16> = None;
+        let mut filter = None;
+        let mut name = None;
+        let filtered_values : Vec<(String,String)> = value.iter().filter(|i| {
+            let (key,value) = i;
+            match key.as_str() {
+                "fields" => {
+                    fields = Some(value.clone());
+                    false
+                },
+                "limit" => {
+                    limit = Some(value.parse().unwrap_or_default());
+                    false
+                },
+                "offset"=> {
+                    offset = Some(value.parse().unwrap_or_default());
+                    false
+                },
+                "filter"=> {
+                    filter = Some(value.clone());
+                    false
+                },
+                "name" => {
+                    name = Some(value.clone());
+                    false
+                }
+                _ => true,
+            }
+        }).cloned().collect();
+        QueryOptions {
+            fields,
+            limit,
+            offset,
+            filter,
+            basic_filter : filtered_values,
+        }
+    }
 }
 
 #[post("/tmflib/tmf629/customer")]
