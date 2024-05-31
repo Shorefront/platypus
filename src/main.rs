@@ -55,6 +55,8 @@ pub struct QueryOptions {
     offset : Option<u16>,
     /// Filter on name
     name : Option<String>,
+    /// JSONPath Filtering
+    filter: Option<String>,
 }
 
 #[post("/tmflib/tmf629/customer")]
