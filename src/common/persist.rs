@@ -29,7 +29,7 @@ impl Persistence {
         use surrealdb::engine::any;
 
         // Connect to the database
-        let db = any::connect("ws://localhost:8000/rpc").await.unwrap();
+        let db = any::connect("ws://192.168.0.92:8000/rpc").await.unwrap();
 
         db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
         Persistence { db }
