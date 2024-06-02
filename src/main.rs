@@ -19,9 +19,6 @@ use model::tmf::tmf632::config_tmf632;
 use model::tmf::tmf648::config_tmf648;
 use model::tmf::tmf674::config_tmf674;
 
-#[cfg(feature = "tmf648_v4")]
-use tmflib::tmf648::quote::Quote;
-
 use std::sync::Mutex;
 
 // SurrealDB
@@ -57,6 +54,8 @@ pub struct QueryOptions {
     filter: Option<String>,
     // Remaining fields
     basic_filter: Vec<(String,String)>,
+    // Legacy name filter
+    name: Option<String>,
 }
 
 impl From<Vec<(String,String)>> for QueryOptions {
@@ -99,6 +98,7 @@ impl From<Vec<(String,String)>> for QueryOptions {
             limit,
             offset,
             filter,
+            name,
             basic_filter : filtered_values,
         }
     }
