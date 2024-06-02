@@ -115,12 +115,12 @@ impl Persistence {
 
         let limit = match query_opts.limit {
             Some(l) => format!("LIMIT BY {}",l),
-            None => format!(""),
+            None => String::new(),
         };
 
         let offset = match query_opts.offset {
             Some(o) => format!("START AT {}",o),
-            None => format!(""),
+            None => String::new(),
         };
         
         let query = format!("SELECT item.id, item.href {} FROM {} {} {} {}",field_query, T::get_class(),filter,limit,offset);
