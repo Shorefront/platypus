@@ -30,10 +30,10 @@ pub async fn tmf620_list_handler(
     path : web::Path<String>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
     persist: web::Data<Mutex<Persistence>>,
-    query : web::Query<QueryOptions>,
+    query : web::Query<Vec<(String, String)>>,
 ) -> impl Responder {
     let object = path.into_inner();
-    let query_opts = query.into_inner();
+    let query_opts = QueryOptions::from(query.into_inner());
     let persist = persist.lock().unwrap();
     // Now have to pass persistence into tmf module here
     tmf620.lock().unwrap().persist(persist.clone());
