@@ -61,10 +61,10 @@ impl Persistence {
             Some(f) => {
                 // Detect a 'none' case
                 let mut output : Vec<String> = vec![];
-                if f == "none" || f == "" {
+                if f == "none" || f.is_empty() {
                     return Some(output);
                 };
-                f.split(',').into_iter().for_each(|f| {
+                f.split(',').for_each(|f| {
                     output.push(f.to_owned());
                 });
                 Some(output)
@@ -80,12 +80,12 @@ impl Persistence {
 
         let limit = match query_opts.limit {
             Some(l) => format!("LIMIT BY {}",l),
-            None => format!(""),
+            None => String::new(),
         };
 
         let offset = match query_opts.offset {
             Some(o) => format!("START AT {}",o),
-            None => format!(""),
+            None => String::new(),
         };
 
         let query = format!("SELECT * FROM {} {} {} {}",T::get_class(),filter,limit,offset);

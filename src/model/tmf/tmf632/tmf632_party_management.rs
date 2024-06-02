@@ -34,7 +34,7 @@ impl TMF632PartyManagement {
         let mut err_count = 0;
         if individual.related_party.is_some() {
             // There is some here, lets iterate and validate each related party
-            individual.related_party.as_ref().unwrap().into_iter().for_each(|rp| {
+            individual.related_party.as_ref().unwrap().iter().for_each(|rp| {
                 if self.party_exists(rp.id.clone()).is_err() {
                     err_count += 1;
                 }

@@ -78,7 +78,7 @@ impl TMF620CatalogManagement
             let parent_query = format!("SELECT * FROM category:{}",parent_id);
             let mut parent_resp = self.persist.as_mut().unwrap().db.query(parent_query).await?;
             let parent : Vec<CategoryRecord> = parent_resp.take(0).unwrap();
-            if parent.len() == 0 {
+            if parent.is_empty() {
                 // Throw error, parent not found
                 let msg = format!("ParentId {} not found for child {}",&parent_id,category.id.clone().unwrap());
                 error!("add_category: {msg}");
