@@ -1,15 +1,15 @@
 //! Party Management Module
 
-#[cfg(feature= "tmf632_v4")]
-use tmflib::tmf632::individual_v4::Individual;
+use tmflib::tmf632::organization_v4::Organization;
 use tmflib::HasId;
-
+#[cfg(feature = "tmf632_v4")]
+use tmflib::tmf632::individual_v4::Individual;
+#[cfg(feature = "tmf632_v5")]
+use tmflib::tmf632::individual_v5::Individual;
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
 
 use crate::model::tmf::{tmf_payload,TMF};
-
-use log::{debug,error};
 
 #[derive(Clone, Debug)]
 pub struct TMF632PartyManagement {
@@ -30,11 +30,11 @@ impl TMF632PartyManagement {
         // Confirm if the party exists in the DB
         Ok(party_id)
     }
-    fn validate_individual(&self, individual : &Individual) -> Result<bool,PlatypusError> {
+    fn validate_individual(&self, individual : &Individual) -> Result<Individual,PlatypusError> {
         let mut err_count = 0;
         if individual.related_party.is_some() {
             // There is some here, lets iterate and validate each related party
-            individual.related_party.as_ref().unwrap().into_iter().for_each(|rp| {
+            individual.related_party.as_ref().unwrap().iter().for_each(|rp| {
                 if self.party_exists(rp.id.clone()).is_err() {
                     err_count += 1;
                 }
@@ -43,20 +43,14 @@ impl TMF632PartyManagement {
         if err_count > 0 {
             return Err(PlatypusError::from("TMF632: Invalid related party for individual"));
         }
-        Ok(true) 
+        Ok(individual.clone()) 
     }
-    pub async fn add_individual(&mut self, individual : Individual) -> Result<Individual,PlatypusError> {
-        match self.validate_individual(&individual) {
-            Ok(_) => debug!("Individual validated"),
-            Err(e) => {
-                error!("Individual failed validation: {}",e);
-                return Err(e);
-            }
-        };
+    pub async fn add_individual(&mut self, individual : Individual) -> Result<Vec<Individual>,PlatypusError> {
+        let individual = self.validate_individual(&individual)?;
         let payload = tmf_payload(individual);
         let insert_records : Vec<TMF<Individual>> = self.persist.as_mut().unwrap().db.create(Individual::get_class()).content(payload).await?;
-        let record = insert_records.first().unwrap();
-        Ok(record.item.clone())
+        let records : Vec<Individual> = insert_records.into_iter().map(|r| r.item).collect();
+        Ok(records)
     }
 
     pub async fn get_individuals(&mut self,query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
@@ -65,5 +59,12 @@ impl TMF632PartyManagement {
 
     pub async fn get_individual(&mut self, id : String, query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
         self.persist.as_mut().unwrap().get_item(id,query_opts).await
+    }
+
+    pub async fn add_organization(&mut self, organization : Organization) -> Result<Vec<Organization>,PlatypusError> {
+        let tmf_payload = tmf_payload(organization);
+        let insert_records : Vec<TMF<Organization>> = self.persist.as_mut().unwrap().db.create(Organization::get_class()).content(tmf_payload).await?;
+        let tmf_records : Vec<Organization> = insert_records.into_iter().map(|r| r.item).collect();
+        Ok(tmf_records)
     }
 }

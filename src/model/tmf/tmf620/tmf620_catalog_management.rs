@@ -78,7 +78,7 @@ impl TMF620CatalogManagement
             let parent_query = format!("SELECT * FROM category:{}",parent_id);
             let mut parent_resp = self.persist.as_mut().unwrap().db.query(parent_query).await?;
             let parent : Vec<CategoryRecord> = parent_resp.take(0).unwrap();
-            if parent.len() == 0 {
+            if parent.is_empty() {
                 // Throw error, parent not found
                 let msg = format!("ParentId {} not found for child {}",&parent_id,category.id.clone().unwrap());
                 error!("add_category: {msg}");
@@ -135,16 +135,23 @@ impl TMF620CatalogManagement
 
     pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
         let result : Vec<Category> = self.persist.as_ref().unwrap().get_item(id,query_opts.clone()).await?;
-        let mut first = result.first().as_mut().unwrap().clone();
-        let parent_id = first.id.clone().unwrap();
-        let children = self.get_child_category(parent_id, query_opts).await?;
-        // Map through children converting to CategoryRef and appending onto cat
-        let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
-            CategoryRef::from(&c)
-        }).collect();
-        first.sub_category.as_mut().unwrap().append(&mut kids);
-        
-        Ok(vec![first.clone()])
+        let mut first = result.first();
+        match first.as_mut() {
+            Some(o) => {
+                let parent_id = o.id.clone().unwrap();
+                let children = self.get_child_category(parent_id, query_opts).await?;
+                // Map through children converting to CategoryRef and appending onto cat
+                let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
+                    CategoryRef::from(&c)
+                }).collect();
+                let mut o = o.clone();
+                o.sub_category.as_mut().unwrap().append(&mut kids);
+                Ok(vec![o])
+            },
+            None => {
+                Err(PlatypusError::from("No category found"))
+            }
+        }   
     }
 
     pub async fn get_catalog(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError>  {
