@@ -3775,7 +3775,8 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 [[package]]
 name = "tmflib"
 version = "0.1.17"
-source = "git+https://github.com/rruckley/tmflib.git#d5aa561d42f8c28e87183a943ebb4d03c59cf150"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79db204f75a059fdaf77689dc46ed4fd8be7ab6e15043854df967a9d3f2cdd28"
 dependencies = [
  "base32",
  "chrono",
