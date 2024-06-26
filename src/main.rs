@@ -98,19 +98,34 @@ async fn main() -> std::io::Result<()> {
     let port = port.parse::<u16>().unwrap();
    
     HttpServer::new(move || {
-        App::new()
+        let mut app = App::new()
             // Using the new configure() approach, we cannot pass persis in as
             // configure() does not take additional arguments
             .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
+            .wrap(Logger::default());
             // New simple config functions.
-            .configure(config_tmf620)
-            .configure(config_tmf622)
-            .configure(config_tmf629)
-            .configure(config_tmf648)
-            .configure(config_tmf632)
-            .configure(config_tmf674)
-            .wrap(Logger::default())
+            if cfg!(feature = "tmf620_v4") {
+                app = app.configure(config_tmf620);
+            }
+            if cfg!(feature = "tmf622_v4") {
+                app = app.configure(config_tmf622);
+            }
+            if cfg!(feature = "tmf629_v4") {
+                app = app .configure(config_tmf629);
+            }
+            if cfg!(feature = "tmf632_v4") {
+                app = app.configure(config_tmf632);
+            }
+            if cfg!(feaure = "tmf648_v4") {
+                app = app.configure(config_tmf648);
+            }
+            if cfg!(feature = "tmf674_v4") {
+                app =  app.configure(config_tmf674);
+            }
+            
+        app
+            
     })
         .bind(("0.0.0.0",port))?
         .run()
