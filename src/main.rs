@@ -10,7 +10,7 @@ mod template;
 mod common;
 
 use actix_web::middleware::Logger;
-use actix_web::{get,post,web,App, HttpResponse,HttpServer, Responder};
+use actix_web::{web,App,HttpServer};
 
 #[cfg(feature = "tmf620_v4")]
 use model::tmf::tmf620::config_tmf620;
@@ -36,19 +36,6 @@ use common::persist::Persistence;
 // TMFLIB
 use common::config::Config;
 
-
-use tmflib::tmf629::customer::Customer;
-use tmflib::tmf629::customer::CUST_STATUS;
-use tmflib::HasId;
-
-#[cfg(feature = "composable")]
-use crate::model::component::*;
-#[cfg(feature = "composable")]
-use crate::template::*;
-
-//use crate::template::product::ProductTemplate;
-//use crate::model::component::product::ProductComponent;
-
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
 pub struct QueryOptions {
@@ -58,26 +45,6 @@ pub struct QueryOptions {
     offset : Option<u16>,
     /// Filter on name
     name : Option<String>,
-}
-
-#[post("/tmflib/tmf629/customer")]
-pub async fn tmf629_create_handler(
-    body : web::Json<Customer>,
-) -> impl Responder {
-    let mut data = body.into_inner();
-    // Since this a new customer we have to regenerate the id / href
-    data.generate_id();
-    // Now that we have an id, we can generate a new code.
-    data.generate_code(None);
-    data.status = Some(CUST_STATUS.to_string());
-    HttpResponse::Ok().json(data)
-}
-
-#[get("/tmflib/tmf629/customer/{id}")]
-pub async fn tmf629_get_handler(
-
-) -> impl Responder {
-    HttpResponse::Ok()
 }
 
 #[actix_web::main]
