@@ -22,10 +22,6 @@ pub struct TMF620CatalogManagement {
     // Use of vectors here is very simplistic, ideally need a hash.
     //db : Surreal<Db>,
     persist : Option<Persistence>,
-    pub categories: Vec<Category>,
-    pub catalogs: Vec<Catalog>,
-    pub offers: Vec<ProductOffering>,
-    pub specifications: Vec<ProductSpecification>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -40,10 +36,6 @@ impl TMF620CatalogManagement
     pub fn new(persist : Option<Persistence>) -> TMF620CatalogManagement {
         TMF620CatalogManagement { 
             persist,
-            categories: vec![], 
-            catalogs: vec![],
-            offers: vec![],
-            specifications: vec![],
         }
     }
 
