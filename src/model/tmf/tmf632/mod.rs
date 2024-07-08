@@ -44,7 +44,10 @@ pub async fn tmf632_list_handler(
             let result = tmf632.get_individuals(query_opts).await;
             render_list_output(result) 
         },
-        "organization" => todo!(),
+        "organization" => {
+            let result = tmf632.get_organizations(query_opts).await;
+            render_list_output(result)
+        },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
     }  
 }
@@ -66,6 +69,10 @@ pub async fn tmf632_get_handler(
         "individual" => {
             let result = tmf632.get_individual(id,query_opts).await;
             render_get_output(result)      
+        },
+        "organization" => {
+            let result = tmf632.get_organization(id, query_opts).await;
+            render_get_output(result)
         },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))    
     }
