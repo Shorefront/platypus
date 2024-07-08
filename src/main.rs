@@ -20,6 +20,8 @@ use model::tmf::tmf622::config_tmf622;
 use model::tmf::tmf629::config_tmf629;
 #[cfg(feature = "tmf632_v4")]
 use model::tmf::tmf632::config_tmf632;
+#[cfg(feature = "tmf632_v5")]
+use model::tmf::tmf632::config_tmf632_v5;
 #[cfg(feature = "tmf648_v4")]
 use model::tmf::tmf648::config_tmf648;
 #[cfg(feature = "tmf674_v4")]
@@ -84,7 +86,7 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF629");
                 app = app .configure(config_tmf629);
             }
-            if cfg!(feature = "tmf632_v4") {
+            if cfg!(any(feature = "tmf632_v4", feature = "tmf632_v5")) {
                 debug!("Adding module: TMF632");
                 app = app.configure(config_tmf632);
             }
