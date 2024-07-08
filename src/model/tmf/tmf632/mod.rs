@@ -29,7 +29,7 @@ use crate::model::tmf::{
 pub mod tmf632_party_management;
 
 #[get("/tmf-api/partyManagement/v4/{object}")]
-pub async fn tmf632_list_handler(
+pub async fn tmf632_list_handler_v4(
     path : web::Path<String>,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
     query : web::Query<QueryOptions>,
@@ -54,7 +54,7 @@ pub async fn tmf632_list_handler(
 
 /// Get a specific object
 #[get("/tmf-api/partyManagement/v4/{object}/{id}")]
-pub async fn tmf632_get_handler(
+pub async fn tmf632_get_handler_v4(
     path : web::Path<(String,String)>,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
     query : web::Query<QueryOptions>,
@@ -79,7 +79,7 @@ pub async fn tmf632_get_handler(
 }
 
 #[post("/tmf-api/partyManagement/v4/{object}")]
-pub async fn tmf632_post_handler(
+pub async fn tmf632_post_handler_v4(
     path : web::Path<String>,
     raw: web::Bytes,
     tmf632: web::Data<Mutex<TMF632PartyManagement>>,
@@ -110,14 +110,28 @@ pub async fn tmf632_post_handler(
     } 
 }
 
+#[cfg(feature = "tmf632_v4")]
 pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class
     // so we need to get access to that via web_data instead now.
     let tmf632 = TMF632PartyManagement::new(None);
     cfg
-        .service(tmf632_list_handler)
-        .service(tmf632_get_handler)
-        .service(tmf632_post_handler)
+        .service(tmf632_list_handler_v4)
+        .service(tmf632_get_handler_v4)
+        .service(tmf632_post_handler_v4)
+        .app_data(web::Data::new(Mutex::new(tmf632.clone())));
+}
+
+#[cfg(feature = "tmf632_v5")]
+pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
+    // Place our configuration into cfg
+    // NB: Since we are adding via this method, we don't have access to persist class
+    // so we need to get access to that via web_data instead now.
+    let tmf632 = TMF632PartyManagement::new(None);
+    cfg
+        .service(tmf632_list_handler_v4)
+        .service(tmf632_get_handler_v4)
+        .service(tmf632_post_handler_v4)
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }
