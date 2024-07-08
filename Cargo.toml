@@ -1,6 +1,6 @@
 [package]
 name = "platypus"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 authors = ["Ryan Ruckley <rruckley@gmail.com>"]
 description = "API layer on top of TMF620 to provide product composition"
