@@ -1,7 +1,6 @@
 //! Persistence Module
 //! 
-use surrealdb::engine::local::Db;
-use surrealdb::engine::local::SpeeDb;
+use surrealdb::engine::any::Any;
 use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
@@ -14,8 +13,6 @@ use crate::QueryOptions;
 use super::error::PlatypusError;
 use tmflib::HasId;
 
-use std::env;
-
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
@@ -25,16 +22,16 @@ pub struct TMF<T : HasId> {
 
 #[derive(Clone,Debug)]
 pub struct Persistence {
-    pub db : Surreal<Db>,
+    pub db : Surreal<Any>,
 }
 
 impl Persistence {
     pub async fn new() -> Persistence {
-        let db_path = env::var("PLATYPUS_DB_PATH")
-            .unwrap_or_else(|_| String::from("/home/rruckley/build/platypus/tmf.db"));
-        let db = Surreal::new::<SpeeDb>(&db_path)
-            .await
-            .expect("Could not open DB connection");
+        use surrealdb::engine::any;
+
+        // Connect to the database
+        let db = any::connect("ws://192.168.0.92:8000/rpc").await.unwrap();
+
         db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
         Persistence { db }
     }
@@ -65,10 +62,10 @@ impl Persistence {
             Some(f) => {
                 // Detect a 'none' case
                 let mut output : Vec<String> = vec![];
-                if f == "none" || f == "" {
+                if f == "none" || f.is_empty() {
                     return Some(output);
                 };
-                f.split(',').into_iter().for_each(|f| {
+                f.split(',').for_each(|f| {
                     output.push(f.to_owned());
                 });
                 Some(output)
@@ -84,12 +81,12 @@ impl Persistence {
 
         let limit = match query_opts.limit {
             Some(l) => format!("LIMIT BY {}",l),
-            None => format!(""),
+            None => String::new(),
         };
 
         let offset = match query_opts.offset {
             Some(o) => format!("START AT {}",o),
-            None => format!(""),
+            None => String::new(),
         };
 
         let query = format!("SELECT * FROM {} {} {} {}",T::get_class(),filter,limit,offset);
@@ -119,12 +116,12 @@ impl Persistence {
 
         let limit = match query_opts.limit {
             Some(l) => format!("LIMIT BY {}",l),
-            None => format!(""),
+            None => String::new(),
         };
 
         let offset = match query_opts.offset {
             Some(o) => format!("START AT {}",o),
-            None => format!(""),
+            None => String::new(),
         };
         
         let query = format!("SELECT item.id, item.href {} FROM {} {} {} {}",field_query, T::get_class(),filter,limit,offset);
@@ -188,12 +185,25 @@ impl Persistence {
         };
 
         let query = format!("SELECT item.id, item.href {} FROM {}:{}",field_query, T::get_class(),id);
-        let mut output = self.db.query(query).await?;
-        let result : Vec<TMF<T>> = output.take(0)?;
-        let item = result.iter().map(|tmf| {
-            tmf.clone().item
-        }).collect();
-        Ok(item)    
+        let mut output = self.db.query(query).with_stats().await?;
+       
+        //let result : Vec<TMF<T>> = output.take(0)?;
+        let data = output.take(0);
+        match data {
+            Some(o) => {
+                let (stats,result) = o;
+                let _execution_time = stats.execution_time;
+
+                let item_set: Vec<TMF<T>> = result?;
+                let item = item_set.iter().map(|tmf| {
+                    tmf.clone().item
+                }).collect();
+                Ok(item)
+            },
+            None => {
+                Err(PlatypusError::from("No results found."))
+            }
+        }
     }
 
     /// Generate function to store into a db.
