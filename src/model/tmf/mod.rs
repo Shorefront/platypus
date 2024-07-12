@@ -25,6 +25,7 @@ pub fn render_list_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) 
         Ok(o) => HttpResponse::Ok()
             .append_header(("X-Total-Count",o.len()))
             .append_header(("Content-Language",CONTENT_LANGUAGE))
+            .append_header(("Access-Control-Allow-Origin","*"))
             .json(o),
         Err(e) => HttpResponse::InternalServerError().json(e),
     }
