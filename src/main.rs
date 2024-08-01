@@ -2,6 +2,7 @@
 
 #![warn(missing_docs)]
 
+use log::info;
 use log::{debug,info};
 
 mod model;
@@ -26,6 +27,11 @@ use model::tmf::tmf632::config_tmf632_v5;
 use model::tmf::tmf648::config_tmf648;
 #[cfg(feature = "tmf674_v4")]
 use model::tmf::tmf674::config_tmf674;
+mod metrics;
+
+use metrics::config_metrics;
+use actix_web_prom::PrometheusMetricsBuilder;
+use std::collections::HashMap;
 
 use std::sync::Mutex;
 
@@ -37,6 +43,9 @@ use common::persist::Persistence;
 
 // TMFLIB
 use common::config::Config;
+
+//use crate::template::product::ProductTemplate;
+//use crate::model::component::product::ProductComponent;
 
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
@@ -63,15 +72,24 @@ async fn main() -> std::io::Result<()> {
     let config = Config::new();
 
     // Extract port crom config, default if not found
-    let port = config.get("PLATYPUS_PORT").unwrap_or("8000".to_string());
+    let port = config.get("PLATYPUS_PORT").unwrap_or("8080".to_string());
     let port = port.parse::<u16>().unwrap();
    
+    let mut labels = HashMap::new();
+    labels.insert("Application".to_string(),"Platypus".to_string());
+    let prom = PrometheusMetricsBuilder::new("api")
+        .endpoint("/metrics")
+        .const_labels(labels)
+        .build()
+        .unwrap();
+    
     HttpServer::new(move || {
         let mut app = App::new()
             // Using the new configure() approach, we cannot pass persis in as
             // configure() does not take additional arguments
             .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
+            .wrap(prom.clone())
             .wrap(Logger::default());
             // New simple config functions.
             if cfg!(feature = "tmf620_v4") {
@@ -100,7 +118,6 @@ async fn main() -> std::io::Result<()> {
             }
             
         app
-            
     })
         .bind(("0.0.0.0",port))?
         .run()
