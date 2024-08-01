@@ -26,9 +26,8 @@ use model::tmf::tmf632::config_tmf632;
 use model::tmf::tmf648::config_tmf648;
 #[cfg(feature = "tmf674_v4")]
 use model::tmf::tmf674::config_tmf674;
-#[cfg(feature = "metrics")]
 mod metrics;
-#[cfg(feature = "metrics")]
+
 use metrics::config_metrics;
 use actix_web_prom::PrometheusMetricsBuilder;
 use std::collections::HashMap;
@@ -72,7 +71,7 @@ async fn main() -> std::io::Result<()> {
     let config = Config::new();
 
     // Extract port crom config, default if not found
-    let port = config.get("PLATYPUS_PORT").unwrap_or("8000".to_string());
+    let port = config.get("PLATYPUS_PORT").unwrap_or("8080".to_string());
     let port = port.parse::<u16>().unwrap();
    
     let mut labels = HashMap::new();
@@ -97,9 +96,10 @@ async fn main() -> std::io::Result<()> {
             .configure(config_tmf632)
             .configure(config_tmf674)
             .wrap(Logger::default());
-        if cfg!(feature = "metrics") {
-            app = app.configure(config_metrics);
-        }
+            if cfg!(feature = "metrics") {
+                app = app.configure(config_metrics);
+            }
+            
         if cfg!(feature = "tmf629_v4") {
             app = app.configure(config_tmf629);
         }
