@@ -2,7 +2,8 @@
 
 #![warn(missing_docs)]
 
-use actix_web_prometheus::PrometheusMetricsBuilder;
+
+
 use log::info;
 
 mod model;
@@ -25,6 +26,10 @@ use model::tmf::tmf632::config_tmf632;
 use model::tmf::tmf648::config_tmf648;
 #[cfg(feature = "tmf674_v4")]
 use model::tmf::tmf674::config_tmf674;
+#[cfg(feature = "metrics")]
+mod metrics;
+#[cfg(feature = "metrics")]
+use metrics::config_metrics;
 
 use std::sync::Mutex;
 
@@ -68,6 +73,7 @@ async fn main() -> std::io::Result<()> {
     let port = config.get("PLATYPUS_PORT").unwrap_or("8000".to_string());
     let port = port.parse::<u16>().unwrap();
    
+    
     HttpServer::new(move || {
         let mut app = App::new()
             // Using the new configure() approach, we cannot pass persis in as
@@ -81,16 +87,11 @@ async fn main() -> std::io::Result<()> {
             .configure(config_tmf632)
             .configure(config_tmf674)
             .wrap(Logger::default());
-        if cfg!(feature = "tmft629_v4") {
+        if cfg!(feature = "tmf629_v4") {
             app = app.configure(config_tmf629);
         }
         if cfg!(feature = "metrics") {
-            // Add metrics
-            let prom = PrometheusMetricsBuilder::new("api")
-                .endpoint("/metrics")
-                .build()
-                .unwrap();
-            //app = app.wrap(prom);
+            app = app.configure(config_metrics);
         }
         app
     })
