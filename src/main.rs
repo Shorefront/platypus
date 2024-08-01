@@ -30,6 +30,8 @@ use model::tmf::tmf674::config_tmf674;
 mod metrics;
 #[cfg(feature = "metrics")]
 use metrics::config_metrics;
+use actix_web_prom::PrometheusMetricsBuilder;
+use std::collections::HashMap;
 
 use std::sync::Mutex;
 
@@ -73,6 +75,13 @@ async fn main() -> std::io::Result<()> {
     let port = config.get("PLATYPUS_PORT").unwrap_or("8000".to_string());
     let port = port.parse::<u16>().unwrap();
    
+    let mut labels = HashMap::new();
+    labels.insert("Application".to_string(),"Platypus".to_string());
+    let prom = PrometheusMetricsBuilder::new("api")
+        .endpoint("/metrics")
+        .const_labels(labels)
+        .build()
+        .unwrap();
     
     HttpServer::new(move || {
         let mut app = App::new()
@@ -80,6 +89,7 @@ async fn main() -> std::io::Result<()> {
             // configure() does not take additional arguments
             .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
+            .wrap(prom.clone())
             // New simple config functions.
             .configure(config_tmf620)
             .configure(config_tmf622)
@@ -87,11 +97,11 @@ async fn main() -> std::io::Result<()> {
             .configure(config_tmf632)
             .configure(config_tmf674)
             .wrap(Logger::default());
-        if cfg!(feature = "tmf629_v4") {
-            app = app.configure(config_tmf629);
-        }
         if cfg!(feature = "metrics") {
             app = app.configure(config_metrics);
+        }
+        if cfg!(feature = "tmf629_v4") {
+            app = app.configure(config_tmf629);
         }
         app
     })
