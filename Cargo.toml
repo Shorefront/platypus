@@ -25,12 +25,12 @@ tmf674_v4 = []
 tmf674_v5 = []
 v4 = ["tmf620_v4","tmf622_v4","tmf629_v4","tmf632_v4","tmf648_v4","tmf674_v4"]
 v5 = ["tmf620_v5","tmf622_v5","tmf632_v5","tmf674_v5"]
-metrics = ["actix-web-prometheus"]
+metrics = ["actix-web-prom"]
 default = ["core","v4","metrics"]
 
 [dependencies]
 actix-web = { version = "4.6.0", features = ["rustls"]}
-actix-web-prometheus = { version = "0.1.2", optional = true }
+actix-web-prom = { version = "0.8.0", optional = true }
 env_logger = "0.11"
 etag = "4.0.0"
 log = "0.4.21"
