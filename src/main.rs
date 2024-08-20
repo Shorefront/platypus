@@ -60,19 +60,22 @@ async fn main() -> std::io::Result<()> {
 
     // Data objects to be pass in
     let persist = Persistence::new().await;
+    // let persis = Persistence::default();
     let config = Config::new();
 
     // Extract port crom config, default if not found
-    let port = config.get("PLATYPUS_PORT").unwrap_or("8000".to_string());
+    let port = config.get("PLATYPUS_PORT").unwrap_or("8080".to_string());
     let port = port.parse::<u16>().unwrap();
+
+    info!("Using port: {port}");
    
     HttpServer::new(move || {
+        debug!("Creating new server instance...");
         let mut app = App::new()
             // Using the new configure() approach, we cannot pass persis in as
             // configure() does not take additional arguments
             .app_data(web::Data::new(Mutex::new(persist.clone())))
-            .app_data(web::Data::new(Mutex::new(config.clone())))
-            .wrap(Logger::default());
+            .app_data(web::Data::new(Mutex::new(config.clone())));
 
             // New simple config functions.
             #[cfg(feature = "tmf620_v4")] 
@@ -92,7 +95,7 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF629");
                 app = app .configure(config_tmf629);
             }
-            
+
             #[cfg(any(feature = "tmf632_v4", feature = "tmf632_v5"))] 
             {
                 debug!("Adding module: TMF632");
@@ -105,14 +108,12 @@ async fn main() -> std::io::Result<()> {
                 app = app.configure(config_tmf648);
             }
             
-            #[cfg(feature = "tmf674_v4")]
+            // #[cfg(feature = "tmf674_v4")]
             {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
-            }
-            
-        app
-            
+            } 
+        app.wrap(Logger::default())  
     })
         .bind(("0.0.0.0",port))?
         .run()
