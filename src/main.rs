@@ -73,28 +73,40 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(Mutex::new(persist.clone())))
             .app_data(web::Data::new(Mutex::new(config.clone())))
             .wrap(Logger::default());
+
             // New simple config functions.
-            if cfg!(feature = "tmf620_v4") {
+            #[cfg(feature = "tmf620_v4")] 
+            {
                 debug!("Adding module: TMF620");
                 app = app.configure(config_tmf620);
             }
-            if cfg!(feature = "tmf622_v4") {
+
+            #[cfg(feature = "tmf622_v4")] 
+            {
                 debug!("Adding module: TMF622");
                 app = app.configure(config_tmf622);
             }
-            if cfg!(feature = "tmf629_v4") {
+
+            #[cfg(feature = "tmf629_v4")]
+            {
                 debug!("Adding module: TMF629");
                 app = app .configure(config_tmf629);
             }
-            if cfg!(any(feature = "tmf632_v4", feature = "tmf632_v5")) {
+            
+            #[cfg(any(feature = "tmf632_v4", feature = "tmf632_v5"))] 
+            {
                 debug!("Adding module: TMF632");
                 app = app.configure(config_tmf632);
             }
-            if cfg!(feaure = "tmf648_v4") {
+
+            #[cfg(feature = "tmf648_v4")] 
+            {
                 debug!("Adding module: TMF648");
                 app = app.configure(config_tmf648);
             }
-            if cfg!(feature = "tmf674_v4") {
+            
+            #[cfg(feature = "tmf674_v4")]
+            {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
             }
