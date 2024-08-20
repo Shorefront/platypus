@@ -9,11 +9,15 @@ use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
 
+#[cfg(feature = "tmf620_v4")]
 pub mod tmf620;
 #[cfg(feature = "tmf622_v4")]
 pub mod tmf622;
+#[cfg(feature = "tmf629_v4")]
 pub mod tmf629;
+#[cfg(feature = "tmf632_v4")]
 pub mod tmf632;
+#[cfg(feature = "tmf648_v4")]
 pub mod tmf648;
 #[cfg(feature = "tmf674_v4")]
 pub mod tmf674;
