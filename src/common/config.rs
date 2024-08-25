@@ -1,7 +1,7 @@
 //! Configuration Module
 //! 
 
-const PLATYPUS_PORT : &str = "8000";
+const PLATYPUS_PORT : &str = "8080";
 
 #[derive(Clone, Debug, Default)]
 pub struct Config {}
