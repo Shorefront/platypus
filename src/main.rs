@@ -59,15 +59,18 @@ async fn main() -> std::io::Result<()> {
     info!("Starting {pkg} v{ver}");
 
     // Data objects to be pass in
+    info!("Connecting to SurrealDB...");
     let persist = Persistence::new().await;
     // let persis = Persistence::default();
     let config = Config::new();
+    info!("Connected.");
 
     // Extract port crom config, default if not found
-    let port = config.get("PLATYPUS_PORT").unwrap_or("8080".to_string());
+
+    let port = config.get("PLATYPUS_PORT").unwrap_or("8001".to_string());
     let port = port.parse::<u16>().unwrap();
 
-    info!("Using port: {port}");
+    info!("Listening on port {port}.");
    
     HttpServer::new(move || {
         debug!("Creating new server instance...");
@@ -101,9 +104,13 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF632");
                 app = app.configure(config_tmf632);
             }
+<<<<<<< HEAD
 
             #[cfg(feature = "tmf648_v4")] 
             {
+=======
+            if cfg!(feature = "tmf648_v4") {
+>>>>>>> 27ef8c2 (more output)
                 debug!("Adding module: TMF648");
                 app = app.configure(config_tmf648);
             }
