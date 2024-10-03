@@ -111,11 +111,11 @@ async fn main() -> std::io::Result<()> {
                 app = app.configure(config_tmf648);
             }
             
-            // #[cfg(feature = "tmf674_v4")]
+            #[cfg(feature = "tmf674_v4")]
             {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
-            } 
+            }
         app.wrap(Logger::default())  
     })
         .bind(("0.0.0.0",port))?
