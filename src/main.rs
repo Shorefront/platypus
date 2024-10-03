@@ -104,13 +104,9 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF632");
                 app = app.configure(config_tmf632);
             }
-<<<<<<< HEAD
 
             #[cfg(feature = "tmf648_v4")] 
             {
-=======
-            if cfg!(feature = "tmf648_v4") {
->>>>>>> 27ef8c2 (more output)
                 debug!("Adding module: TMF648");
                 app = app.configure(config_tmf648);
             }
