@@ -1,7 +1,6 @@
 //! Persistence Module
 //! 
 use surrealdb::engine::any::Any;
-use surrealdb::sql::Thing;
 use surrealdb::Surreal;
 
 use log::debug;
@@ -15,7 +14,8 @@ use tmflib::HasId;
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
-    id : Option<Thing>,
+    id : String,
+    class : String,
     pub item : T,
 }
 
@@ -40,10 +40,8 @@ impl Persistence {
     /// Geneate a TMF payload for storing in the database
     fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
         TMF {
-            id : Some(Thing {
-                tb : T::get_class(),
-                id : item.get_id().into(),
-            }),
+            id : item.get_id(),
+            class : T::get_class(),
             item,
         }
     }
@@ -206,16 +204,24 @@ impl Persistence {
     }
 
     /// Generate function to store into a db.
-    pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
+    pub async fn create_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
         let class = T::get_class();
         // Should only generate a new id if one has not been supplied
         item.generate_id();
         let payload = Persistence::tmf_payload(item);
-        let insert_records : Vec<TMF<T>> = self.db.create(class).content(payload).await?;
-        let output = insert_records.into_iter().map(|tmf| {
-            tmf.item
-        }).collect();
-        Ok(output)
+        // let insert_records : Vec<TMF<T>> = self.db.create(class).content(payload).await?;
+        let insert_records : Option<Vec<TMF<T>>> = self.db.create((class,payload.item.get_id())).content(payload).await?;
+
+        match insert_records {
+            Some(v) => {
+                Ok(v.into_iter().map(|tmf| {
+                    tmf.item
+                }).collect())
+            },
+            None => {
+                Err(PlatypusError::from("Could not create record"))
+            }
+        }
     }
 
     pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
