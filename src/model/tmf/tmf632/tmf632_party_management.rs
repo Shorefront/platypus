@@ -48,8 +48,9 @@ impl TMF632PartyManagement {
     pub async fn add_individual(&mut self, individual : Individual) -> Result<Vec<Individual>,PlatypusError> {
         let individual = self.validate_individual(&individual)?;
         let payload = tmf_payload(individual);
-        let insert_records : Vec<TMF<Individual>> = self.persist.as_mut().unwrap().db.create(Individual::get_class()).content(payload).await?;
-        let records : Vec<Individual> = insert_records.into_iter().map(|r| r.item).collect();
+        let insert_records : Option<Vec<TMF<Individual>>> = self.persist.as_mut().unwrap().db.create(Individual::get_class()).content(payload).await?;
+        let rec_vec = insert_records.unwrap();
+        let records : Vec<Individual> = rec_vec.into_iter().map(|r| r.item).collect();
         Ok(records)
     }
 
@@ -63,8 +64,9 @@ impl TMF632PartyManagement {
 
     pub async fn add_organization(&mut self, organization : Organization) -> Result<Vec<Organization>,PlatypusError> {
         let tmf_payload = tmf_payload(organization);
-        let insert_records : Vec<TMF<Organization>> = self.persist.as_mut().unwrap().db.create(Organization::get_class()).content(tmf_payload).await?;
-        let tmf_records : Vec<Organization> = insert_records.into_iter().map(|r| r.item).collect();
+        let insert_records : Option<Vec<TMF<Organization>>> = self.persist.as_mut().unwrap().db.create(Organization::get_class()).content(tmf_payload).await?;
+        let rec_vec = insert_records.unwrap();
+        let tmf_records : Vec<Organization> = rec_vec.into_iter().map(|r| r.item).collect();
         Ok(tmf_records)
     }
 

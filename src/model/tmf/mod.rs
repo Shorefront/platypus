@@ -1,7 +1,7 @@
 //! TMF Modules
 //! 
 
-use surrealdb::{sql::Thing, RecordId};
+use surrealdb::RecordId;
 use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
@@ -17,6 +17,8 @@ pub mod tmf622;
 pub mod tmf629;
 #[cfg(feature = "tmf632_v4")]
 pub mod tmf632;
+#[cfg(feature = "tmf633_v4")]
+pub mod tmf633;
 #[cfg(feature = "tmf648_v4")]
 pub mod tmf648;
 #[cfg(feature = "tmf674_v4")]

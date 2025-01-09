@@ -8,7 +8,7 @@ repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
 
 [features]
-core = ["tmf620_v4"]
+core = ["tmf633_v4"]
 composable = ["core"]
 tmf620_v4 = []
 tmf622_v4 = []
