@@ -3,12 +3,12 @@ name = "platypus"
 version = "0.1.7"
 edition = "2021"
 authors = ["Ryan Ruckley <rruckley@gmail.com>"]
-description = "API layer on top of TMF620 to provide product composition"
+description = "TMF ODA Component Platform"
 repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
 
 [features]
-core = []
+core = ["tmf620_v4"]
 composable = ["core"]
 tmf620_v4 = []
 tmf622_v4 = []
