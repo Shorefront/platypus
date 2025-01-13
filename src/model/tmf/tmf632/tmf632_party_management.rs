@@ -2,9 +2,9 @@
 
 use tmflib::tmf632::organization_v4::Organization;
 use tmflib::HasId;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature="v4"))]
 use tmflib::tmf632::individual_v4::Individual;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature="v5"))]
 use tmflib::tmf632::individual_v5::Individual;
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
