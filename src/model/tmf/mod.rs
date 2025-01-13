@@ -9,19 +9,19 @@ use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
 
-#[cfg(feature = "tmf620_v4")]
+#[cfg(feature = "tmf620")]
 pub mod tmf620;
-#[cfg(feature = "tmf622_v4")]
+#[cfg(feature = "tmf622")]
 pub mod tmf622;
-#[cfg(feature = "tmf629_v4")]
+#[cfg(feature = "tmf629")]
 pub mod tmf629;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(feature = "tmf632")]
 pub mod tmf632;
-#[cfg(feature = "tmf633_v4")]
+#[cfg(feature = "tmf633")]
 pub mod tmf633;
-#[cfg(feature = "tmf648_v4")]
+#[cfg(feature = "tmf648")]
 pub mod tmf648;
-#[cfg(feature = "tmf674_v4")]
+#[cfg(feature = "tmf674")]
 pub mod tmf674;
 
 pub const CONTENT_LANGUAGE : &str = "en_GB";
