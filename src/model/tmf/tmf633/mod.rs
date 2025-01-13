@@ -24,7 +24,19 @@ pub async fn tmf633_list_handler(
     let mut tmf633 = tmf633.lock().unwrap();
     tmf633.persist(persist.clone());
     match object.as_str() {
-        _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad object"))
+        "serviceCandidate" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("serviceCandidate object not implemented"))
+        },
+        "serviceCatalog" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("serviceCatalog object not implemented"))
+        },
+        "serviceCategory" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("serviceCategory object not implemented"))
+        }
+        "serviceSpecification" => {
+            HttpResponse::BadRequest().json(PlatypusError::from("serviceSpecification object not implemented"))
+        }
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("serviceCandidate object not implemented"))
     }
     
 }
