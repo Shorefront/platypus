@@ -12,21 +12,21 @@ mod common;
 use actix_web::middleware::Logger;
 use actix_web::{web,App,HttpServer};
 
-#[cfg(feature = "tmf620_v4")]
+#[cfg(feature = "tmf620")]
 use model::tmf::tmf620::config_tmf620;
-#[cfg(feature = "tmf622_v4")]
+#[cfg(feature = "tmf622")]
 use model::tmf::tmf622::config_tmf622;
-#[cfg(feature = "tmf629_v4")]
+#[cfg(feature = "tmf629")]
 use model::tmf::tmf629::config_tmf629;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature = "v4"))]
 use model::tmf::tmf632::config_tmf632;
-#[cfg(feature = "tmf633_v4")]
+#[cfg(feature = "tmf633")]
 use model::tmf::tmf633::config_tmf633;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature = "v5"))]
 use model::tmf::tmf632::config_tmf632_v5;
-#[cfg(feature = "tmf648_v4")]
+#[cfg(feature = "tmf648")]
 use model::tmf::tmf648::config_tmf648;
-#[cfg(feature = "tmf674_v4")]
+#[cfg(feature = "tmf674")]
 use model::tmf::tmf674::config_tmf674;
 
 use std::sync::Mutex;
@@ -83,43 +83,43 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(Mutex::new(config.clone())));
 
             // New simple config functions.
-            #[cfg(feature = "tmf620_v4")] 
+            #[cfg(feature = "tmf620")] 
             {
                 debug!("Adding module: TMF620");
                 app = app.configure(config_tmf620);
             }
 
-            #[cfg(feature = "tmf622_v4")] 
+            #[cfg(feature = "tmf622")] 
             {
                 debug!("Adding module: TMF622");
                 app = app.configure(config_tmf622);
             }
 
-            #[cfg(feature = "tmf629_v4")]
+            #[cfg(feature = "tmf629")]
             {
                 debug!("Adding module: TMF629");
                 app = app .configure(config_tmf629);
             }
 
-            #[cfg(any(feature = "tmf632_v4", feature = "tmf632_v5"))] 
+            #[cfg(feature = "tmf632")] 
             {
                 debug!("Adding module: TMF632");
                 app = app.configure(config_tmf632);
             }
 
-            #[cfg(any(feature = "tmf633_v4", feature = "tmf633_v5"))]
+            #[cfg(feature = "tmf633")]
             {
                 debug!("Adding module: TMF633");
                 app = app.configure(config_tmf633);
             }
 
-            #[cfg(feature = "tmf648_v4")] 
+            #[cfg(feature = "tmf648")] 
             {
                 debug!("Adding module: TMF648");
                 app = app.configure(config_tmf648);
             }
             
-            #[cfg(feature = "tmf674_v4")]
+            #[cfg(feature = "tmf674")]
             {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
