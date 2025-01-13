@@ -3,6 +3,7 @@
 
 
 const PLATYPUS_PORT : &str = "8001";
+const PLATYPUS_WORKERS : u16 = 4;
 
 
 #[derive(Clone, Debug, Default)]
@@ -21,6 +22,7 @@ impl Config {
     pub fn get_default(item : &str) -> Option<String> {
         match item {
             "PLATYPUS_PORT" => Some(PLATYPUS_PORT.to_string()),
+            "PLATYPUS_WORKERS" => Some(PLATYPUS_WORKERS.to_string()),
             _ => None,
         }
     }
