@@ -8,26 +8,18 @@ repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
 
 [features]
-core = ["tmf633_v4"]
+core = ["tmf620","tmf622","tmf629","tmf632","tmf633","tmf648","tmf674"]
 composable = ["core"]
-tmf620_v4 = []
-tmf622_v4 = []
-tmf629_v4 = []
+tmf620 = ["tmflib/tmf620"]
+tmf622 = ["tmflib/tmf622"]
+tmf629 = ["tmflib/tmf629"]
+tmf632 = ["tmflib/tmf632"]
+tmf633 = ["tmflib/tmf633"]
+tmf648 = ["tmflib/tmf648"]
+tmf674 = ["tmflib/tmf674"]
 
-tmf632_v4 = []
-tmf632_v5 = []
-
-tmf633_v4 = ["tmflib/tmf633","tmflib/build-V4"]
-tmf633_v5 = ["tmflib/tmf633","tmflib/build-V5"]
-
-tmf620_v5 = ["tmflib/tmf620","tmflib/build-V5"]
-tmf622_v5 = ["tmflib/tmf620","tmflib/build-V5"]
-
-tmf648_v4 = ["tmflib/tmf648","tmflib/build-V4"]
-tmf674_v4 = ["tmflib/tmf674","tmflib/build-V4"]
-tmf674_v5 = ["tmflib/tmf674","tmflib/build-V5"]
-v4 = ["tmf620_v4","tmf622_v4","tmf629_v4","tmf632_v4","tmf648_v4","tmf674_v4","tmflib/build-V4"]
-v5 = ["tmf620_v5","tmf622_v5","tmf632_v5","tmf674_v5","tmflib/build-V5"]
+v4 = ["tmflib/build-V4"]
+v5 = ["tmflib/build-V5"]
 default = ["core","v4"]
 
 [dependencies]
