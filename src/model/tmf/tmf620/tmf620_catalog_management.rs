@@ -120,30 +120,8 @@ impl TMF620CatalogManagement
         self.persist.as_ref().unwrap().get_item(id,query_opts).await
     }
 
-    pub async fn get_child_category(&self, parent_id : String, query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
-        // Look for categories with common parent_id
-        self.persist.as_ref().unwrap().get_items_filter(format!("item.parent_id = {}",parent_id), query_opts).await
-    }
-
     pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
-        let result : Vec<Category> = self.persist.as_ref().unwrap().get_item(id,query_opts.clone()).await?;
-        let mut first = result.first();
-        match first.as_mut() {
-            Some(o) => {
-                let parent_id = o.id.clone().unwrap();
-                let children = self.get_child_category(parent_id, query_opts).await?;
-                // Map through children converting to CategoryRef and appending onto cat
-                let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
-                    CategoryRef::from(&c)
-                }).collect();
-                let mut o = o.clone();
-                o.sub_category.as_mut().unwrap().append(&mut kids);
-                Ok(vec![o])
-            },
-            None => {
-                Err(PlatypusError::from("No category found"))
-            }
-        }   
+        self.persist.as_ref().unwrap().get_item(id, query_opts).await
     }
 
     pub async fn get_catalog(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError>  {
