@@ -24,6 +24,10 @@ impl TMF629CustomerManagement {
         self.persist.as_ref().unwrap().get_items(query_ops).await
     }
 
+    pub async fn get_customer(&self, id : String, query_ops : QueryOptions) -> Result<Vec<Customer>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_item(id,query_ops).await
+    }
+
     pub async fn add_customer(&mut self, item : Customer) -> Result<Vec<Customer>,PlatypusError> {
         self.persist.as_mut().unwrap().create_tmf_item(item).await
     }
