@@ -78,11 +78,3 @@ pub struct TMF<T : HasId> {
     id : RecordId,
     pub item : T,
 }
-
-/// Geneate a TMF payload for storing in the database
-pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
-    TMF {
-        id : (T::get_class(),item.get_id()).into(),
-        item,
-    }
-}
