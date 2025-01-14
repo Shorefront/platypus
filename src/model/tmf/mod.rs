@@ -8,6 +8,7 @@ use tmflib::HasId;
 use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
+use log::error;
 
 #[cfg(feature = "tmf620")]
 pub mod tmf620;
@@ -72,17 +73,19 @@ pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypus
     }
 }
 
+pub fn render_delete_output(output : Result<bool,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(_b) => HttpResponse::NoContent().finish(),
+        Err(e) => {
+            error!("Could not delete: {e}");
+            HttpResponse::BadRequest().json(e)
+        },     
+    }     
+}
+
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
     id : RecordId,
     pub item : T,
-}
-
-/// Geneate a TMF payload for storing in the database
-pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
-    TMF {
-        id : (T::get_class(),item.get_id()).into(),
-        item,
-    }
 }

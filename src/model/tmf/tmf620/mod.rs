@@ -257,12 +257,16 @@ pub async fn tmf620_post_handler(
 #[delete("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_delete_handler(
     path : web::Path<(String,String)>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
+    let mut tmf620 = tmf620.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf620.persist(persist.clone());
     match object.as_str() {
         "catalog" => {
-            match tmf620.lock().unwrap().delete_catalog(id).await {
+            match tmf620.delete_catalog(id).await {
                 Ok(_b) => HttpResponse::NoContent(),
                 Err(e) => {
                     error!("Could not delete: {e}");
@@ -271,7 +275,7 @@ pub async fn tmf620_delete_handler(
             }    
         },
         "category" => {
-            match tmf620.lock().unwrap().delete_category(id).await {
+            match tmf620.delete_category(id).await {
                 Ok(_b) => HttpResponse::NoContent(),
                 Err(e) => {
                     error!("Could not delete: {e}");
@@ -280,7 +284,7 @@ pub async fn tmf620_delete_handler(
             }    
         },
         "productSpecification" => {
-            match tmf620.lock().unwrap().delete_specification(id).await {
+            match tmf620.delete_specification(id).await {
                 Ok(_b) => HttpResponse::NoContent(),
                 Err(e) => {
                     error!("Could not delete: {e}");
@@ -289,7 +293,7 @@ pub async fn tmf620_delete_handler(
             }
         },
         "productOffering" => {
-            match tmf620.lock().unwrap().delete_offering(id).await {
+            match tmf620.delete_offering(id).await {
                 Ok(_b) => HttpResponse::NoContent(),
                 Err(e) => {
                     error!("Could not delete: {e}");
@@ -298,7 +302,7 @@ pub async fn tmf620_delete_handler(
             }
         },
         "productOfferingPrice"  => {
-            match tmf620.lock().unwrap().delete_price(id).await {
+            match tmf620.delete_price(id).await {
                 Ok(_b) => HttpResponse::NoContent(),
                 Err(e) => {
                     error!("Could not delete: {e}");

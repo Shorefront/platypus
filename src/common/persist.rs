@@ -224,16 +224,12 @@ impl Persistence {
         item.generate_id();
         let payload = Persistence::tmf_payload(item);
         // let tuple = (T::get_class(),item.get_id());
-        let insert_option: Option<Vec<TMF<T>>>  = self.db.create(T::get_class())
+        let insert_option: Option<TMF<T>>  = self.db.create(T::get_class())
             .content(payload).await?;
-        let insert_records = match insert_option {
-            Some(ir) => ir,
-            None => vec![],
-        };
-        let output = insert_records.into_iter().map(|tmf| {
-            tmf.item
-        }).collect();
-        Ok(output)
+        match insert_option {
+            Some(o) => Ok(vec![o.item]),
+            None => Err(PlatypusError::from("Could not create object"))
+        }
     }
 
     pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
