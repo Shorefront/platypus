@@ -8,7 +8,7 @@ use actix_web::{
     get,
     // patch,
     post,
-    // delete,
+    delete,
     web, 
     HttpResponse, 
     Responder
@@ -18,6 +18,7 @@ use crate::model::tmf::{
     // render_get_output,
     render_list_output,
     render_post_output,
+    render_delete_output,
 };
 
 // TMFLIB
@@ -99,6 +100,27 @@ pub async fn tmf629_create_handler(
     }
 }
 
+#[delete("/tmf-api/customerManagement/v4/{object}/{id}")]
+pub async fn tmf629_delete_handler(
+    path : web::Path<(String,String)>,
+    tmf629: web::Data<Mutex<TMF629CustomerManagement>>,
+    persist: web::Data<Mutex<Persistence>>, 
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let mut tmf629 = tmf629.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf629.persist(persist.clone());
+    match object.as_str() {
+        "customer" => {
+            let customers = tmf629.delete_customer(id).await;
+            render_delete_output(customers)
+        },
+        _ => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))   
+        }
+    } 
+}
+
 pub fn config_tmf629(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class
@@ -108,5 +130,6 @@ pub fn config_tmf629(cfg: &mut web::ServiceConfig) {
         .service(tmf629_list_handler)
         .service(tmf629_get_handler)
         .service(tmf629_create_handler)
+        .service(tmf629_delete_handler)
         .app_data(web::Data::new(Mutex::new(tmf629)));
 }
