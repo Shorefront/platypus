@@ -10,6 +10,12 @@ use crate::QueryOptions;
 
 mod tmf633_service_catalog_management;
 
+use crate::model::tmf::{
+    render_list_output,
+    // render_get_output,
+    // render_post_output
+};
+
 #[get("/tmf-api/serviceCatalogManagement/v4/{object}")]
 pub async fn tmf633_list_handler(
         path : web::Path<String>,
@@ -25,17 +31,21 @@ pub async fn tmf633_list_handler(
     tmf633.persist(persist.clone());
     match object.as_str() {
         "serviceCandidate" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("serviceCandidate object not implemented"))
+            let output = tmf633.get_candidates(query_opts).await;
+            render_list_output(output)
         },
-        "serviceCatalog" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("serviceCatalog object not implemented"))
-        },
-        "serviceCategory" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("serviceCategory object not implemented"))
-        }
+        // "serviceCatalog" => {
+        //     let output = tmf633.get_catalogs(query_opts).await;
+        //     render_list_output(output)
+        // },
+        // "serviceCategory" => {
+        //     let output = tmf633.get_categories(query_opts).await;
+        //     render_list_output(output)        
+        // },
         "serviceSpecification" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("serviceSpecification object not implemented"))
-        }
+            let output = tmf633.get_specifications(query_opts).await;
+            render_list_output(output)        
+        },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("serviceCandidate object not implemented"))
     }
     
