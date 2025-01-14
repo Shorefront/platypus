@@ -2,9 +2,9 @@
 
 use tmflib::tmf632::organization_v4::Organization;
 use tmflib::HasId;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature="v4"))]
 use tmflib::tmf632::individual_v4::Individual;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature="v5"))]
 use tmflib::tmf632::individual_v5::Individual;
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
@@ -49,16 +49,9 @@ impl TMF632PartyManagement {
         let individual = self.validate_individual(&individual)?;
         let payload = tmf_payload(individual);
         let insert_records : Option<Vec<TMF<Individual>>> = self.persist.as_mut().unwrap().db.create(Individual::get_class()).content(payload).await?;
-        match insert_records {
-            Some(v) => {
-                let records : Vec<Individual> = v.into_iter().map(|r| r.item).collect();
-                Ok(records)
-            },
-            None => {
-                Err(PlatypusError::from("Could not create individual"))
-            }
-        }
-
+        let rec_vec = insert_records.unwrap();
+        let records : Vec<Individual> = rec_vec.into_iter().map(|r| r.item).collect();
+        Ok(records)
     }
 
     pub async fn get_individuals(&mut self,query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
@@ -72,15 +65,9 @@ impl TMF632PartyManagement {
     pub async fn add_organization(&mut self, organization : Organization) -> Result<Vec<Organization>,PlatypusError> {
         let tmf_payload = tmf_payload(organization);
         let insert_records : Option<Vec<TMF<Organization>>> = self.persist.as_mut().unwrap().db.create(Organization::get_class()).content(tmf_payload).await?;
-        match insert_records {
-            Some(v) => {
-                let tmf_records : Vec<Organization> = v.into_iter().map(|r| r.item).collect();
-                Ok(tmf_records)        
-            },
-            None => {
-                Err(PlatypusError::from("Could not create organization"))
-            }
-        }
+        let rec_vec = insert_records.unwrap();
+        let tmf_records : Vec<Organization> = rec_vec.into_iter().map(|r| r.item).collect();
+        Ok(tmf_records)
     }
 
     pub async fn get_organizations(&mut self, query_opts : QueryOptions) -> Result<Vec<Organization>,PlatypusError> {

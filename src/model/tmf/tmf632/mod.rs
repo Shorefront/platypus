@@ -6,13 +6,13 @@ use tmf632_party_management::TMF632PartyManagement;
 use actix_web::{get,post,web, HttpResponse, Responder};
 
 // TMFLIB
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature="v4"))]
 use tmflib::tmf632::individual_v4::Individual;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature="v5"))]
 use tmflib::tmf632::individual_v5::Individual;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature="v4"))]
 use tmflib::tmf632::organization_v4::Organization;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature="v5"))]
 use tmflib::tmf632::organization_v5::Organization;
 use tmflib::HasId;
 
@@ -25,7 +25,7 @@ use crate::model::tmf::{
     render_post_output
 };
 
-#[cfg(feature = "tmf632_v4")]
+#[cfg(feature = "tmf632")]
 pub mod tmf632_party_management;
 
 #[get("/tmf-api/partyManagement/v4/{object}")]
@@ -110,7 +110,7 @@ pub async fn tmf632_post_handler_v4(
     } 
 }
 
-#[cfg(feature = "tmf632_v4")]
+#[cfg(feature = "v4")]
 pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class
@@ -123,7 +123,7 @@ pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }
 
-#[cfg(feature = "tmf632_v5")]
+#[cfg(feature = "v5")]
 pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class

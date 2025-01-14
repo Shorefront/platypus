@@ -1,6 +1,7 @@
 //! TMF Modules
 //! 
 
+use surrealdb::RecordId;
 use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
@@ -8,17 +9,19 @@ use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
 
-#[cfg(feature = "tmf620_v4")]
+#[cfg(feature = "tmf620")]
 pub mod tmf620;
-#[cfg(feature = "tmf622_v4")]
+#[cfg(feature = "tmf622")]
 pub mod tmf622;
-#[cfg(feature = "tmf629_v4")]
+#[cfg(feature = "tmf629")]
 pub mod tmf629;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(feature = "tmf632")]
 pub mod tmf632;
-#[cfg(feature = "tmf648_v4")]
+#[cfg(feature = "tmf633")]
+pub mod tmf633;
+#[cfg(feature = "tmf648")]
 pub mod tmf648;
-#[cfg(feature = "tmf674_v4")]
+#[cfg(feature = "tmf674")]
 pub mod tmf674;
 
 pub const CONTENT_LANGUAGE : &str = "en_GB";
@@ -72,16 +75,14 @@ pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypus
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
-    id : String,
-    class : String,
+    id : RecordId,
     pub item : T,
 }
 
 /// Geneate a TMF payload for storing in the database
 pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
     TMF {
-        id : item.get_id(),
-        class : T::get_class(),
+        id : (T::get_class(),item.get_id()).into(),
         item,
     }
 }

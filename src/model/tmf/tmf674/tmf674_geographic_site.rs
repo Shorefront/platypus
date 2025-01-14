@@ -5,8 +5,10 @@
 use crate::common::{error::PlatypusError, persist::Persistence};
 
 // Optional modules
-#[cfg(feature = "tmf674_v4")]
+#[cfg(feature = "v4")]
 use tmflib::tmf674::geographic_site_v4::GeographicSite;
+#[cfg(feature = "v5")]
+use tmflib::tmf674::geographic_site_v5::GeographicSite;
 
 use crate::QueryOptions;
 
@@ -30,7 +32,7 @@ impl TMF674GeographicSiteManagement {
         self.persist.as_ref().unwrap().get_items(query_opts).await
     }
 
-    pub async fn add_site(&mut self, site : GeographicSite) -> Result<Vec<GeographicSite>,PlatypusError> {
-        self.persist.as_mut().unwrap().create_tmf_item(site).await
+    pub async fn add_site(&mut self, item : GeographicSite) -> Result<Vec<GeographicSite>,PlatypusError> {
+        self.persist.as_mut().unwrap().create_tmf_item(item).await
     }
 }
