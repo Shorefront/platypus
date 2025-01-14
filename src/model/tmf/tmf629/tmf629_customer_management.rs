@@ -31,4 +31,8 @@ impl TMF629CustomerManagement {
     pub async fn add_customer(&mut self, item : Customer) -> Result<Vec<Customer>,PlatypusError> {
         self.persist.as_mut().unwrap().create_tmf_item(item).await
     }
+
+    pub async fn delete_customer(&self, id : String) -> Result<bool, PlatypusError> {
+        self.persist.as_ref().unwrap().delete_tmf_item::<Customer>(id).await
+    }
 }
