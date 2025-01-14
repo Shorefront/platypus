@@ -145,6 +145,7 @@ pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
         .service(tmf632_list_handler_v4)
         .service(tmf632_get_handler_v4)
         .service(tmf632_post_handler_v4)
+        .service(tmf632_delete_handler_v4)
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }
 
@@ -158,5 +159,6 @@ pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
         .service(tmf632_list_handler_v4)
         .service(tmf632_get_handler_v4)
         .service(tmf632_post_handler_v4)
+        .service(tmf632_delete_handler_v4)
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }
