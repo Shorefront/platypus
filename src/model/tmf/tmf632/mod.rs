@@ -3,7 +3,7 @@
 
 use std::sync::Mutex;
 use tmf632_party_management::TMF632PartyManagement;
-use actix_web::{get,post,web, HttpResponse, Responder};
+use actix_web::{get,post,delete, web, HttpResponse, Responder};
 
 // TMFLIB
 #[cfg(all(feature = "tmf632",feature="v4"))]
@@ -22,7 +22,8 @@ use crate::QueryOptions;
 use crate::model::tmf::{
     render_list_output,
     render_get_output,
-    render_post_output
+    render_post_output,
+    render_delete_output,
 };
 
 #[cfg(feature = "tmf632")]
@@ -108,6 +109,30 @@ pub async fn tmf632_post_handler_v4(
             HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))
         }
     } 
+}
+
+/// Get a specific object
+#[delete("/tmf-api/partyManagement/v4/{object}/{id}")]
+pub async fn tmf632_delete_handler_v4(
+    path : web::Path<(String,String)>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let mut tmf632 = tmf632.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf632.persist(persist.clone());
+    match object.as_str() {
+        "individual" => {
+            let result = tmf632.delete_individual(id).await;
+            render_delete_output(result)      
+        },
+        "organization" => {
+            let result = tmf632.delete_organization(id).await;
+            render_delete_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))    
+    }
 }
 
 #[cfg(feature = "v4")]
