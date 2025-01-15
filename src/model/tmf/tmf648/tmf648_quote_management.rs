@@ -28,4 +28,8 @@ impl TMF648QuoteManagement {
     pub async fn add_quote(&mut self, item : Quote) -> Result<Vec<Quote>,PlatypusError> {
         self.persist.as_mut().unwrap().create_tmf_item(item).await
     }
+
+    pub async fn update_quote(&self, id : String, patch : Quote) -> Result<Vec<Quote>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
 }

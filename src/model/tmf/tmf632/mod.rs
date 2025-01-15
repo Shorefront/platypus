@@ -3,7 +3,7 @@
 
 use std::sync::Mutex;
 use tmf632_party_management::TMF632PartyManagement;
-use actix_web::{get,post,delete, web, HttpResponse, Responder};
+use actix_web::{get,post,patch, delete, web, HttpResponse, Responder};
 
 // TMFLIB
 #[cfg(all(feature = "tmf632",feature="v4"))]
@@ -23,6 +23,7 @@ use crate::model::tmf::{
     render_list_output,
     render_get_output,
     render_post_output,
+    render_patch_output,
     render_delete_output,
 };
 
@@ -111,6 +112,35 @@ pub async fn tmf632_post_handler_v4(
     } 
 }
 
+/// Update an object
+#[patch("/tmf-api/partyManagement/v4/{object}/{id}")]
+pub async fn tmf632_patch_handler(
+    path : web::Path<(String,String)>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+    raw: web::Bytes,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf632 = tmf632.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf632.persist(persist.clone());
+    match object.as_str() {
+        "individual" => {
+            let individual : Individual = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf632.update_individual(id, individual).await;
+            render_patch_output(result)
+        },
+        "organization" => {
+            let organization : Organization = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf632.update_organization(id, organization).await;
+            render_patch_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
+    } 
+}
+
+
 /// Get a specific object
 #[delete("/tmf-api/partyManagement/v4/{object}/{id}")]
 pub async fn tmf632_delete_handler_v4(
@@ -145,6 +175,7 @@ pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
         .service(tmf632_list_handler_v4)
         .service(tmf632_get_handler_v4)
         .service(tmf632_post_handler_v4)
+        .service(tmf632_patch_handler)
         .service(tmf632_delete_handler_v4)
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }

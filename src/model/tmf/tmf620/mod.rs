@@ -27,7 +27,8 @@ pub mod tmf620_catalog_management;
 use crate::model::tmf::{
     render_list_output,
     render_get_output,
-    render_post_output
+    render_post_output,
+    render_patch_output
 };
 
 /// Get a list
@@ -130,38 +131,40 @@ pub async fn tmf620_get_handler(
 #[patch("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_patch_handler(
     path : web::Path<(String,String)>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
     raw: web::Bytes,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
     let (object,id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf620 = tmf620.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf620.persist(persist.clone());
     match object.as_str() {
+        "category" => {
+            let category : Category = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_category(id, category).await;
+            render_patch_output(result)
+        },
+        "catalog" => {
+            let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_catalog(id, catalog).await;
+            render_patch_output(result)
+        },
         "productSpecification" => {
-            match tmf620.lock().unwrap().patch_specification(id,json).await {
-                Ok(r) => HttpResponse::Ok().json(r),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest().json(e)
-                },
-            }
+            let specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_specification(id, specification).await;
+            render_patch_output(result)
         },
         "productOffering" => {
-            match tmf620.lock().unwrap().patch_offering(id,json).await {
-                Ok(r) => HttpResponse::Ok().json(r),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
-                },
-            }
+            let offering : ProductOffering = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_offering(id, offering).await;
+            render_patch_output(result)
         },
         "productOfferingPrice"  => {
-            match tmf620.lock().unwrap().patch_price(id,json).await {
-                Ok(r) => HttpResponse::Ok().json(r),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
-                },
-            }
+            let price : ProductOfferingPrice = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_price(id, price).await;
+            render_patch_output(result)
         },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
     } 

@@ -73,6 +73,19 @@ pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypus
     }
 }
 
+pub fn render_patch_output<T : Serialize + HasId>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(v) => {
+            let item = v.first().unwrap();
+            HttpResponse::Accepted()
+                .append_header(("Location",item.get_href()))
+                .append_header(("Content-Language",CONTENT_LANGUAGE))
+                .json(item)
+        },
+        Err(e) => HttpResponse::BadRequest().json(e),
+    }
+}
+
 pub fn render_delete_output(output : Result<bool,PlatypusError>) -> HttpResponse {
     match output {
         Ok(_b) => HttpResponse::NoContent().finish(),

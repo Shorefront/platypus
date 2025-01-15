@@ -36,6 +36,10 @@ impl TMF632PartyManagement {
         self.persist.as_mut().unwrap().get_item(id,query_opts).await
     }
 
+    pub async fn update_individual(&self, id : String, patch : Individual) -> Result<Vec<Individual>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
+
     pub async fn delete_individual(&mut self, id : String) -> Result<bool,PlatypusError> {
         self.persist.as_mut().unwrap().delete_tmf_item::<Individual>(id).await
     }
@@ -50,6 +54,10 @@ impl TMF632PartyManagement {
 
     pub async fn get_organization(&mut self, id : String, query_opts : QueryOptions) -> Result<Vec<Organization>,PlatypusError> {
         self.persist.as_mut().unwrap().get_item(id,query_opts).await
+    }
+
+    pub async fn update_organization(&self, id : String, patch : Organization) -> Result<Vec<Organization>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
 
     pub async fn delete_organization(&mut self, id : String) -> Result<bool,PlatypusError> {

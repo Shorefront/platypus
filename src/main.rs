@@ -60,11 +60,13 @@ async fn main() -> std::io::Result<()> {
 
     info!("Starting {pkg} v{ver}");
 
+    let config = Config::new();
+
     // Data objects to be pass in
     info!("Connecting to SurrealDB...");
-    let persist = Persistence::new().await;
+    let persist = Persistence::new(&config).await;
     // let persis = Persistence::default();
-    let config = Config::new();
+    
     info!("Connected.");
 
     // Extract port crom config, default if not found

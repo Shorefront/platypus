@@ -29,6 +29,10 @@ impl TMF633ServiceCatalogManagement {
         self.persist.as_ref().unwrap().get_items(query_opts).await
     }
 
+    pub async fn update_candidate(&self, id : String, patch : ServiceCandidate) -> Result<Vec<ServiceCandidate>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
+
     // pub async fn get_catalogs(&self, query_opts : QueryOptions) -> Result<Vec<ServiceCatalog>,PlatypusError> {
     //     self.persist.as_ref().unwrap().get_items(query_opts).await
     // }
@@ -39,5 +43,9 @@ impl TMF633ServiceCatalogManagement {
 
     pub async fn get_specifications(&self, query_opts : QueryOptions) -> Result<Vec<ServiceSpecification>,PlatypusError> {
         self.persist.as_ref().unwrap().get_items(query_opts).await
+    }
+
+    pub async fn update_specification(&self, id : String, patch : ServiceSpecification) -> Result<Vec<ServiceSpecification>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
 }

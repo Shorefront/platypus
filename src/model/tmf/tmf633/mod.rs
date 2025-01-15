@@ -4,6 +4,8 @@ use std::sync::Mutex;
 
 use actix_web::{get,patch, delete, post,web, HttpResponse, Responder};
 use tmf633_service_catalog_management::TMF633ServiceCatalogManagement;
+use tmflib::tmf633::service_candidate::ServiceCandidate;
+use tmflib::tmf633::service_specification::ServiceSpecification;
 use crate::common::persist::Persistence;
 use crate::common::error::PlatypusError;
 use crate::QueryOptions;
@@ -14,6 +16,7 @@ use crate::model::tmf::{
     render_list_output,
     // render_get_output,
     // render_post_output
+    render_patch_output,
 };
 
 #[get("/tmf-api/serviceCatalogManagement/v4/{object}")]
@@ -57,8 +60,30 @@ pub async fn tmf633_get_handler() -> impl Responder {
 }
 
 #[patch("/tmf-api/serviceCatalogManagement/v4/{object}/{id}")]
-pub async fn tmf633_patch_handler() -> impl Responder {
-    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Not implemented"))
+pub async fn tmf633_patch_handler(
+    path : web::Path<(String,String)>,
+    tmf633: web::Data<Mutex<TMF633ServiceCatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+    raw: web::Bytes,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf633 = tmf633.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf633.persist(persist.clone());
+    match object.as_str() {
+        "serciceCandidate" => {
+            let candidate : ServiceCandidate = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf633.update_candidate(id, candidate).await;
+            render_patch_output(result)
+        },
+        "serviceSpecification" => {
+            let specification : ServiceSpecification = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf633.update_specification(id, specification).await;
+            render_patch_output(result)
+        }
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
+    } 
 }
 
 #[post("/tmf-api/serviceCatalogManagement/v4/{object}")]

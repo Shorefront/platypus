@@ -40,6 +40,10 @@ impl TMF674GeographicSiteManagement {
         self.persist.as_ref().unwrap().get_item(id,query_opts).await
     }
 
+    pub async fn update_site(&self, id : String, patch : GeographicSite) -> Result<Vec<GeographicSite>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
+
     pub async fn delete_site(&mut self, id : String) -> Result<bool,PlatypusError> {
         self.persist.as_mut().unwrap().delete_tmf_item::<GeographicSite>(id).await
     }

@@ -5,7 +5,7 @@
 use std::sync::Mutex;
 use actix_web::{
     get,
-    // patch,
+    patch,
     post,
     // delete,
     web, 
@@ -17,6 +17,7 @@ use crate::model::tmf::{
     // render_get_output,
     render_list_output,
     render_post_output,
+    render_patch_output,
 };
 
 // TMFLIB
@@ -56,6 +57,28 @@ pub async fn tmf648_create_handler(
     }
 }
 
+#[patch("/tmf-api/quoteManagement/v4/{object}/{id}")]
+pub async fn tmf648_patch_handler(
+    path : web::Path<(String,String)>,
+    tmf648: web::Data<Mutex<TMF648QuoteManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+    raw: web::Bytes,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf648 = tmf648.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf648.persist(persist.clone());
+    match object.as_str() {
+        "quote" => {
+            let quote : Quote = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf648.update_quote(id, quote).await;
+            render_patch_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
+    } 
+}
+
 #[get("/tmf-api/quoteManagement/v4/{object}")]
 pub async fn tmf648_list_handler(
     path : web::Path<String>,
@@ -87,5 +110,6 @@ pub fn config_tmf648(cfg: &mut web::ServiceConfig) {
     cfg
         .service(tmf648_list_handler)
         .service(tmf648_create_handler)
+        .service(tmf648_patch_handler)
         .app_data(web::Data::new(Mutex::new(tmf648)));
 }

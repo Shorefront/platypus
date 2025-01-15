@@ -8,7 +8,7 @@ use crate::common::error::PlatypusError;
 use crate::QueryOptions;
 use actix_web::{
     get,
-    // patch,
+    patch,
     post,
     delete,
     web, 
@@ -17,9 +17,10 @@ use actix_web::{
 };
 
 use crate::model::tmf::{
-    render_get_output,
+    // render_get_output,
     render_list_output,
     render_post_output,
+    render_patch_output,
     render_delete_output,
 };
 
@@ -98,6 +99,30 @@ pub async fn tmf674_post_handler(
     }
 }
 
+/// Update an object
+#[patch("/tmf-api/geographicSiteManagement/v4/{object}/{id}")]
+pub async fn tmf674_patch_handler(
+    path : web::Path<(String,String)>,
+    tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+    raw: web::Bytes,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf674 = tmf674.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf674.persist(persist.clone());
+    match object.as_str() {
+        "site" => {
+            let site : GeographicSite = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf674.update_site(id, site).await;
+            render_patch_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
+    } 
+}
+
+
 #[delete("/tmf-api/geographicSiteManagement/v4/{object}/{id}")]
 pub async fn tmf674_delete_handler(
     path : web::Path<(String,String)>,
@@ -128,6 +153,7 @@ pub fn config_tmf674(cfg: &mut web::ServiceConfig) {
         .service(tmf674_list_handler)
         .service(tmf674_get_handler)
         .service(tmf674_post_handler)
+        .service(tmf674_patch_handler)
         .service(tmf674_delete_handler)
         .app_data(web::Data::new(Mutex::new(tmf674.clone())));
 }
