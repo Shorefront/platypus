@@ -155,6 +155,7 @@ pub fn config_tmf629(cfg: &mut web::ServiceConfig) {
         .service(tmf629_list_handler)
         .service(tmf629_get_handler)
         .service(tmf629_create_handler)
+        .service(tmf629_patch_handler)
         .service(tmf629_delete_handler)
         .app_data(web::Data::new(Mutex::new(tmf629)));
 }

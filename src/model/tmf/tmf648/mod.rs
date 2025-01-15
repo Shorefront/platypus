@@ -110,5 +110,6 @@ pub fn config_tmf648(cfg: &mut web::ServiceConfig) {
     cfg
         .service(tmf648_list_handler)
         .service(tmf648_create_handler)
+        .service(tmf648_patch_handler)
         .app_data(web::Data::new(Mutex::new(tmf648)));
 }

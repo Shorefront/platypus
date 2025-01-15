@@ -153,6 +153,7 @@ pub fn config_tmf674(cfg: &mut web::ServiceConfig) {
         .service(tmf674_list_handler)
         .service(tmf674_get_handler)
         .service(tmf674_post_handler)
+        .service(tmf674_patch_handler)
         .service(tmf674_delete_handler)
         .app_data(web::Data::new(Mutex::new(tmf674.clone())));
 }
