@@ -9,6 +9,7 @@ use log::debug;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::QueryOptions;
+use super::config::Config;
 use super::error::PlatypusError;
 use tmflib::HasId;
 
@@ -25,7 +26,7 @@ pub struct Persistence {
 }
 
 impl Persistence {
-    pub async fn new() -> Persistence {
+    pub async fn new(config : &Config) -> Persistence {
         use surrealdb::engine::any;
 
         // Connect to the database
@@ -33,11 +34,14 @@ impl Persistence {
 
         // db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
 
-        let db = any::connect("wss://platypus-06a3rhk0qlrtj092qq5dgtl91o.aws-use1.surreal.cloud").await
+        let db_host = config.get("DB_HOST").expect("DB Host not configured");
+        let db_ns = config.get("DB_NS").expect("DB Namespace not configured");
+
+        let db = any::connect(db_host).await
             .expect("Could not connect");
 
         // Select a namespace and database
-        db.use_ns("tmf").use_db("platypus-db").await
+        db.use_ns(db_ns).use_db("platypus-db").await
             .expect("Could not set namespace");
 
                 // Authenticate
@@ -232,17 +236,17 @@ impl Persistence {
         }
     }
 
-    pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
-        let resource = format!("({},{})",T::get_class(),id);
-        let result : Result<Vec<TMF<T>>,_> = self.db.update(resource)
-            .merge(patch).await;
+    pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&self, id : String, mut patch : T) -> Result<Vec<T>,PlatypusError> {
+        // We need to use id in the payload so need to ensure its set even if its not in the original payload
+        patch.set_id(id);
+        let payload = Persistence::tmf_payload(patch.clone());
+        let result : Option<TMF<T>> = self.db.update((T::get_class(),patch.get_id()))
+            .merge(payload).await?;
         match result {
-            Ok(r) => {
-                Ok(r.into_iter().map(|tmf| {
-                    tmf.item
-                }).collect())
+            Some(r) => {
+                Ok(vec![r.item])
             },
-            Err(e) => Err(PlatypusError::from(e))
+            None => Err(PlatypusError::from("Could not update object"))
         }
     }
 
