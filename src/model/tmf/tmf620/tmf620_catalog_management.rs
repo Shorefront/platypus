@@ -1,6 +1,6 @@
 //! TMF620 Catalog Management Module
 
-use tmflib::tmf620::category::{Category, CategoryRef};
+use tmflib::tmf620::category::Category;
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
