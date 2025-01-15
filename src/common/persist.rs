@@ -30,12 +30,10 @@ impl Persistence {
         use surrealdb::engine::any;
 
         // Connect to the database
-        // let db = any::connect("ws://localhost:8000/rpc").await.unwrap();
-
-        // db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
-
         let db_host = config.get("DB_HOST").expect("DB Host not configured");
-        let db_ns = config.get("DB_NS").expect("DB Namespace not configured");
+        let db_ns   = config.get("DB_NS").expect("DB Namespace not configured");
+        let db_user = config.get("DB_USER").expect("DB User not set");
+        let db_pass = config.get("DB_PASS").expect("DB Pass not set");
 
         let db = any::connect(db_host).await
             .expect("Could not connect");
@@ -46,8 +44,8 @@ impl Persistence {
 
                 // Authenticate
         db.signin(Root {
-            username: "platypus",
-            password: "Platypus2025!",
+            username: db_user.as_str(),
+            password: db_pass.as_str(),
         }).await
             .expect("Could not authenticate");
 
