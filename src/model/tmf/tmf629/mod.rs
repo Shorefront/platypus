@@ -6,7 +6,7 @@ use crate::common::error::PlatypusError;
 use crate::QueryOptions;
 use actix_web::{
     get,
-    // patch,
+    patch,
     post,
     delete,
     web, 
@@ -18,6 +18,7 @@ use crate::model::tmf::{
     // render_get_output,
     render_list_output,
     render_post_output,
+    render_patch_output,
     render_delete_output,
 };
 
@@ -99,6 +100,30 @@ pub async fn tmf629_create_handler(
         }
     }
 }
+
+/// Update an object
+#[patch("/tmf-api/customerManagement/v4/{object}/{id}")]
+pub async fn tmf629_patch_handler(
+    path : web::Path<(String,String)>,
+    tmf629: web::Data<Mutex<TMF629CustomerManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+    raw: web::Bytes,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf629 = tmf629.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf629.persist(persist.clone());
+    match object.as_str() {
+        "customer" => {
+            let customer : Customer = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf629.update_customer(id, customer).await;
+            render_patch_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
+    } 
+}
+
 
 #[delete("/tmf-api/customerManagement/v4/{object}/{id}")]
 pub async fn tmf629_delete_handler(
