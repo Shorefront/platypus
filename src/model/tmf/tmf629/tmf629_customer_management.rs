@@ -36,7 +36,7 @@ impl TMF629CustomerManagement {
         self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
 
-    pub async fn delete_customer(&self, id : String) -> Result<bool, PlatypusError> {
-        self.persist.as_ref().unwrap().delete_tmf_item::<Customer>(id).await
+    pub async fn delete_customer(&self, id : String) -> Result<Customer, PlatypusError> {
+        self.persist.as_ref().unwrap().delete_tmf_item(id).await
     }
 }
