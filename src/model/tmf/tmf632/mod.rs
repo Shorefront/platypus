@@ -3,16 +3,16 @@
 
 use std::sync::Mutex;
 use tmf632_party_management::TMF632PartyManagement;
-use actix_web::{get,post,web, HttpResponse, Responder};
+use actix_web::{get,post,patch, delete, web, HttpResponse, Responder};
 
 // TMFLIB
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature="v4"))]
 use tmflib::tmf632::individual_v4::Individual;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature="v5"))]
 use tmflib::tmf632::individual_v5::Individual;
-#[cfg(feature = "tmf632_v4")]
+#[cfg(all(feature = "tmf632",feature="v4"))]
 use tmflib::tmf632::organization_v4::Organization;
-#[cfg(feature = "tmf632_v5")]
+#[cfg(all(feature = "tmf632",feature="v5"))]
 use tmflib::tmf632::organization_v5::Organization;
 use tmflib::HasId;
 
@@ -22,10 +22,12 @@ use crate::QueryOptions;
 use crate::model::tmf::{
     render_list_output,
     render_get_output,
-    render_post_output
+    render_post_output,
+    render_patch_output,
+    render_delete_output,
 };
 
-#[cfg(feature = "tmf632_v4")]
+#[cfg(feature = "tmf632")]
 pub mod tmf632_party_management;
 
 #[get("/tmf-api/partyManagement/v4/{object}")]
@@ -110,7 +112,60 @@ pub async fn tmf632_post_handler_v4(
     } 
 }
 
-#[cfg(feature = "tmf632_v4")]
+/// Update an object
+#[patch("/tmf-api/partyManagement/v4/{object}/{id}")]
+pub async fn tmf632_patch_handler(
+    path : web::Path<(String,String)>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+    raw: web::Bytes,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf632 = tmf632.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf632.persist(persist.clone());
+    match object.as_str() {
+        "individual" => {
+            let individual : Individual = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf632.update_individual(id, individual).await;
+            render_patch_output(result)
+        },
+        "organization" => {
+            let organization : Organization = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf632.update_organization(id, organization).await;
+            render_patch_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
+    } 
+}
+
+
+/// Get a specific object
+#[delete("/tmf-api/partyManagement/v4/{object}/{id}")]
+pub async fn tmf632_delete_handler_v4(
+    path : web::Path<(String,String)>,
+    tmf632: web::Data<Mutex<TMF632PartyManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let mut tmf632 = tmf632.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf632.persist(persist.clone());
+    match object.as_str() {
+        "individual" => {
+            let result = tmf632.delete_individual(id).await;
+            render_delete_output(result)      
+        },
+        "organization" => {
+            let result = tmf632.delete_organization(id).await;
+            render_delete_output(result)
+        },
+        _ => HttpResponse::BadRequest().json(PlatypusError::from("TMF632: Invalid Object"))    
+    }
+}
+
+#[cfg(feature = "v4")]
 pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class
@@ -120,10 +175,12 @@ pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
         .service(tmf632_list_handler_v4)
         .service(tmf632_get_handler_v4)
         .service(tmf632_post_handler_v4)
+        .service(tmf632_patch_handler)
+        .service(tmf632_delete_handler_v4)
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }
 
-#[cfg(feature = "tmf632_v5")]
+#[cfg(feature = "v5")]
 pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class
@@ -133,5 +190,6 @@ pub fn config_tmf632(cfg: &mut web::ServiceConfig) {
         .service(tmf632_list_handler_v4)
         .service(tmf632_get_handler_v4)
         .service(tmf632_post_handler_v4)
+        .service(tmf632_delete_handler_v4)
         .app_data(web::Data::new(Mutex::new(tmf632.clone())));
 }

@@ -1,6 +1,6 @@
 //! TMF620 Catalog Management Module
 
-use tmflib::tmf620::category::{Category, CategoryRef};
+use tmflib::tmf620::category::Category;
 use tmflib::tmf620::catalog::Catalog;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
@@ -120,45 +120,31 @@ impl TMF620CatalogManagement
         self.persist.as_ref().unwrap().get_item(id,query_opts).await
     }
 
-    pub async fn get_child_category(&self, parent_id : String, query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
-        // Look for categories with common parent_id
-        self.persist.as_ref().unwrap().get_items_filter(format!("item.parent_id = {}",parent_id), query_opts).await
-    }
-
     pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
-        let result : Vec<Category> = self.persist.as_ref().unwrap().get_item(id,query_opts.clone()).await?;
-        let mut first = result.first();
-        match first.as_mut() {
-            Some(o) => {
-                let parent_id = o.id.clone().unwrap();
-                let children = self.get_child_category(parent_id, query_opts).await?;
-                // Map through children converting to CategoryRef and appending onto cat
-                let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
-                    CategoryRef::from(&c)
-                }).collect();
-                let mut o = o.clone();
-                o.sub_category.as_mut().unwrap().append(&mut kids);
-                Ok(vec![o])
-            },
-            None => {
-                Err(PlatypusError::from("No category found"))
-            }
-        }   
+        self.persist.as_ref().unwrap().get_item(id, query_opts).await
     }
 
     pub async fn get_catalog(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError>  {
         self.persist.as_ref().unwrap().get_item(id,query_opts).await
     }
-    
-    pub async fn patch_specification(&self, id : String, patch : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
+
+    pub async fn patch_category(&self, id : String, patch : Category) -> Result<Vec<Category>,PlatypusError> {
         self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
 
-    pub async fn patch_offering(&self, id : String, patch : String) -> Result<Vec<ProductOffering>, PlatypusError> {
+    pub async fn patch_catalog(&self, id : String, patch : Catalog) -> Result<Vec<Catalog>,PlatypusError> {
         self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
     
-    pub async fn patch_price(&self, id : String, patch : String) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
+    pub async fn patch_specification(&self, id : String, patch : ProductSpecification) -> Result<Vec<ProductSpecification>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
+
+    pub async fn patch_offering(&self, id : String, patch : ProductOffering) -> Result<Vec<ProductOffering>, PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
+    
+    pub async fn patch_price(&self, id : String, patch : ProductOfferingPrice) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
         self.persist.as_ref().unwrap().patch_tmf_item(id,patch).await
     }
 

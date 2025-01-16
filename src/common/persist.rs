@@ -1,8 +1,8 @@
 //! Persistence Module
 //! 
-use surrealdb::engine::any::Any;
-use surrealdb::sql::Thing;
-use surrealdb::Surreal;
+use surrealdb::{engine::any::Any, opt::auth::Root};
+use surrealdb::{RecordId, Surreal};
+// use surrealdb::Surreal::Root;
 
 use log::debug;
 
@@ -10,13 +10,14 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tmflib::common::event::Event;
 
 use crate::QueryOptions;
+use super::config::Config;
 use super::error::PlatypusError;
 use tmflib::HasId;
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
-    id : Option<Thing>,
+    id : RecordId,
     pub item : T,
 }
 
@@ -26,13 +27,29 @@ pub struct Persistence {
 }
 
 impl Persistence {
-    pub async fn new() -> Persistence {
+    pub async fn new(config : &Config) -> Persistence {
         use surrealdb::engine::any;
 
         // Connect to the database
-        let db = any::connect("ws://192.168.0.92:8000/rpc").await.unwrap();
+        let db_host = config.get("DB_HOST").expect("DB Host not configured");
+        let db_ns   = config.get("DB_NS").expect("DB Namespace not configured");
+        let db_user = config.get("DB_USER").expect("DB User not set");
+        let db_pass = config.get("DB_PASS").expect("DB Pass not set");
 
-        db.use_ns("tmflib").use_db("composable").await.expect("Could not set DB NS");
+        let db = any::connect(db_host).await
+            .expect("Could not connect");
+
+        // Select a namespace and database
+        db.use_ns(db_ns).use_db("platypus-db").await
+            .expect("Could not set namespace");
+
+                // Authenticate
+        db.signin(Root {
+            username: db_user.as_str(),
+            password: db_pass.as_str(),
+        }).await
+            .expect("Could not authenticate");
+
         Persistence { db }
     }
 }
@@ -41,10 +58,7 @@ impl Persistence {
     /// Geneate a TMF payload for storing in the database
     fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
         TMF {
-            id : Some(Thing {
-                tb : T::get_class(),
-                id : item.get_id().into(),
-            }),
+            id : (T::get_class(),item.get_id()).into(),
             item,
         }
     }
@@ -207,29 +221,31 @@ impl Persistence {
     }
 
     /// Generate function to store into a db.
-    pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
-        let class = T::get_class();
+    pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
+        // let class = T::get_class();
         // Should only generate a new id if one has not been supplied
         item.generate_id();
         let payload = Persistence::tmf_payload(item);
-        let insert_records : Vec<TMF<T>> = self.db.create(class).content(payload).await?;
-        let output = insert_records.into_iter().map(|tmf| {
-            tmf.item
-        }).collect();
-        Ok(output)
+        // let tuple = (T::get_class(),item.get_id());
+        let insert_option: Option<TMF<T>>  = self.db.create(T::get_class())
+            .content(payload).await?;
+        match insert_option {
+            Some(o) => Ok(vec![o.item]),
+            None => Err(PlatypusError::from("Could not create object"))
+        }
     }
 
-    pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String, patch : String) -> Result<Vec<T>,PlatypusError> {
-        let resource = format!("({},{})",T::get_class(),id);
-        let result : Result<Vec<TMF<T>>,_> = self.db.update(resource)
-            .merge(patch).await;
+    pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&self, id : String, mut patch : T) -> Result<Vec<T>,PlatypusError> {
+        // We need to use id in the payload so need to ensure its set even if its not in the original payload
+        patch.set_id(id);
+        let payload = Persistence::tmf_payload(patch.clone());
+        let result : Option<TMF<T>> = self.db.update((T::get_class(),patch.get_id()))
+            .merge(payload).await?;
         match result {
-            Ok(r) => {
-                Ok(r.into_iter().map(|tmf| {
-                    tmf.item
-                }).collect())
+            Some(r) => {
+                Ok(vec![r.item])
             },
-            Err(e) => Err(PlatypusError::from(e))
+            None => Err(PlatypusError::from("Could not update object"))
         }
     }
 

@@ -1,21 +1,28 @@
 //! TMF Modules
 //! 
 
-use surrealdb::sql::Thing;
+use surrealdb::RecordId;
 use serde::{Deserialize, Serialize};
 
 use tmflib::HasId;
 use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
+use log::error;
 
+#[cfg(feature = "tmf620")]
 pub mod tmf620;
-#[cfg(feature = "tmf622_v4")]
+#[cfg(feature = "tmf622")]
 pub mod tmf622;
+#[cfg(feature = "tmf629")]
 pub mod tmf629;
+#[cfg(feature = "tmf632")]
 pub mod tmf632;
+#[cfg(feature = "tmf633")]
+pub mod tmf633;
+#[cfg(feature = "tmf648")]
 pub mod tmf648;
-#[cfg(feature = "tmf674_v4")]
+#[cfg(feature = "tmf674")]
 pub mod tmf674;
 
 pub const CONTENT_LANGUAGE : &str = "en_GB";
@@ -67,20 +74,32 @@ pub fn render_post_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypus
     }
 }
 
+pub fn render_patch_output<T : Serialize + HasId>(output : Result<Vec<T>,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(v) => {
+            let item = v.first().unwrap();
+            HttpResponse::Accepted()
+                .append_header(("Location",item.get_href()))
+                .append_header(("Content-Language",CONTENT_LANGUAGE))
+                .json(item)
+        },
+        Err(e) => HttpResponse::BadRequest().json(e),
+    }
+}
+
+pub fn render_delete_output(output : Result<bool,PlatypusError>) -> HttpResponse {
+    match output {
+        Ok(_b) => HttpResponse::NoContent().finish(),
+        Err(e) => {
+            error!("Could not delete: {e}");
+            HttpResponse::BadRequest().json(e)
+        },     
+    }     
+}
+
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T : HasId> {
-    id : Option<Thing>,
+    id : RecordId,
     pub item : T,
-}
-
-/// Geneate a TMF payload for storing in the database
-pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
-    TMF {
-        id : Some(Thing {
-            tb : T::get_class(),
-            id : item.get_id().into(),
-        }),
-        item,
-    }
 }
