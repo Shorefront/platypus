@@ -249,7 +249,7 @@ impl Persistence {
         }
     }
 
-    pub async fn delete_tmf_item<T>(&self, id : String) -> Result<T,PlatypusError> 
+    pub async fn delete_tmf_item<T>(&self, id : String) -> Result<T,PlatypusError>
     where
         T : HasId + Serialize + Clone + DeserializeOwned
     {
