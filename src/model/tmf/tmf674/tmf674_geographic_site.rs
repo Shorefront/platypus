@@ -28,8 +28,8 @@ impl TMF674GeographicSiteManagement {
         self.persist = Some(persist);
     }
 
-    pub async fn add_site(&mut self, item : GeographicSite) -> Result<Vec<GeographicSite>,PlatypusError> {
-        self.persist.as_mut().unwrap().create_tmf_item(item).await
+    pub async fn add_site(&self, item : GeographicSite) -> Result<Vec<GeographicSite>,PlatypusError> {
+        self.persist.as_ref().unwrap().create_tmf_item(item).await
     }
 
     pub async fn get_sites(&self, query_opts : QueryOptions) -> Result<Vec<GeographicSite>,PlatypusError> {
@@ -44,7 +44,7 @@ impl TMF674GeographicSiteManagement {
         self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
 
-    pub async fn delete_site(&mut self, id : String) -> Result<bool,PlatypusError> {
-        self.persist.as_mut().unwrap().delete_tmf_item::<GeographicSite>(id).await
+    pub async fn delete_site(&self, id : String) -> Result<GeographicSite,PlatypusError> {
+        self.persist.as_ref().unwrap().delete_tmf_item(id).await
     }
 }

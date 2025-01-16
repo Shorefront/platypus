@@ -4,9 +4,10 @@ use surrealdb::{engine::any::Any, opt::auth::Root};
 use surrealdb::{RecordId, Surreal};
 // use surrealdb::Surreal::Root;
 
-use log::debug;
+use log::{info,debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use tmflib::common::event::Event;
 
 use crate::QueryOptions;
 use super::config::Config;
@@ -220,7 +221,7 @@ impl Persistence {
     }
 
     /// Generate function to store into a db.
-    pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&mut self, mut item : T) -> Result<Vec<T>,PlatypusError> {
+    pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&self, mut item : T) -> Result<Vec<T>,PlatypusError> {
         // let class = T::get_class();
         // Should only generate a new id if one has not been supplied
         item.generate_id();
@@ -248,14 +249,44 @@ impl Persistence {
         }
     }
 
-    pub async fn delete_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self, id : String) -> Result<bool,PlatypusError> {
+    pub async fn delete_tmf_item<T>(&self, id : String) -> Result<T,PlatypusError>
+    where
+        T : HasId + Serialize + Clone + DeserializeOwned
+    {
         //let resource = format!("({},{})",T::get_class(),id);
         // Need to generate a tuple, not just a string with brackets!
         let result : Option<TMF<T>> = self.db.clone().delete((T::get_class(),id)).await?;
         match result {
-            Some(_r) => Ok(true),
+            Some(r) => Ok(r.item),
             None => Err(PlatypusError::from("Issue Deleting object")),
         }
+    }
+    #[cfg(feature = "events")]
+    pub async fn store_tmf_event<T,U>(&self, event : Event<T, U>) -> Result<Event<T, U>,PlatypusError> 
+    where 
+        T : Serialize + Clone + DeserializeOwned + 'static,
+        U : Serialize + DeserializeOwned + 'static
+    {
+        // Step1, store event in DB for processing.
+        let domain = event.domain.clone();
+        let result : Option<Event<T,U>> = self.db.create("event")
+            .content(event)
+            .await?;
+        match result {
+            Some(e) => {
+                // Trigger sending of events here for now
+                let _send_result = self.send_tmf_events(domain).await;
+                Ok(e)
+            },
+            None => Err(PlatypusError::from("Could not store event")),
+        }
+    }
+
+    #[cfg(feature = "events")]
+    pub async fn send_tmf_events(&self, domain : Option<String>) -> Result<u16,PlatypusError> {
+        info!("Process events for domain: {}",domain.unwrap_or("No domain".to_string()));
+
+        Err(PlatypusError::from("Not implemented"))
     }
 }
 

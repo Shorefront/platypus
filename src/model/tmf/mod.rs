@@ -32,6 +32,7 @@ pub fn render_list_output<T : Serialize>(output : Result<Vec<T>,PlatypusError>) 
         Ok(o) => HttpResponse::Ok()
             .append_header(("X-Total-Count",o.len()))
             .append_header(("Content-Language",CONTENT_LANGUAGE))
+            .append_header(("Access-Control-Allow-Origin","*"))
             .json(o),
         Err(e) => HttpResponse::InternalServerError().json(e),
     }
@@ -86,7 +87,7 @@ pub fn render_patch_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypu
     }
 }
 
-pub fn render_delete_output(output : Result<bool,PlatypusError>) -> HttpResponse {
+pub fn render_delete_output<T : Serialize>(output : Result<T,PlatypusError>) -> HttpResponse {
     match output {
         Ok(_b) => HttpResponse::NoContent().finish(),
         Err(e) => {
