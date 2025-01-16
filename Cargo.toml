@@ -1,32 +1,35 @@
 [package]
 name = "platypus"
-version = "0.1.5"
+version = "0.1.7"
 edition = "2021"
 authors = ["Ryan Ruckley <rruckley@gmail.com>"]
-description = "API layer on top of TMF620 to provide product composition"
+description = "TMF ODA Component Platform"
 repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
 
 [features]
-core = []
+core = ["tmf620","tmf622","tmf629","tmf632","tmf633","tmf648","tmf674"]
 composable = ["core"]
-tmf620_v4 = []
-tmf622_v4 = []
-tmf632_v4 = []
-tmf620_v5 = []
-tmf622_v5 = []
-tmf632_v5 = []
-v4 = ["tmf620_v4","tmf622_v4","tmf632_v4"]
-v5 = ["tmf620_v5","tmf622_v5","tmf632_v5"]
+tmf620 = ["tmflib/tmf620"]
+tmf622 = ["tmflib/tmf622"]
+tmf629 = ["tmflib/tmf629"]
+tmf632 = ["tmflib/tmf632"]
+tmf633 = ["tmflib/tmf633"]
+tmf648 = ["tmflib/tmf648"]
+tmf674 = ["tmflib/tmf674"]
+
+v4 = ["tmflib/build-V4"]
+v5 = ["tmflib/build-V5"]
 default = ["core","v4"]
 
 [dependencies]
-actix-web = { version = "4.5", features = ["rustls"]}
-env_logger = "0.11"
-log = "0.4.21"
-serde = "1.0.197"
-serde_json = "1.0.114"
-surrealdb = {version = "1.3.1", features = ["kv-mem","kv-speedb"]}
-tmflib = { git = "https://github.com/rruckley/tmflib.git"}
+actix-web = { version = "4.9.0", features = ["rustls"]}
+env_logger = "0.11.6"
+etag = "4.0.0"
+log = "0.4.25"
+serde = "1.0.217"  
+serde_json = "1.0.125"
+surrealdb = {version = "2.1.4"}
+tmflib = "0.1.24"
 
 
