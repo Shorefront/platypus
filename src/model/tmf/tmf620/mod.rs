@@ -13,7 +13,6 @@ use tmflib::{
     HasId,
     HasLastUpdate
 };
-use log::error;
 
 use crate::common::error::PlatypusError;
 use crate::common::persist::Persistence;
@@ -28,7 +27,8 @@ use crate::model::tmf::{
     render_list_output,
     render_get_output,
     render_post_output,
-    render_patch_output
+    render_patch_output,
+    render_delete_output
 };
 
 /// Get a list
@@ -269,51 +269,26 @@ pub async fn tmf620_delete_handler(
     tmf620.persist(persist.clone());
     match object.as_str() {
         "catalog" => {
-            match tmf620.delete_catalog(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },     
-            }    
+            let output = tmf620.delete_catalog(id).await;
+            render_delete_output(output) 
         },
         "category" => {
-            match tmf620.delete_category(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },     
-            }    
+            let output= tmf620.delete_category(id).await;
+            render_delete_output(output)  
         },
         "productSpecification" => {
-            match tmf620.delete_specification(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },
-            }
+            let output = tmf620.delete_specification(id).await;
+            render_delete_output(output)
         },
         "productOffering" => {
-            match tmf620.delete_offering(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },
-            }
+            let output = tmf620.delete_offering(id).await;
+            render_delete_output(output)
         },
         "productOfferingPrice"  => {
-            match tmf620.delete_price(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },
-            }
+            let result = tmf620.delete_price(id).await;
+            render_delete_output(result)
         },
-        _ => HttpResponse::BadRequest(),
+        _ => HttpResponse::BadRequest().finish(),
     }  
 }
 
