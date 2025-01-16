@@ -87,7 +87,7 @@ pub fn render_patch_output<T : Serialize + HasId>(output : Result<Vec<T>,Platypu
     }
 }
 
-pub fn render_delete_output(output : Result<bool,PlatypusError>) -> HttpResponse {
+pub fn render_delete_output<T : Serialize>(output : Result<T,PlatypusError>) -> HttpResponse {
     match output {
         Ok(_b) => HttpResponse::NoContent().finish(),
         Err(e) => {
