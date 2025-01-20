@@ -15,7 +15,7 @@ use actix_web::{
 };
 
 use crate::model::tmf::{
-    // render_get_output,
+    render_get_output,
     render_list_output,
     render_post_output,
     render_patch_output,
@@ -67,7 +67,7 @@ pub async fn tmf629_get_handler(
     match object.as_str() {
         "customer" => {
             let customers = tmf629.get_customer(id, query_opts).await;
-            render_list_output(customers)
+            render_get_output(customers)
         },
         _ => {
             HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))   
