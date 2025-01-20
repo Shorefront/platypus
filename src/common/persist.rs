@@ -12,7 +12,7 @@ use tmflib::common::event::Event;
 use crate::QueryOptions;
 use super::config::Config;
 use super::error::PlatypusError;
-use tmflib::HasId;
+use tmflib::{HasId, HasLastUpdate};
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -235,6 +235,11 @@ impl Persistence {
         }
     }
 
+    pub async fn create_tmf_item_lastupdate<'a, T: HasId + HasLastUpdate + Serialize + Clone + DeserializeOwned + 'static>(&self, mut item : T) -> Result<Vec<T>,PlatypusError> {
+        item.set_last_update(T::get_timestamp());
+        self.create_tmf_item(item).await
+    }
+
     pub async fn patch_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&self, id : String, mut patch : T) -> Result<Vec<T>,PlatypusError> {
         // We need to use id in the payload so need to ensure its set even if its not in the original payload
         patch.set_id(id);
@@ -247,6 +252,11 @@ impl Persistence {
             },
             None => Err(PlatypusError::from("Could not update object"))
         }
+    }
+
+    pub async fn patch_tmf_item_lastupdate<T : HasId + HasLastUpdate + Serialize + Clone + DeserializeOwned + 'static>(&self, id : String, mut patch : T) -> Result<Vec<T>,PlatypusError> {
+        patch.set_last_update(T::get_timestamp());
+        self.patch_tmf_item(id, patch).await
     }
 
     pub async fn delete_tmf_item<T>(&self, id : String) -> Result<T,PlatypusError>

@@ -126,11 +126,11 @@ pub async fn tmf674_patch_handler(
 #[delete("/tmf-api/geographicSiteManagement/v4/{object}/{id}")]
 pub async fn tmf674_delete_handler(
     path : web::Path<(String,String)>,
-    tmf629: web::Data<Mutex<TMF674GeographicSiteManagement>>,
+    tmf674: web::Data<Mutex<TMF674GeographicSiteManagement>>,
     persist: web::Data<Mutex<Persistence>>, 
 ) -> impl Responder {
     let (object,id) = path.into_inner();
-    let mut tmf674 = tmf629.lock().unwrap();
+    let mut tmf674 = tmf674.lock().unwrap();
     let persist = persist.lock().unwrap();
     tmf674.persist(persist.clone());
     match object.as_str() {
