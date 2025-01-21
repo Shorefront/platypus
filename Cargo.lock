@@ -2754,7 +2754,7 @@ checksum = "953ec861398dccce10c670dfeaf3ec4911ca479e9c02154b3a215178c5f566f2"
 
 [[package]]
 name = "platypus"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "actix-web",
  "env_logger",
@@ -3514,9 +3514,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.135"
+version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b0d7ba2887406110130a978386c4e1befb98c674b4fba677954e4db976630d9"
+checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
 dependencies = [
  "indexmap 2.7.0",
  "itoa",
@@ -4158,9 +4158,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tmflib"
-version = "0.1.24"
+version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac6dce2482fa1476bf0f2b381b348fdbe6eba34a4cf421641444986ea84f705e"
+checksum = "701da46d6b8d8d38db9bd2501dfd492d03ca3238e6c04dcf8a3682cffa2367f5"
 dependencies = [
  "base32",
  "chrono",
