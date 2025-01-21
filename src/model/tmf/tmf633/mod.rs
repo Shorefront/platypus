@@ -37,14 +37,14 @@ pub async fn tmf633_list_handler(
             let output = tmf633.get_candidates(query_opts).await;
             render_list_output(output)
         },
-        // "serviceCatalog" => {
-        //     let output = tmf633.get_catalogs(query_opts).await;
-        //     render_list_output(output)
-        // },
-        // "serviceCategory" => {
-        //     let output = tmf633.get_categories(query_opts).await;
-        //     render_list_output(output)        
-        // },
+        "serviceCatalog" => {
+            let output = tmf633.get_catalogs(query_opts).await;
+            render_list_output(output)
+        },
+        "serviceCategory" => {
+            let output = tmf633.get_categories(query_opts).await;
+            render_list_output(output)        
+        },
         "serviceSpecification" => {
             let output = tmf633.get_specifications(query_opts).await;
             render_list_output(output)        

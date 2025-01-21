@@ -3,6 +3,8 @@
 use tmflib::tmf633::{
     service_candidate::ServiceCandidate,
     service_specification::ServiceSpecification,
+    service_catalog::ServiceCatalog,
+    service_category::ServiceCategory,
 };
 
 use crate::QueryOptions;
@@ -33,13 +35,13 @@ impl TMF633ServiceCatalogManagement {
         self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
     }
 
-    // pub async fn get_catalogs(&self, query_opts : QueryOptions) -> Result<Vec<ServiceCatalog>,PlatypusError> {
-    //     self.persist.as_ref().unwrap().get_items(query_opts).await
-    // }
+    pub async fn get_catalogs(&self, query_opts : QueryOptions) -> Result<Vec<ServiceCatalog>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_items(query_opts).await
+    }
 
-    // pub async fn get_categories(&self, query_opts : QueryOptions) -> Result<Vec<ServiceCategory>,PlatypusError> {
-    //     self.persist.as_ref().unwrap().get_items(query_opts).await
-    // }
+    pub async fn get_categories(&self, query_opts : QueryOptions) -> Result<Vec<ServiceCategory>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_items(query_opts).await
+    }
 
     pub async fn get_specifications(&self, query_opts : QueryOptions) -> Result<Vec<ServiceSpecification>,PlatypusError> {
         self.persist.as_ref().unwrap().get_items(query_opts).await
