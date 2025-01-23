@@ -3,7 +3,7 @@
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
 use tmflib::common::event::EventPayload;
-use tmflib::tmf648::quote::{Quote, QuoteEventType};
+use tmflib::tmf648::quote::{Quote, QuoteEventType, QuoteStateType};
 use log::debug;
 
 pub struct TMF648QuoteManagement {
@@ -41,7 +41,28 @@ impl TMF648QuoteManagement {
     }
 
     pub async fn update_quote(&self, id : String, patch : Quote) -> Result<Vec<Quote>,PlatypusError> {
-        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+        let result = self.persist.as_ref().unwrap().patch_tmf_item(id, patch.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            let event = match patch.state.is_some() {
+                true => {
+                    let state = patch.state.clone().unwrap();
+                    match state {
+                        QuoteStateType::Pending => {
+                            patch.to_event(QuoteEventType::QuoteInformationRequiredEvent)
+                        },
+                        _ => {
+                            patch.to_event(QuoteEventType::QuoteStateChangeEvent)
+                        }
+                    }  
+                }
+                false => {
+                    patch.to_event(QuoteEventType::QuoteAttributeValueChangeEvent)
+                }
+            };
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+        }
+        result
     }
 
     pub async fn delete_quote(&self, id : String) -> Result<Quote,PlatypusError> {
