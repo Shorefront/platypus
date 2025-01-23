@@ -282,6 +282,7 @@ impl Persistence {
         let result : Option<Event<T,U>> = self.db.create("event")
             .content(event)
             .await?;
+        debug!("Event created, domain = {}",domain.clone().unwrap_or_default());
         match result {
             Some(e) => {
                 // Trigger sending of events here for now
