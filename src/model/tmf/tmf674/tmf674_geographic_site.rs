@@ -34,7 +34,7 @@ impl TMF674GeographicSiteManagement {
         #[cfg(feature = "events")]
         {
             let event = item.to_event(GeographicSiteEventType::GeographicSiteCreateEvent);
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -59,7 +59,7 @@ impl TMF674GeographicSiteManagement {
                     patch.to_event(GeographicSiteEventType::GeographicSiteAttributeValueChangeEvent)
                 }
             };
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -70,7 +70,7 @@ impl TMF674GeographicSiteManagement {
         {
             if let Ok(d) = result.clone() {
                 let event = d.to_event(GeographicSiteEventType::GeographicSiteDeleteEvent);
-                let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
             }
         }
         result

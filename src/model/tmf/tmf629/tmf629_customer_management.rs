@@ -51,7 +51,7 @@ impl TMF629CustomerManagement {
                     patch.to_event(CustomerEventType::CustomerAttributeValueChangeEvent)
                 }
             };
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -63,7 +63,7 @@ impl TMF629CustomerManagement {
             // Only generate event if successful
             if let Ok(d) = result.clone() {
                 let event = d.to_event(CustomerEventType::CustomerDeleteEvent);
-                let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
             } 
         }
         result

@@ -9,6 +9,7 @@ use tmflib::tmf632::individual_v4::Individual;
 use tmflib::tmf632::individual_v5::Individual;
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
+use log::{error,debug};
 
 #[derive(Clone, Debug)]
 pub struct TMF632PartyManagement {
@@ -31,7 +32,10 @@ impl TMF632PartyManagement {
         #[cfg(feature = "events")]
         {
             let event = individual.to_event(IndividualEventType::IndividualCreateEvent);
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            match self.persist.as_ref().unwrap().store_tmf_event(event).await {
+                Ok(r) => debug!("Event created: Individual"),
+                Err(e) => error!("Event creation failed: {}",e),
+            }
         }
         result
     }
@@ -51,7 +55,7 @@ impl TMF632PartyManagement {
             // Determine if the status is being updated to set the correct event type
             // TODO: No status field present to check
             let event = patch.to_event(IndividualEventType::IndividualAttributeValueChangeEvent);
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -62,7 +66,7 @@ impl TMF632PartyManagement {
         {
             if let Ok(d) = result.clone() {
                 let event = d.to_event(IndividualEventType::IndividualDeleteEvent);
-                let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
             }
         }
         result
@@ -73,7 +77,7 @@ impl TMF632PartyManagement {
         #[cfg(feature = "events")]
         {
             let event = organization.to_event(OrganizationEventType::OrganizationCreateEvent);
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -96,7 +100,7 @@ impl TMF632PartyManagement {
         {
             if let Ok(d) = result.clone() {
                 let event = d.to_event(OrganizationEventType::OrganizationDeleteEvent);
-                let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
             }
         }
         result

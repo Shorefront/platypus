@@ -35,7 +35,7 @@ impl TMF648QuoteManagement {
         #[cfg(feature = "events")]
         {
             let event = item.to_event(QuoteEventType::QuoteCreateEvent);
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -60,7 +60,7 @@ impl TMF648QuoteManagement {
                     patch.to_event(QuoteEventType::QuoteAttributeValueChangeEvent)
                 }
             };
-            let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
         }
         result
     }
@@ -71,7 +71,7 @@ impl TMF648QuoteManagement {
         {
             if let Ok(d) = result.clone() {
                 let event = d.to_event(QuoteEventType::QuoteDeleteEvent);
-                let _ = self.persist.as_ref().unwrap().store_tmf_event(event);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
             }
         }
         result
