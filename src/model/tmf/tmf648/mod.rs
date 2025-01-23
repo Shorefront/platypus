@@ -14,7 +14,7 @@ use actix_web::{
 };
 
 use crate::model::tmf::{
-    // render_get_output,
+    render_get_output,
     render_list_output,
     render_post_output,
     render_patch_output,
@@ -29,7 +29,6 @@ use crate::QueryOptions;
 
 pub mod tmf648_quote_management;
 use tmf648_quote_management::TMF648QuoteManagement;
-
 
 
 #[post("/tmf-api/quoteManagement/v4/{object}")]
@@ -102,12 +101,36 @@ pub async fn tmf648_list_handler(
     } 
 }
 
+#[get("/tmf-api/quoteManagement/v4/{object}/{id}")]
+pub async fn tmf648_get_handler(
+    path : web::Path<(String,String)>,
+    query : web::Query<QueryOptions>,
+    tmf648: web::Data<Mutex<TMF648QuoteManagement>>,
+    persist: web::Data<Mutex<Persistence>>, 
+) -> impl Responder {
+    let (object,id) = path.into_inner();
+    let query_opts = query.into_inner();
+    let mut tmf648 = tmf648.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf648.persist(persist.clone());
+    match object.as_str() {
+        "quote" => {
+            let customers = tmf648.get_quote(id, query_opts).await;
+            render_get_output(customers)
+        },
+        _ => {
+            HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object"))   
+        }
+    } 
+}
+
 pub fn config_tmf648(cfg: &mut web::ServiceConfig) {
     // Place our configuration into cfg
     // NB: Since we are adding via this method, we don't have access to persist class
     // so we need to get access to that via web_data instead now.
     let tmf648 = TMF648QuoteManagement::new(None);
     cfg
+        .service(tmf648_get_handler)
         .service(tmf648_list_handler)
         .service(tmf648_create_handler)
         .service(tmf648_patch_handler)

@@ -25,6 +25,10 @@ impl TMF648QuoteManagement {
         self.persist.as_ref().unwrap().get_items(query_opts).await
     }
 
+    pub async fn get_quote(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Quote>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_item(id,query_opts).await
+    }
+
     pub async fn add_quote(&mut self, item : Quote) -> Result<Vec<Quote>,PlatypusError> {
         self.persist.as_mut().unwrap().create_tmf_item(item).await
     }
