@@ -3,7 +3,7 @@
 use crate::common::{error::PlatypusError, persist::Persistence};
 
 // TMFLIB
-use tmflib::tmf629::customer::Customer;
+use tmflib::{common::event::EventPayload, tmf629::customer::{Customer, CustomerEventType}};
 
 use crate::QueryOptions;
 
@@ -29,14 +29,43 @@ impl TMF629CustomerManagement {
     }
 
     pub async fn add_customer(&mut self, item : Customer) -> Result<Vec<Customer>,PlatypusError> {
-        self.persist.as_mut().unwrap().create_tmf_item(item).await
+        let result = self.persist.as_mut().unwrap().create_tmf_item(item.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            let event = item.to_event(CustomerEventType::CustomerCreateEvent);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+        }
+        result
     }
 
     pub async fn update_customer(&self, id: String, patch : Customer) -> Result<Vec<Customer>,PlatypusError> {
-        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+        let result = self.persist.as_ref().unwrap().patch_tmf_item(id, patch.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            // Need to determine if the state has changed to set the correct event type
+            let event = match patch.status.is_some() {
+                true => {
+                    patch.to_event(CustomerEventType::CustomerStateChangeEvent)
+                },
+                false => {
+                    patch.to_event(CustomerEventType::CustomerAttributeValueChangeEvent)
+                }
+            };
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+        }
+        result
     }
 
     pub async fn delete_customer(&self, id : String) -> Result<Customer, PlatypusError> {
-        self.persist.as_ref().unwrap().delete_tmf_item(id).await
+        let result = self.persist.as_ref().unwrap().delete_tmf_item::<Customer>(id).await;
+        #[cfg(feature = "events")]
+        {
+            // Only generate event if successful
+            if let Ok(d) = result.clone() {
+                let event = d.to_event(CustomerEventType::CustomerDeleteEvent);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+            } 
+        }
+        result
     }
 }
