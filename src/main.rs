@@ -2,6 +2,7 @@
 
 #![warn(missing_docs)]
 
+use actix_web::dev::Extensions;
 use log::{debug,info};
 
 mod model;
@@ -9,8 +10,10 @@ mod model;
 mod template;
 mod common;
 
+use std::any::Any;
+
 use actix_web::middleware::Logger;
-use actix_web::{web,App,HttpServer};
+use actix_web::{web,App,HttpServer,rt::net::TcpStream};
 
 #[cfg(feature = "tmf620")]
 use model::tmf::tmf620::config_tmf620;
@@ -49,6 +52,15 @@ pub struct QueryOptions {
     offset : Option<u16>,
     /// Filter on name
     name : Option<String>,
+}
+
+fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
+    if let Some(sock) = connection.downcast_ref::<TcpStream>() {
+        let bind = sock.local_addr().unwrap();
+        let peer = sock.peer_addr().unwrap();
+        let ttl = sock.ttl().ok();
+        info!("New Connection: {} {} {}",bind.to_string(),peer.to_string(),ttl.unwrap_or_default());
+    }
 }
 
 #[actix_web::main]
@@ -129,6 +141,7 @@ async fn main() -> std::io::Result<()> {
         app.wrap(Logger::default())  
     })
         .bind(("0.0.0.0",port))?
+        .on_connect(log_conn_info)
         .run()
         .await
 }
