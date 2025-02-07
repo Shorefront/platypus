@@ -59,7 +59,7 @@ fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
         let bind = sock.local_addr().unwrap();
         let peer = sock.peer_addr().unwrap();
         let ttl = sock.ttl().ok();
-        info!("New Connection: {} {} {}",bind.to_string(),peer.to_string(),ttl.unwrap_or_default());
+        debug!("New Connection: {} {} {}",bind.to_string(),peer.to_string(),ttl.unwrap_or_default());
     }
 }
 
