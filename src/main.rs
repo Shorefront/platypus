@@ -140,8 +140,8 @@ async fn main() -> std::io::Result<()> {
             }
         app.wrap(Logger::default())  
     })
-        .bind(("0.0.0.0",port))?
         .on_connect(log_conn_info)
+        .bind(("0.0.0.0",port))?
         .run()
         .await
 }
