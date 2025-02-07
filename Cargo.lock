@@ -3514,9 +3514,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
+checksum = "d434192e7da787e94a6ea7e9670b26a036d0ca41e0b7efb2676dd32bae872949"
 dependencies = [
  "indexmap 2.7.0",
  "itoa",
@@ -4158,9 +4158,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tmflib"
-version = "0.1.25"
+version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "701da46d6b8d8d38db9bd2501dfd492d03ca3238e6c04dcf8a3682cffa2367f5"
+checksum = "6c0b221c4576bab6fc86cb3c04d998441c8405a90b16223f55b5bb38201ee16a"
 dependencies = [
  "base32",
  "chrono",
@@ -4178,9 +4178,9 @@ dependencies = [
 
 [[package]]
 name = "tmflib-derive"
-version = "0.1.29"
+version = "0.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89aa2b8ab77aaa5542102509ad42a7611d5ffc5f901ae8bac94d6a406ed1815c"
+checksum = "face997acc384024287fcbe015889c4eec68e4be2e8f4e584a4e79d7075f04f6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4508,9 +4508,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.12.0"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744018581f9a3454a9e15beb8a33b017183f1e7c0cd170232a2d1453b23a51c4"
+checksum = "b3758f5e68192bb96cc8f9b7e2c2cfdabb435499a28499a42f8f984092adad4b"
 dependencies = [
  "getrandom",
  "serde",
