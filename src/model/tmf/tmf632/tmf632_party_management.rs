@@ -33,7 +33,7 @@ impl TMF632PartyManagement {
         {
             let event = individual.to_event(IndividualEventType::IndividualCreateEvent);
             match self.persist.as_ref().unwrap().store_tmf_event(event).await {
-                Ok(r) => debug!("Event created: Individual"),
+                Ok(r) => debug!("Event created: Individual: {}",r.title.unwrap_or_default()),
                 Err(e) => error!("Event creation failed: {}",e),
             }
         }

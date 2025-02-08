@@ -161,16 +161,6 @@ impl Persistence {
         }
     }
 
-    pub async fn get_items_filter<T : HasId + Serialize + Clone + DeserializeOwned>(&self, filter : String, _query_opts : QueryOptions) -> Result<Vec<T>,PlatypusError> {
-        let query = format!("SELECT * FROM {} WHERE {}",T::get_class(),filter);
-        let mut output = self.db.query(query).await?;
-        let result : Vec<TMF<T>> = output.take(0)?;
-        let item = result.iter().map(|tmf| {
-            tmf.clone().item
-        }).collect();
-        Ok(item)         
-    }
-
     pub async fn get_tmf_item<T : HasId + Serialize + Clone + DeserializeOwned>(&self,id : String) -> Result<Vec<T>,PlatypusError> {
         
         let query = format!("SELECT * FROM {}:{}",T::get_class(),id);
