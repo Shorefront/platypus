@@ -8,7 +8,7 @@ repository = "https://github.com/rruckley/platypus"
 keywords = ["tmf"]
 
 [features]
-core = ["tmf620","tmf622","tmf629","tmf632","tmf633","tmf648","tmf674"]
+core = ["tmf620","tmf622","tmf629","tmf632","tmf633","tmf645","tmf648","tmf674"]
 events = []
 composable = ["core"]
 tmf620 = ["tmflib/tmf620"]
@@ -16,6 +16,7 @@ tmf622 = ["tmflib/tmf622"]
 tmf629 = ["tmflib/tmf629"]
 tmf632 = ["tmflib/tmf632"]
 tmf633 = ["tmflib/tmf633"]
+tmf645 = ["tmflib/tmf645"]
 tmf648 = ["tmflib/tmf648"]
 tmf674 = ["tmflib/tmf674"]
 
