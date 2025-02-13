@@ -25,10 +25,13 @@ v5 = ["tmflib/build-V5"]
 default = ["core","v4","events"]
 
 [dependencies]
-actix-web = { version = "4.9.0", features = ["rustls"]}
+actix-web = { version = "4.9.0", features = ["rustls-0_23"]}
 env_logger = "0.11.6"
 etag = "4.0.0"
 log = "0.4.25"
+rustls = "0.23"
+rustls-pemfile = "2.2.0"
+# rustls = "0.23.23"
 serde = "1.0.217"  
 serde_json = "1.0.138"
 surrealdb = {version = "2.2.0"}

@@ -9,6 +9,8 @@ const DB_HOST : &str = "wss://platypus-06a3rhk0qlrtj092qq5dgtl91o.aws-use1.surre
 const DB_NS : &str = "tmf";
 const DB_USER : &str = "platypus";
 const DB_PASS : &str = "Platypus2025!";
+const TLS_CERT : &str = "tls/cert.pem";
+const TLS_KEY : &str = "tls/key.pem";
 
 
 #[derive(Clone, Debug, Default)]
@@ -32,6 +34,8 @@ impl Config {
             "DB_NS" => Some(DB_NS.to_string()),
             "DB_USER" => Some(DB_USER.to_string()),
             "DB_PASS" => Some(DB_PASS.to_string()),
+            "TLS_CERT" => Some(TLS_CERT.to_string()),
+            "TLS_KEY" => Some(TLS_KEY.to_string()),
             _ => None,
         }
     }

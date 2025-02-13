@@ -11,6 +11,8 @@ mod template;
 mod common;
 
 use std::any::Any;
+use std::io::BufReader;
+use std::fs::File;
 
 use actix_web::middleware::Logger;
 use actix_web::{web,App,HttpServer,rt::net::TcpStream};
@@ -76,10 +78,7 @@ async fn main() -> std::io::Result<()> {
 
     let config = Config::new();
 
-    // Data objects to be pass in
-    info!("Connecting to SurrealDB...");
-    let persist = Persistence::new(&config).await;
-    // let persis = Persistence::default();
+
     
     info!("Connected.");
 
@@ -89,6 +88,35 @@ async fn main() -> std::io::Result<()> {
     let port = port.parse::<u16>().unwrap();
 
     info!("Listening on port {port}.");
+
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("Could not install AWS LC provider");
+
+    // Data objects to be pass in
+    info!("Connecting to SurrealDB...");
+    let persist = Persistence::new(&config).await;
+        // let persis = Persistence::default();
+
+    let cert_file = config.get("TLS_CERT").unwrap_or("certs/cert.pem".to_string());
+    let key_file = config.get("TLS_KEY").unwrap_or("certs/key.pem".to_string());
+
+    let mut certs_file = BufReader::new(File::open(cert_file).expect("TLS: Could not open cert.pem"));
+    let mut key_file = BufReader::new(File::open(key_file).expect("TLS: Could not open key.pem"));
+
+    let tls_certs = rustls_pemfile::certs(&mut certs_file)
+        .collect::<Result<Vec<_>, _>>()
+        .expect("TLS: Could not process certificates");
+
+    let tls_key = rustls_pemfile::pkcs8_private_keys(&mut key_file)
+        .next()
+        .expect("TLS: Could not process private key")
+        .expect("TLS: No private key found");
+
+    let tls_config = rustls::ServerConfig::builder()
+        .with_no_client_auth()
+        .with_single_cert(tls_certs, rustls::pki_types::PrivateKeyDer::Pkcs8(tls_key))
+        .expect("TLS: Could not create TLS configuration");
    
     HttpServer::new(move || {
         debug!("Creating new server instance...");
@@ -149,7 +177,8 @@ async fn main() -> std::io::Result<()> {
         app.wrap(Logger::default())  
     })
         .on_connect(log_conn_info)
-        .bind(("0.0.0.0",port))?
+        // .bind(("0.0.0.0",port))?
+        .bind_rustls_0_23(("0.0.0.0",port),tls_config)?
         .run()
         .await
 }
