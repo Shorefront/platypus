@@ -36,6 +36,9 @@ use model::tmf::tmf648::config_tmf648;
 #[cfg(feature = "tmf674")]
 use model::tmf::tmf674::config_tmf674;
 
+#[cfg(feature = "metrics")]
+use common::metrics::config_metrics;
+
 use std::sync::Mutex;
 
 // SurrealDB
@@ -173,6 +176,12 @@ async fn main() -> std::io::Result<()> {
             {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
+            }
+
+            #[cfg(feature = "metrics")]
+            {
+                debug!("Adding module: Metrics");
+                app = app.configure(config_metrics);
             }
         app.wrap(Logger::default())  
     })
