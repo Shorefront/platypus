@@ -16,7 +16,7 @@ use std::io::BufReader;
 use std::fs::File;
 
 use actix_web::middleware::Logger;
-use actix_web::{get,web,App,HttpServer,HttpResponse,rt::net::TcpStream};
+use actix_web::{web,App,HttpServer,HttpResponse,rt::net::TcpStream};
 
 #[cfg(feature = "tmf620")]
 use model::tmf::tmf620::config_tmf620;
@@ -48,6 +48,8 @@ use common::persist::Persistence;
 // TMFLIB
 use common::config::Config;
 
+// use common::metrics::health_handler;
+
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
 pub struct QueryOptions {
@@ -68,10 +70,7 @@ fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
     }
 }
 
-use actix_web::{HttpRequest, Responder};
-
-#[get("/health")]
-async fn health_handler() -> impl Responder {
+async fn health() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
@@ -131,7 +130,7 @@ async fn main() -> std::io::Result<()> {
    
     let mut labels = HashMap::new();
     labels.insert("Application".to_string(), "Platypus".to_string());
-    let prom = actix_web_prometheus::PrometheusMetricsBuilder::new("api")
+    let prom = actix_web_prom::PrometheusMetricsBuilder::new("api")
         .endpoint("metrics")
         .const_labels(labels)
         .build()
@@ -195,8 +194,9 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
             }
+            
             app.wrap(prom.clone())
-            .service(health_handler)
+            .service(web::resource("/health").to(health))
             .wrap(Logger::default())
     })
         .on_connect(log_conn_info)
