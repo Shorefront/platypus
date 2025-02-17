@@ -11,6 +11,7 @@ mod template;
 mod common;
 
 use std::any::Any;
+use std::collections::HashMap;
 use std::io::BufReader;
 use std::fs::File;
 
@@ -38,6 +39,8 @@ use model::tmf::tmf674::config_tmf674;
 
 #[cfg(feature = "metrics")]
 use common::metrics::config_metrics;
+#[cfg(feature = "metrics")]
+use actix_web_prom::PrometheusMetricsBuilder;
 
 use std::sync::Mutex;
 
@@ -121,13 +124,22 @@ async fn main() -> std::io::Result<()> {
         .with_single_cert(tls_certs, rustls::pki_types::PrivateKeyDer::Pkcs8(tls_key))
         .expect("TLS: Could not create TLS configuration");
    
+    let mut labels = HashMap::new();
+    labels.insert("Application".to_string(), "Platypus".to_string());
+    let prom = actix_web_prom::PrometheusMetricsBuilder::new("api")
+        .endpoint("metrics")
+        .const_labels(labels)
+        .build()
+        .unwrap();
+   
     HttpServer::new(move || {
         debug!("Creating new server instance...");
+ 
         let mut app = App::new()
-            // Using the new configure() approach, we cannot pass persis in as
-            // configure() does not take additional arguments
-            .app_data(web::Data::new(Mutex::new(persist.clone())))
-            .app_data(web::Data::new(Mutex::new(config.clone())));
+                .app_data(web::Data::new(Mutex::new(persist.clone())))
+                .app_data(web::Data::new(Mutex::new(config.clone())))
+                .wrap(prom.clone())
+                .wrap(Logger::default());
 
             // New simple config functions.
             #[cfg(feature = "tmf620")] 
@@ -183,7 +195,7 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: Metrics");
                 app = app.configure(config_metrics);
             }
-        app.wrap(Logger::default())  
+            app
     })
         .on_connect(log_conn_info)
         // .bind(("0.0.0.0",port))?
