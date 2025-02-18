@@ -11,11 +11,12 @@ mod template;
 mod common;
 
 use std::any::Any;
+use std::collections::HashMap;
 use std::io::BufReader;
 use std::fs::File;
 
 use actix_web::middleware::Logger;
-use actix_web::{web,App,HttpServer,rt::net::TcpStream};
+use actix_web::{web,App,HttpServer,HttpResponse,rt::net::TcpStream};
 
 #[cfg(feature = "tmf620")]
 use model::tmf::tmf620::config_tmf620;
@@ -47,6 +48,8 @@ use common::persist::Persistence;
 // TMFLIB
 use common::config::Config;
 
+// use common::metrics::health_handler;
+
 /// Fields for filtering output
 #[derive(Clone, Debug, Deserialize)]
 pub struct QueryOptions {
@@ -65,6 +68,10 @@ fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
         let ttl = sock.ttl().ok();
         debug!("New Connection: {} {} {}",bind.to_string(),peer.to_string(),ttl.unwrap_or_default());
     }
+}
+
+async fn health() -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
 
 #[actix_web::main]
@@ -101,6 +108,9 @@ async fn main() -> std::io::Result<()> {
     let cert_file = config.get("TLS_CERT").unwrap_or("certs/cert.pem".to_string());
     let key_file = config.get("TLS_KEY").unwrap_or("certs/key.pem".to_string());
 
+    info!("Using certificate: {} ",cert_file);
+    info!("Using key: {} ",key_file);
+
     let mut certs_file = BufReader::new(File::open(cert_file).expect("TLS: Could not open cert.pem"));
     let mut key_file = BufReader::new(File::open(key_file).expect("TLS: Could not open key.pem"));
 
@@ -118,13 +128,23 @@ async fn main() -> std::io::Result<()> {
         .with_single_cert(tls_certs, rustls::pki_types::PrivateKeyDer::Pkcs8(tls_key))
         .expect("TLS: Could not create TLS configuration");
    
+    let mut labels = HashMap::new();
+    labels.insert("Application".to_string(), "Platypus".to_string());
+    let prom = actix_web_prom::PrometheusMetricsBuilder::new("api")
+        .endpoint("/metrics")
+        .const_labels(labels)
+        .build()
+        .unwrap();
+
+      
+   
     HttpServer::new(move || {
         debug!("Creating new server instance...");
+ 
         let mut app = App::new()
-            // Using the new configure() approach, we cannot pass persis in as
-            // configure() does not take additional arguments
-            .app_data(web::Data::new(Mutex::new(persist.clone())))
-            .app_data(web::Data::new(Mutex::new(config.clone())));
+                .app_data(web::Data::new(Mutex::new(persist.clone())))
+                .app_data(web::Data::new(Mutex::new(config.clone())));
+
 
             // New simple config functions.
             #[cfg(feature = "tmf620")] 
@@ -174,7 +194,11 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
             }
-        app.wrap(Logger::default())  
+            
+            app
+            .service(web::resource("/health").to(health))
+            .wrap(prom.clone())
+            .wrap(Logger::default())
     })
         .on_connect(log_conn_info)
         // .bind(("0.0.0.0",port))?

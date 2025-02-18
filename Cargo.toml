@@ -10,6 +10,7 @@ keywords = ["tmf"]
 [features]
 core = ["tmf620","tmf622","tmf629","tmf632","tmf633","tmf645","tmf648","tmf674"]
 events = []
+health = []
 composable = ["core"]
 tmf620 = ["tmflib/tmf620"]
 tmf622 = ["tmflib/tmf622"]
@@ -26,6 +27,7 @@ default = ["core","v4","events"]
 
 [dependencies]
 actix-web = { version = "4.9.0", features = ["rustls-0_23"]}
+actix-web-prom = { version = "0.9.0" }
 env_logger = "0.11.6"
 etag = "4.0.0"
 log = "0.4.25"
