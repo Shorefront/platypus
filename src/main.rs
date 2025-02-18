@@ -131,7 +131,7 @@ async fn main() -> std::io::Result<()> {
     let mut labels = HashMap::new();
     labels.insert("Application".to_string(), "Platypus".to_string());
     let prom = actix_web_prom::PrometheusMetricsBuilder::new("api")
-        .endpoint("metrics")
+        .endpoint("/metrics")
         .const_labels(labels)
         .build()
         .unwrap();
@@ -195,8 +195,9 @@ async fn main() -> std::io::Result<()> {
                 app =  app.configure(config_tmf674);
             }
             
-            app.wrap(prom.clone())
+            app
             .service(web::resource("/health").to(health))
+            .wrap(prom.clone())
             .wrap(Logger::default())
     })
         .on_connect(log_conn_info)
