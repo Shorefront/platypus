@@ -4,7 +4,7 @@
 use surrealdb::RecordId;
 use serde::{Deserialize, Serialize};
 
-use tmflib::HasId;
+use tmflib::{HasId,Uri};
 use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
@@ -110,15 +110,4 @@ pub struct CallBack {
     id : String,
     callback : Uri,
     query: Option<String>,
-}
-
-/// Geneate a TMF payload for storing in the database
-pub fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
-    TMF {
-        id : Some(Thing {
-            tb : T::get_class(),
-            id : item.get_id().into(),
-        }),
-        item,
-    }
 }

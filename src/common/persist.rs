@@ -7,6 +7,7 @@ use surrealdb::{RecordId, Surreal};
 use log::{info,debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+#[cfg(feature = "events")]
 use tmflib::common::event::Event;
 use tmflib::Uri;
 
@@ -33,7 +34,7 @@ pub struct NotificationEndpoint {
 
 #[derive(Clone,Debug)]
 pub struct Persistence {
-    pub db : Surreal<Db>,
+    pub db : Surreal<Any>,
     pub callback : Vec<NotificationEndpoint>,
 }
 
