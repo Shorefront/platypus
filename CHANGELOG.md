@@ -1,0 +1,262 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.7](https://github.com/rruckley/platypus/releases/tag/v0.1.7) - 2025-01-03
+
+### Fixed
+
+- fix conditional blocks
+- fix conflicts
+- fixed move
+- fix status code
+- fixes
+
+### Other
+
+- network db
+- DB upates
+- updates
+- Complete merge
+- more output
+- change port
+- use local surrealdb
+- conditional compile
+- update to avoid surrealdb
+- modules conditional
+- updates
+- updates
+- v5 support
+- push features to tmflib
+- updates
+- add missing ops
+- Updates
+- moved port
+- debug
+- Updates
+- Remove old 'use'
+- Remove old vec[]
+- conditionall configure tmf modules
+- Use fixed tmflib
+- Merge branch 'master' into HTTPHeaders-34
+- Clippy fix
+- clippy
+- persistence
+- persistence
+- implement persistence
+- local DB
+- shuffle
+- updates
+- tmf632 v5 support
+- cleanup
+- updates
+- handle no data
+- cleanup
+- deal with no data
+- add tmf674 web fns
+- additional headers
+- Add eTag dep
+- return correct status for failed GET
+- set persistence
+- use common render fn
+- use local db
+- change default port
+- conditional modules
+- more features
+- common render fn()
+- Handles use configure()
+- Merge branch 'master' into Refactor
+- Merge pull request [#33](https://github.com/rruckley/platypus/pull/33) from rruckley/ExternalDB-27
+- External DB
+- comment
+- remove dep
+- Merge branch 'master' into tmf632-basic
+- Merge branch 'master' into tmf632-basic
+- Fleshing out features
+- move behind feature flag
+- use full path
+- cleanup
+- cleanup
+- duplicate line
+- updates
+- Merge branch 'master' into feature-flags
+- Add test for database path environment variable
+- Add support for versioned ProductOrders and DB path configuration
+- new() for ComponentTemplate
+- updates
+- Create docker-image.yml
+- cleanup
+- add Dockerfile
+- Update main.rs
+- some updates.
+- updates
+- Generate code after generating id.
+- updates
+- add delete for catalog, category
+- add delete category,catalog
+- Correctly implement delete()
+- execute filter sql
+- collect child categories
+- revert
+- filter on name
+- cleanup
+- pass QueryOptions everywhere
+- imp limit, offset
+- pass QueryOptions everywhere
+- builder pattern fns
+- made private
+- pull tmflib from github
+- Create rust.yml
+- add limit into query object
+- field filtering
+- refactor
+- refactoring
+- cleanup
+- process field query
+- query with dynamic fields
+- struct to capture query string
+- debugging
+- process fields query string
+- version bump
+- TMFError
+- use new persistence layer
+- move fn to persistence
+- new persistence mod
+- version bump
+- use generic fn now.
+- generate id in generic
+- use more generic fn
+- new deps
+- impl patch
+- add generic for patch / delete
+- updated payload returned from generics
+- use new generic db fns
+- new generic fn for db
+- cleanup
+- new deps
+- switch to filedb
+- cleanup
+- use lastupdate trait
+- tmf conformance
+- cleanup
+- dep not needed
+- now option
+- spec list / get
+- spec list / get
+- new func
+- include seralize
+- vers bump
+- add patch,delete verbs
+- make pub
+- use config for port.
+- remove generic fn
+- cleanup
+- use individual / org
+- add clone / debug
+- attempt generic
+- includes
+- error from &str
+- new mod tmf632
+- use new trait
+- new module tmf632
+- use new TMF payload
+- vers bump
+- use new TMF payload
+- use new trait fn
+- update
+- Generic payload
+- Fixed derive
+- cleanup
+- updates
+- new tmf622 mod
+- use generic fn
+- generic add fn with traits
+- create catalog
+- Create catalog
+- Now use library error type
+- Fixed morphing of errors
+- log info
+- remove dbg
+- valid parent check
+- Enrich with sub_cats
+- Trying to get single record working
+- single get
+- query for single record.
+- Now to get cat
+- return json responses.
+- error can hold message
+- Improved response msg.
+- pass db by mutex
+- handle persistence
+- new example
+- link component to template
+- create component from template
+- Create offer from template
+- mew tmf620 mod
+- new tmf620 instance
+- new tmf mod
+- new tmf mod
+- always generate href for 'new'
+- create record.
+- added surrealdb
+- added customer
+- cleanup
+- template handlers
+- remove optionals
+- added name
+- cleanup
+- Add API
+- template is bundle
+- cleanup
+- provide into
+- use bundled_product_offering
+- change category when converting
+- more tests
+- conversion
+- use const category
+- with clone
+- const for categories
+- make public
+- add spec fn
+- change to builder fn
+- sample customer
+- updates
+- make work
+- make working
+- useful fields
+- formatting
+- updates
+- add into()
+- cleanup
+- Convert to CatRef
+- add categories
+- use categories
+- new deps
+- create sample objects
+- new
+- add components
+- new template
+- added serde
+- missing mod
+- added serde
+- added serde
+- use config
+- updates
+- common mods
+- reference tmflib
+- pull in tmflib
+- new mods
+- model mods
+- component mods
+- template mods
+- template modules
+- initial
+
+### Removed
+
+- removed old fn
