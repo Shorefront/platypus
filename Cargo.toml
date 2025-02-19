@@ -26,5 +26,5 @@ env_logger = "0.11"
 log = "0.4.21"
 serde = "1.0.202"
 serde_json = "1.0.117"
-surrealdb = {version = "1.5.0", features = ["kv-mem","kv-speedb"]}
+surrealdb = {version = "2.2.1"}
 tmflib = { git = "https://github.com/rruckley/tmflib.git"}

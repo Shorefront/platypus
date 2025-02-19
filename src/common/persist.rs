@@ -8,6 +8,7 @@ use log::{info,debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tmflib::common::event::Event;
+use tmflib::Uri;
 
 use crate::QueryOptions;
 use super::config::Config;
@@ -35,6 +36,8 @@ pub struct Persistence {
     pub db : Surreal<Db>,
     pub callback : Vec<NotificationEndpoint>,
 }
+
+impl Persistence {
     pub async fn new(config : &Config) -> Persistence {
         use surrealdb::engine::any;
 
@@ -58,13 +61,16 @@ pub struct Persistence {
         }).await
             .expect("Could not authenticate");
 
-        Persistence { db }
+        Persistence { 
+            db,
+            callback : vec![], 
+        }
     }
 
-    /// Geneate a TMF payload for storing in the database
+    fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
         TMF {
             id : (T::get_class(),item.get_id()).into(),
-            item,
+            item
         }
     }
 
@@ -266,7 +272,7 @@ pub struct Persistence {
             None => Err(PlatypusError::from("Issue Deleting object")),
         }
     }
-    
+
     #[cfg(feature = "events")]
     pub async fn store_tmf_event<T,U>(&self, event : Event<T, U>) -> Result<Event<T, U>,PlatypusError> 
     where 
