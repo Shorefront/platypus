@@ -4,3 +4,4 @@ pub mod config;
 pub mod error;
 pub mod persist;
 pub mod metrics;
+pub mod hub;
