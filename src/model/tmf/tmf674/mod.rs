@@ -27,7 +27,7 @@ use crate::model::tmf::{
 pub mod tmf674_geographic_site;
 
 /// Get a list
-#[get("tmf-api/geographicSiteManagement/v4/{object}")]
+#[get("/tmf-api/geographicSiteManagement/v4/{object}")]
 pub async fn tmf674_list_handler(
     path : web::Path<String>,
     query : web::Query<QueryOptions>,
