@@ -23,19 +23,9 @@ pub struct TMF<T : HasId> {
     pub item : T,
 }
 
-#[derive(Clone,Debug,Default,Deserialize,Serialize)]
-pub struct NotificationEndpoint {
-    id: String,
-    domain : String,
-    filter : Option<String>,
-    callback: Uri,
-    query: Option<String>,
-}
-
 #[derive(Clone,Debug)]
 pub struct Persistence {
     pub db : Surreal<Any>,
-    pub callback : Vec<NotificationEndpoint>,
 }
 
 impl Persistence {
@@ -64,7 +54,6 @@ impl Persistence {
 
         Persistence { 
             db,
-            callback : vec![], 
         }
     }
 
@@ -219,6 +208,24 @@ impl Persistence {
             None => {
                 Err(PlatypusError::from("No results found."))
             }
+        }
+    }
+
+    pub async fn create_hub_item<T : Serialize + Clone + DeserializeOwned + 'static>(&self, item : T) -> Result<T,PlatypusError> {
+       
+        let result : Option<T> = self.db.create("hub")
+            .content(item).await?;
+        match result {
+            Some(r) => Ok(r),
+            None => Err(PlatypusError::from("Could not create object"))
+        }
+    }
+
+    pub async fn delete_hub_item<T : Serialize + Clone + DeserializeOwned + 'static>(&self, id : String) -> Result<T,PlatypusError> {
+        let result : Option<T> = self.db.delete(("hub",id)).await?;
+        match result {
+            Some(r) => Ok(r),
+            None => Err(PlatypusError::from("Issue Deleting object")),
         }
     }
 
