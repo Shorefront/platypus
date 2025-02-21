@@ -315,7 +315,9 @@ mod tests {
 
     #[test]
     fn test_env_variable() {
-        std::env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
+        unsafe {
+            std::env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
+        }
 
         let db_path = std::env::var("PLATYPUS_DB_PATH")
             .unwrap_or_else(|_| String::from("/home/rruckley/build/platypus/tmf.db"));
