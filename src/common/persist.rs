@@ -9,7 +9,6 @@ use log::{info,debug};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 #[cfg(feature = "events")]
 use tmflib::common::event::Event;
-use tmflib::Uri;
 
 use crate::QueryOptions;
 use super::config::Config;
