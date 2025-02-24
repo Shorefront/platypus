@@ -11,7 +11,7 @@ use tmflib::Uri;
 
 #[derive(Clone,Debug,Default,Deserialize,Serialize)]
 pub struct NotificationEndpoint {
-    id: String,
+    id: Option<String>,
     domain : String,
     filter : Option<String>,
     callback: Uri,
@@ -42,13 +42,16 @@ impl HubManagement {
     }
 }
 
-pub fn render_register_hub<T : Serialize>(output : Result<T,PlatypusError>) -> HttpResponse {
+pub fn render_register_hub(output : Result<NotificationEndpoint,PlatypusError>) -> HttpResponse {
     match output {
         Ok(b) => {
-            HttpResponse::Created().json(b)
+            HttpResponse::Created()
+                .append_header(("Location:",format!("/tmf-api/hub/{}",b.id.clone().unwrap())))
+                .append_header(("Content-Type","application/json"))
+                .json(b.clone())
         }
         Err(e) => {
-            error!("Could not delete: {e}");
+            error!("Could not create: {e}");
             HttpResponse::Conflict().json(e)
         },     
     }
@@ -75,12 +78,17 @@ pub async fn hub_handle_post(
 
     let json = String::from_utf8(raw.to_vec()).unwrap();
 
-    let end_point : NotificationEndpoint = match serde_json::from_str(&json) {
+    let mut end_point : NotificationEndpoint = match serde_json::from_str(&json) {
         Ok(e) => e,
         Err(e) => {
             return HttpResponse::BadRequest().json(e.to_string());
         }
     };
+    if end_point.id.is_none() {
+        let id = uuid::Uuid::new_v4();
+        let (short,_) = tmflib::gen_code(format!("{}:{}","HUB",end_point.domain), id.to_string(), None, Some(String::from("HUB")), None);
+        end_point.id = Some(short);
+    }
     let response = hub.register_hub(end_point).await;
     render_register_hub(response)
 }

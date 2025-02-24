@@ -224,7 +224,7 @@ impl Persistence {
         let result : Option<T> = self.db.delete(("hub",id)).await?;
         match result {
             Some(r) => Ok(r),
-            None => Err(PlatypusError::from("Issue Deleting object")),
+            None => Err(PlatypusError::from("Could not delet hub entry")),
         }
     }
 
