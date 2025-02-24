@@ -106,9 +106,3 @@ pub struct TMF<T : HasId> {
     id : RecordId,
     pub item : T,
 }
-
-pub struct CallBack {
-    id : String,
-    callback : Uri,
-    query: Option<String>,
-}
