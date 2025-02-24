@@ -9,6 +9,8 @@ RUN apt update \
 
 RUN cargo build --release
 
+FROM debian:bullseye-slim
+
 RUN apt update \
     && apt install --yes ca-certificates gettext-base libssl1.1 --no-install-recommends \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
