@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use log::error;
 use serde::{Deserialize,Serialize};
 use tmflib::Uri;
+use crate::common::persist::TMF;
 
 
 #[derive(Clone,Debug,Default,Deserialize,Serialize)]
@@ -34,7 +35,16 @@ impl HubManagement {
     }
 
     pub async fn register_hub(&mut self, hub : NotificationEndpoint) -> Result<NotificationEndpoint,PlatypusError> {
-        self.persist.as_mut().unwrap().create_hub_item(hub.clone()).await
+        let payload = TMF {
+            id : ("hub",hub.id.clone().unwrap()).into(),
+            item : hub.clone(),
+        };
+        self
+            .persist
+            .as_mut()
+            .unwrap()
+            .create_hub_item(payload).await
+            .map(|r| r.item)
     }   
 
     pub async fn unregister_hub(&mut self, hub_id : String) -> Result<NotificationEndpoint,PlatypusError> {
@@ -46,7 +56,7 @@ pub fn render_register_hub(output : Result<NotificationEndpoint,PlatypusError>) 
     match output {
         Ok(b) => {
             HttpResponse::Created()
-                .append_header(("Location:",format!("/tmf-api/hub/{}",b.id.clone().unwrap())))
+                .append_header(("Location",format!("/tmf-api/hub/{}",b.id.clone().unwrap())))
                 .append_header(("Content-Type","application/json"))
                 .json(b.clone())
         }
