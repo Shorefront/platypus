@@ -1,12 +1,15 @@
 //! Party Management Module
 
-use tmflib::{tmf632::individual::Individual, HasId};
+use tmflib::common::event::EventPayload;
+use tmflib::tmf632::individual_v4::IndividualEventType;
+use tmflib::tmf632::organization_v4::{Organization, OrganizationEventType};
+#[cfg(all(feature = "tmf632",feature="v4"))]
+use tmflib::tmf632::individual_v4::Individual;
+#[cfg(all(feature = "tmf632",feature="v5"))]
+use tmflib::tmf632::individual_v5::Individual;
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
-
-use crate::model::tmf::{tmf_payload,TMF};
-
-use log::{debug,error};
+use log::{error,debug};
 
 #[derive(Clone, Debug)]
 pub struct TMF632PartyManagement {
@@ -23,44 +26,83 @@ impl TMF632PartyManagement {
     pub fn persist(&mut self, persist: Persistence) {
         self.persist = Some(persist);
     }
-    fn party_exists(&self, party_id : String) -> Result<String,PlatypusError> {
-        // Confirm if the party exists in the DB
-        Ok(party_id)
-    }
-    fn validate_individual(&self, individual : &Individual) -> Result<bool,PlatypusError> {
-        let mut err_count = 0;
-        if individual.related_party.is_some() {
-            // There is some here, lets iterate and validate each related party
-            individual.related_party.as_ref().unwrap().into_iter().for_each(|rp| {
-                if self.party_exists(rp.id.clone()).is_err() {
-                    err_count += 1;
-                }
-            });
-        }
-        if err_count > 0 {
-            return Err(PlatypusError::from("TMF632: Invalid related party for individual"));
-        }
-        Ok(true) 
-    }
-    pub async fn add_individual(&mut self, individual : Individual) -> Result<Individual,PlatypusError> {
-        match self.validate_individual(&individual) {
-            Ok(_) => debug!("Individual validated"),
-            Err(e) => {
-                error!("Individual failed validation: {}",e);
-                return Err(e);
+
+    pub async fn add_individual(&self, individual : Individual) -> Result<Vec<Individual>,PlatypusError> {
+        let result = self.persist.as_ref().unwrap().create_tmf_item(individual.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            let event = individual.to_event(IndividualEventType::IndividualCreateEvent);
+            match self.persist.as_ref().unwrap().store_tmf_event(event).await {
+                Ok(r) => debug!("Event created: Individual: {}",r.title.unwrap_or_default()),
+                Err(e) => error!("Event creation failed: {}",e),
             }
-        };
-        let payload = tmf_payload(individual);
-        let insert_records : Vec<TMF<Individual>> = self.persist.as_mut().unwrap().db.create(Individual::get_class()).content(payload).await?;
-        let record = insert_records.first().unwrap();
-        Ok(record.item.clone())
+        }
+        result
     }
 
-    pub async fn get_individuals(&mut self,query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
-        self.persist.as_mut().unwrap().get_items(query_opts).await
+    pub async fn get_individuals(&self,query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_items(query_opts).await
     }
 
-    pub async fn get_individual(&mut self, id : String, query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
-        self.persist.as_mut().unwrap().get_item(id,query_opts).await
+    pub async fn get_individual(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Individual>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_item(id,query_opts).await
+    }
+
+    pub async fn update_individual(&self, id : String, patch : Individual) -> Result<Vec<Individual>,PlatypusError> {
+        let result = self.persist.as_ref().unwrap().patch_tmf_item(id, patch.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            // Determine if the status is being updated to set the correct event type
+            // TODO: No status field present to check
+            let event = patch.to_event(IndividualEventType::IndividualAttributeValueChangeEvent);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+        }
+        result
+    }
+
+    pub async fn delete_individual(&mut self, id : String) -> Result<Individual,PlatypusError> {
+        let result = self.persist.as_mut().unwrap().delete_tmf_item::<Individual>(id).await;
+        #[cfg(feature = "events")]
+        {
+            if let Ok(d) = result.clone() {
+                let event = d.to_event(IndividualEventType::IndividualDeleteEvent);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+            }
+        }
+        result
+    }
+
+    pub async fn add_organization(&self, organization : Organization) -> Result<Vec<Organization>,PlatypusError> {
+        let result = self.persist.as_ref().unwrap().create_tmf_item(organization.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            let event = organization.to_event(OrganizationEventType::OrganizationCreateEvent);
+            let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+        }
+        result
+    }
+
+    pub async fn get_organizations(&self, query_opts : QueryOptions) -> Result<Vec<Organization>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_items(query_opts).await
+    }
+
+    pub async fn get_organization(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Organization>,PlatypusError> {
+        self.persist.as_ref().unwrap().get_item(id,query_opts).await
+    }
+
+    pub async fn update_organization(&self, id : String, patch : Organization) -> Result<Vec<Organization>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    }
+
+    pub async fn delete_organization(&self, id : String) -> Result<Organization,PlatypusError> {
+        let result = self.persist.as_ref().unwrap().delete_tmf_item::<Organization>(id).await;
+        #[cfg(feature = "events")]
+        {
+            if let Ok(d) = result.clone() {
+                let event = d.to_event(OrganizationEventType::OrganizationDeleteEvent);
+                let _ = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+            }
+        }
+        result
     }
 }

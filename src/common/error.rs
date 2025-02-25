@@ -2,7 +2,7 @@
 //! 
 use serde::{Deserialize,Serialize};
 
-#[derive(Deserialize,Serialize)]
+#[derive(Clone, Deserialize,Serialize)]
 pub struct PlatypusError {
    pub message : String,
 }
@@ -46,5 +46,11 @@ impl From<PlatypusError> for TMFError {
          status: None, 
          reference_error: None 
       }
+   }
+}
+
+impl From<serde_json::Error> for PlatypusError {
+   fn from(value: serde_json::Error) -> Self {
+       PlatypusError { message: value.to_string() }
    }
 }

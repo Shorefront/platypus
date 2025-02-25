@@ -9,11 +9,11 @@ use tmflib::tmf620::category::Category;
 use tmflib::tmf620::product_specification::ProductSpecification;
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
+use crate::common::hub::{create_hub, render_register_hub, HubManagement};
 use tmflib::{
     HasId,
     HasLastUpdate
 };
-use log::error;
 
 use crate::common::error::PlatypusError;
 use crate::common::persist::Persistence;
@@ -23,6 +23,14 @@ use crate::QueryOptions;
 pub mod tmf620_catalog_management;
 
 // Place actix_web config functions here
+
+use crate::model::tmf::{
+    render_list_output,
+    render_get_output,
+    render_post_output,
+    render_patch_output,
+    render_delete_output
+};
 
 /// Get a list
 #[get("/tmf-api/productCatalogManagement/v4/{object}")]
@@ -36,55 +44,35 @@ pub async fn tmf620_list_handler(
     let query_opts = QueryOptions::from(query.into_inner());
     let persist = persist.lock().unwrap();
     // Now have to pass persistence into tmf module here
-    tmf620.lock().unwrap().persist(persist.clone());
+    let mut tmf620 = tmf620.lock().unwrap();
+    tmf620.persist(persist.clone());
 
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalogs(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_catalogs(query_opts).await;
+            render_list_output(output)
         },
         "category" => {
-            let output = tmf620.lock().unwrap().get_categories(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_categories(query_opts).await;
+            render_list_output(output)
         },
         "productSpecification" => {
-            let output = tmf620.lock().unwrap().get_specifications(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_specifications(query_opts).await;
+            render_list_output(output)
         },
         "productOffering" => {
-            let output = tmf620.lock().unwrap().get_offers(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_offers(query_opts).await;
+            render_list_output(output)
         }
         "productOfferingPrice" => {
-            let output = tmf620.lock().unwrap().get_prices(query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }    
+            let output = tmf620.get_prices(query_opts).await;
+            render_list_output(output)   
         },
         "importJob" => {
             HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
         },
         "exportJob" => {
             HttpResponse::BadRequest().json(PlatypusError::from("exportJob: Not implemented"))
-        },
-        "hub" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("Hub: Not implemented"))
-        },
-        "listener" => {
-            HttpResponse::BadRequest().json(PlatypusError::from("listener: Not implemented"))
         },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Bad Object: {object}")),
     }
@@ -95,46 +83,34 @@ pub async fn tmf620_list_handler(
 pub async fn tmf620_get_handler(
     path : web::Path<(String,String)>,
     tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
     query : web::Query<QueryOptions>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
     let query_opts = query.into_inner();
-    
+    let persist = persist.lock().unwrap();
+    let mut tmf620 = tmf620.lock().unwrap();
+    tmf620.persist(persist.clone());
     match object.as_str() {
         "catalog" => {
-            let output = tmf620.lock().unwrap().get_catalog(id,query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_catalog(id,query_opts).await;
+            render_get_output(output)
         },
         "category" => {
-            let output = tmf620.lock().unwrap().get_category(id,query_opts).await;
-            match output {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),
-            }
+            let output = tmf620.get_category(id,query_opts).await;
+            render_get_output(output)
         },
         "productSpecification" => {
-            let data = tmf620.lock().unwrap().get_specification(id,query_opts).await;
-            match data {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),    
-            }
+            let output = tmf620.get_specification(id,query_opts).await;
+            render_get_output(output)
         },
         "productOffering" => {
-            let data = tmf620.lock().unwrap().get_offer(id,query_opts).await;
-            match data {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),    
-            }
+            let output = tmf620.get_offer(id,query_opts).await;
+            render_get_output(output)
         },
         "productOfferingPrice" => {
-            let data = tmf620.lock().unwrap().get_price(id,query_opts).await;
-            match data {
-                Ok(o) => HttpResponse::Ok().json(o),
-                Err(e) => HttpResponse::InternalServerError().json(e),    
-            }
+            let output = tmf620.get_price(id,query_opts).await;
+            render_get_output(output)
         },
         "importJob" => {
             HttpResponse::BadRequest().json(PlatypusError::from("importJob: Not implemented"))
@@ -150,38 +126,40 @@ pub async fn tmf620_get_handler(
 #[patch("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_patch_handler(
     path : web::Path<(String,String)>,
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
     raw: web::Bytes,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
 ) -> impl Responder {
     let (object,id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
+    let mut tmf620 = tmf620.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf620.persist(persist.clone());
     match object.as_str() {
+        "category" => {
+            let category : Category = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_category(id, category).await;
+            render_patch_output(result)
+        },
+        "catalog" => {
+            let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_catalog(id, catalog).await;
+            render_patch_output(result)
+        },
         "productSpecification" => {
-            match tmf620.lock().unwrap().patch_specification(id,json).await {
-                Ok(r) => HttpResponse::Ok().json(r),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest().json(e)
-                },
-            }
+            let specification : ProductSpecification = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_specification(id, specification).await;
+            render_patch_output(result)
         },
         "productOffering" => {
-            match tmf620.lock().unwrap().patch_offering(id,json).await {
-                Ok(r) => HttpResponse::Ok().json(r),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
-                },
-            }
+            let offering : ProductOffering = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_offering(id, offering).await;
+            render_patch_output(result)
         },
         "productOfferingPrice"  => {
-            match tmf620.lock().unwrap().patch_price(id,json).await {
-                Ok(r) => HttpResponse::Ok().json(r),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object"))
-                },
-            }
+            let price : ProductOfferingPrice = serde_json::from_str(json.as_str()).unwrap();
+            let result = tmf620.patch_price(id, price).await;
+            render_patch_output(result)
         },
         _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}"))
     } 
@@ -207,21 +185,13 @@ pub async fn tmf620_post_handler(
         "category" => {
             let category : Category = serde_json::from_str(json.as_str()).unwrap();
             let result = tmf620.add_category(category).await;
-            match result {
-                Ok(r) => {
-                    //let json = serde_json::to_string(
-                    let item = r.first().unwrap().clone();
-                    HttpResponse::Created().json(item)
-                },
-                Err(e) => HttpResponse::BadRequest().json(e),
-            }
+            render_post_output(result)
         },
         "catalog" => {
             let catalog : Catalog = serde_json::from_str(json.as_str()).unwrap();
             let result = tmf620.add_catalog(catalog).await;
             match result {
                 Ok(r) => {
-                    //let json = serde_json::to_string(
                     let item = r.first().unwrap().clone();
                     HttpResponse::Created().json(item)
                 },
@@ -235,7 +205,6 @@ pub async fn tmf620_post_handler(
             let result = tmf620.add_specification(specification).await;
             match result {
                 Ok(r) => {
-                    //let json = serde_json::to_string(
                     let item = r.first().unwrap().clone();
                     HttpResponse::Created().json(item)
                 },
@@ -275,7 +244,12 @@ pub async fn tmf620_post_handler(
                 },
                 Err(e) => HttpResponse::BadGateway().json(e),
             }
-        }
+        },
+        "hub" => {
+            let mut hub = HubManagement::new(Some(persist.clone()));  
+            let result = create_hub(&mut hub,json).await;
+            render_register_hub(result)
+        },
         _ => {
             HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object: {object}"))
         }
@@ -286,56 +260,35 @@ pub async fn tmf620_post_handler(
 #[delete("/tmf-api/productCatalogManagement/v4/{object}/{id}")]
 pub async fn tmf620_delete_handler(
     path : web::Path<(String,String)>,
-    tmf620: web::Data<Mutex<TMF620CatalogManagement>>
+    tmf620: web::Data<Mutex<TMF620CatalogManagement>>,
+    persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object,id) = path.into_inner();
+    let mut tmf620 = tmf620.lock().unwrap();
+    let persist = persist.lock().unwrap();
+    tmf620.persist(persist.clone());
     match object.as_str() {
         "catalog" => {
-            match tmf620.lock().unwrap().delete_catalog(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },     
-            }    
+            let output = tmf620.delete_catalog(id).await;
+            render_delete_output(output) 
         },
         "category" => {
-            match tmf620.lock().unwrap().delete_category(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },     
-            }    
+            let output= tmf620.delete_category(id).await;
+            render_delete_output(output)  
         },
         "productSpecification" => {
-            match tmf620.lock().unwrap().delete_specification(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },
-            }
+            let output = tmf620.delete_specification(id).await;
+            render_delete_output(output)
         },
         "productOffering" => {
-            match tmf620.lock().unwrap().delete_offering(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },
-            }
+            let output = tmf620.delete_offering(id).await;
+            render_delete_output(output)
         },
         "productOfferingPrice"  => {
-            match tmf620.lock().unwrap().delete_price(id).await {
-                Ok(_b) => HttpResponse::NoContent(),
-                Err(e) => {
-                    error!("Could not delete: {e}");
-                    HttpResponse::BadRequest()
-                },
-            }
+            let result = tmf620.delete_price(id).await;
+            render_delete_output(result)
         },
-        _ => HttpResponse::BadRequest(),
+        _ => HttpResponse::BadRequest().finish(),
     }  
 }
 

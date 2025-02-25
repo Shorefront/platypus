@@ -1,7 +1,8 @@
 //! TMF620 Catalog Management Module
 
-use tmflib::tmf620::category::{Category, CategoryRef};
-use tmflib::tmf620::catalog::Catalog;
+use tmflib::common::event::EventPayload;
+use tmflib::tmf620::category::Category;
+use tmflib::tmf620::catalog::{Catalog,CatalogEventType};
 use tmflib::tmf620::product_offering::ProductOffering;
 use tmflib::tmf620::product_offering_price::ProductOfferingPrice;
 use tmflib::tmf620::product_specification::ProductSpecification;
@@ -9,8 +10,6 @@ use tmflib::tmf620::product_specification::ProductSpecification;
 use crate::QueryOptions;
 
 use serde::{Deserialize,Serialize};
-
-use log::error;
 
 use surrealdb::sql::Thing;
 
@@ -22,10 +21,6 @@ pub struct TMF620CatalogManagement {
     // Use of vectors here is very simplistic, ideally need a hash.
     //db : Surreal<Db>,
     persist : Option<Persistence>,
-    pub categories: Vec<Category>,
-    pub catalogs: Vec<Catalog>,
-    pub offers: Vec<ProductOffering>,
-    pub specifications: Vec<ProductSpecification>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -40,10 +35,6 @@ impl TMF620CatalogManagement
     pub fn new(persist : Option<Persistence>) -> TMF620CatalogManagement {
         TMF620CatalogManagement { 
             persist,
-            categories: vec![], 
-            catalogs: vec![],
-            offers: vec![],
-            specifications: vec![],
         }
     }
 
@@ -52,46 +43,37 @@ impl TMF620CatalogManagement
     }
 
     pub async fn add_catalog(&mut self, catalog : Catalog) -> Result<Vec<Catalog>,PlatypusError> {
-        self.persist.as_mut().unwrap().create_tmf_item(catalog).await
+        let result = self.persist.as_mut().unwrap().create_tmf_item_lastupdate(catalog.clone()).await;
+        #[cfg(feature = "events")]
+        {
+            let event = catalog.to_event(CatalogEventType::CatalogCreateEvent);
+            let _new_event = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+        }
+        result
     }
 
     pub async fn add_specification(&mut self, mut specification: ProductSpecification) -> Result<Vec<ProductSpecification>,PlatypusError> {
         // New record, needs appropriate status
         specification.status("New");
-        self.persist.as_mut().unwrap().create_tmf_item(specification).await
+        self.persist.as_mut().unwrap().create_tmf_item_lastupdate(specification).await
     }
 
     pub async fn add_offering(&mut self, mut offering : ProductOffering) -> Result<Vec<ProductOffering>,PlatypusError> {
         offering.status("New");
-        self.persist.as_mut().unwrap().create_tmf_item(offering).await
+        self.persist.as_mut().unwrap().create_tmf_item_lastupdate(offering).await
     }
 
     pub async fn add_price(&mut self, price: ProductOfferingPrice) -> Result<Vec<ProductOfferingPrice>,PlatypusError> {
-        self.persist.as_mut().unwrap().create_tmf_item(price).await
+        self.persist.as_mut().unwrap().create_tmf_item_lastupdate(price).await
     }
 
     pub async fn add_category(&mut self, mut category : Category) -> Result<Vec<Category>,PlatypusError> {
-        
-        if !category.root() && category.parent_id.is_some() {
-            let parent_id = category.parent_id.as_ref().unwrap().clone();
-            // Need to check if parentId is pointing to a valid parent
-            let parent_query = format!("SELECT * FROM category:{}",parent_id);
-            let mut parent_resp = self.persist.as_mut().unwrap().db.query(parent_query).await?;
-            let parent : Vec<CategoryRecord> = parent_resp.take(0).unwrap();
-            if parent.len() == 0 {
-                // Throw error, parent not found
-                let msg = format!("ParentId {} not found for child {}",&parent_id,category.id.clone().unwrap());
-                error!("add_category: {msg}");
-                return Err(PlatypusError { message: msg, })
-            }
-        }
-
-        // Simiarly, if flagged as root, cannot also have parent_id
+        // If flagged as root, cannot also have parent_id
         if category.root() {
             category.parent_id = None;
         }
 
-        self.persist.as_mut().unwrap().create_tmf_item(category).await
+        self.persist.as_mut().unwrap().create_tmf_item_lastupdate(category).await
     }
 
     pub async fn get_catalogs(&self, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError> {
@@ -128,58 +110,60 @@ impl TMF620CatalogManagement
         self.persist.as_ref().unwrap().get_item(id,query_opts).await
     }
 
-    pub async fn get_child_category(&self, parent_id : String, query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
-        // Look for categories with common parent_id
-        self.persist.as_ref().unwrap().get_items_filter(format!("item.parent_id = {}",parent_id), query_opts).await
-    }
-
     pub async fn get_category(&self,id : String,query_opts : QueryOptions) -> Result<Vec<Category>,PlatypusError> {
-        let result : Vec<Category> = self.persist.as_ref().unwrap().get_item(id,query_opts.clone()).await?;
-        let mut first = result.first().as_mut().unwrap().clone();
-        let parent_id = first.id.clone().unwrap();
-        let children = self.get_child_category(parent_id, query_opts).await?;
-        // Map through children converting to CategoryRef and appending onto cat
-        let mut kids : Vec<CategoryRef> = children.into_iter().map(|c| {
-            CategoryRef::from(&c)
-        }).collect();
-        first.sub_category.as_mut().unwrap().append(&mut kids);
-        
-        Ok(vec![first.clone()])
+        self.persist.as_ref().unwrap().get_item(id, query_opts).await
     }
 
     pub async fn get_catalog(&self, id : String, query_opts : QueryOptions) -> Result<Vec<Catalog>,PlatypusError>  {
         self.persist.as_ref().unwrap().get_item(id,query_opts).await
     }
-    
-    pub async fn patch_specification(&self, id : String, patch : String) -> Result<Vec<ProductSpecification>,PlatypusError> {
-        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+
+    pub async fn patch_category(&self, id : String, patch : Category) -> Result<Vec<Category>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item_lastupdate(id, patch).await
     }
 
-    pub async fn patch_offering(&self, id : String, patch : String) -> Result<Vec<ProductOffering>, PlatypusError> {
-        self.persist.as_ref().unwrap().patch_tmf_item(id, patch).await
+    pub async fn patch_catalog(&self, id : String, patch : Catalog) -> Result<Vec<Catalog>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item_lastupdate(id, patch).await
     }
     
-    pub async fn patch_price(&self, id : String, patch : String) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
-        self.persist.as_ref().unwrap().patch_tmf_item(id,patch).await
+    pub async fn patch_specification(&self, id : String, patch : ProductSpecification) -> Result<Vec<ProductSpecification>,PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item_lastupdate(id, patch).await
     }
 
-    pub async fn delete_category(&self, id : String) -> Result<bool, PlatypusError> {
+    pub async fn patch_offering(&self, id : String, patch : ProductOffering) -> Result<Vec<ProductOffering>, PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item_lastupdate(id, patch).await
+    }
+    
+    pub async fn patch_price(&self, id : String, patch : ProductOfferingPrice) -> Result<Vec<ProductOfferingPrice>, PlatypusError> {
+        self.persist.as_ref().unwrap().patch_tmf_item_lastupdate(id,patch).await
+    }
+
+    pub async fn delete_category(&self, id : String) -> Result<Category, PlatypusError> {
         self.persist.as_ref().unwrap().delete_tmf_item::<Category>(id).await
     }
 
-    pub async fn delete_catalog(&self, id : String) -> Result<bool, PlatypusError> {
-        self.persist.as_ref().unwrap().delete_tmf_item::<Catalog>(id).await
+    pub async fn delete_catalog(&self, id : String) -> Result<Catalog, PlatypusError> {
+        let result = self.persist.as_ref().unwrap().delete_tmf_item::<Catalog>(id).await;
+        #[cfg(feature = "events")]
+        {
+            if result.is_ok() {
+                let catalog = result.as_ref().ok().unwrap();
+                let event = catalog.to_event(CatalogEventType::CatalogDeleteEvent);
+                let _new_event = self.persist.as_ref().unwrap().store_tmf_event(event).await?;
+            }
+        }
+        result
     }
 
-    pub async fn delete_specification(&self, id : String) -> Result<bool,PlatypusError> {
+    pub async fn delete_specification(&self, id : String) -> Result<ProductSpecification,PlatypusError> {
         self.persist.as_ref().unwrap().delete_tmf_item::<ProductSpecification>(id).await
     }
 
-    pub async fn delete_offering(&self, id : String) -> Result<bool, PlatypusError> {
+    pub async fn delete_offering(&self, id : String) -> Result<ProductOffering, PlatypusError> {
         self.persist.as_ref().unwrap().delete_tmf_item::<ProductOffering>(id).await
     }
     
-    pub async fn delete_price(&self, id : String) -> Result<bool, PlatypusError> {
+    pub async fn delete_price(&self, id : String) -> Result<ProductOfferingPrice, PlatypusError> {
         self.persist.as_ref().unwrap().delete_tmf_item::<ProductOfferingPrice>(id).await
     }
 }
