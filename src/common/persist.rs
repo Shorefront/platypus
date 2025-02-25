@@ -221,9 +221,9 @@ impl Persistence {
     }
 
     pub async fn delete_hub_item<T : Serialize + Clone + DeserializeOwned + 'static>(&self, id : String) -> Result<T,PlatypusError> {
-        let result : Option<T> = self.db.delete(("hub",id)).await?;
+        let result : Option<TMF<T>> = self.db.delete(("hub",id)).await?;
         match result {
-            Some(r) => Ok(r),
+            Some(r) => Ok(r.item),
             None => Err(PlatypusError::from("Could not delet hub entry")),
         }
     }
