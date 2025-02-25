@@ -7,6 +7,7 @@ use surrealdb::{RecordId, Surreal};
 use log::{info,debug};
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+#[cfg(feature = "events")]
 use tmflib::common::event::Event;
 
 use crate::QueryOptions;
@@ -16,8 +17,8 @@ use tmflib::{HasId, HasLastUpdate};
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TMF<T : HasId> {
-    id : RecordId,
+pub struct TMF<T> {
+    pub id : RecordId,
     pub item : T,
 }
 
@@ -50,16 +51,15 @@ impl Persistence {
         }).await
             .expect("Could not authenticate");
 
-        Persistence { db }
+        Persistence { 
+            db,
+        }
     }
-}
 
-impl Persistence {
-    /// Geneate a TMF payload for storing in the database
     fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {
         TMF {
             id : (T::get_class(),item.get_id()).into(),
-            item,
+            item
         }
     }
 
@@ -210,6 +210,24 @@ impl Persistence {
         }
     }
 
+    pub async fn create_hub_item<T : Serialize + Clone + DeserializeOwned + 'static>(&self, item : T) -> Result<T,PlatypusError> {
+       
+        let result : Option<T> = self.db.create("hub")
+            .content(item).await?;
+        match result {
+            Some(r) => Ok(r),
+            None => Err(PlatypusError::from("Could not create object"))
+        }
+    }
+
+    pub async fn delete_hub_item<T : Serialize + Clone + DeserializeOwned + 'static>(&self, id : String) -> Result<T,PlatypusError> {
+        let result : Option<TMF<T>> = self.db.delete(("hub",id)).await?;
+        match result {
+            Some(r) => Ok(r.item),
+            None => Err(PlatypusError::from("Could not delet hub entry")),
+        }
+    }
+
     /// Generate function to store into a db.
     pub async fn create_tmf_item<'a, T : HasId + Serialize + Clone + DeserializeOwned + 'static>(&self, mut item : T) -> Result<Vec<T>,PlatypusError> {
         // let class = T::get_class();
@@ -261,6 +279,7 @@ impl Persistence {
             None => Err(PlatypusError::from("Issue Deleting object")),
         }
     }
+
     #[cfg(feature = "events")]
     pub async fn store_tmf_event<T,U>(&self, event : Event<T, U>) -> Result<Event<T, U>,PlatypusError> 
     where 
@@ -295,7 +314,9 @@ mod tests {
 
     #[test]
     fn test_env_variable() {
-        std::env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
+        unsafe {
+            std::env::set_var("PLATYPUS_DB_PATH", "/test/db/path");
+        }
 
         let db_path = std::env::var("PLATYPUS_DB_PATH")
             .unwrap_or_else(|_| String::from("/home/rruckley/build/platypus/tmf.db"));

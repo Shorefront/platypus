@@ -1,6 +1,7 @@
 # Platypus
 
 ![Cargo Build](https://github.com/rruckley/platypus/actions/workflows/rust.yml/badge.svg)
+[![Docker Image CI](https://github.com/Shorefront/platypus/actions/workflows/docker-image.yml/badge.svg)](https://github.com/Shorefront/platypus/actions/workflows/docker-image.yml)
 
 ## Open Source Telco Platform
 

@@ -194,6 +194,11 @@ async fn main() -> std::io::Result<()> {
                 debug!("Adding module: TMF674");
                 app =  app.configure(config_tmf674);
             }
+            #[cfg(feature = "events")]
+            {
+                debug!("Adding module: Events");
+                app = app.configure(common::hub::config_hub);
+            }
             
             app
             .service(web::resource("/health").to(health))
