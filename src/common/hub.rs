@@ -91,10 +91,16 @@ pub async fn hub_handle_post(
 
     let json = String::from_utf8(raw.to_vec()).unwrap();
 
+
+    let result = create_hub(&mut hub.clone(),json).await;
+    render_register_hub(result)
+}
+
+pub async fn create_hub(hub : &mut HubManagement,json : String) -> Result<NotificationEndpoint,PlatypusError> {
     let mut end_point : NotificationEndpoint = match serde_json::from_str(&json) {
         Ok(e) => e,
         Err(e) => {
-            return HttpResponse::BadRequest().json(e.to_string());
+            return Err(PlatypusError::from(e));
         }
     };
     if end_point.id.is_none() {
@@ -102,8 +108,7 @@ pub async fn hub_handle_post(
         let (short,_) = tmflib::gen_code(format!("{}:{}","H-",end_point.domain), id.to_string(), None, Some(String::from("HUB")), None);
         end_point.id = Some(short);
     }
-    let response = hub.register_hub(end_point).await;
-    render_register_hub(response)
+    hub.register_hub(end_point).await
 }
 
 #[delete("/tmf-api/hub/{hub_id}")]
