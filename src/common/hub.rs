@@ -96,7 +96,7 @@ pub async fn hub_handle_post(
     };
     if end_point.id.is_none() {
         let id = uuid::Uuid::new_v4();
-        let (short,_) = tmflib::gen_code(format!("{}:{}","HUB",end_point.domain), id.to_string(), None, Some(String::from("HUB")), None);
+        let (short,_) = tmflib::gen_code(format!("{}:{}","H-",end_point.domain), id.to_string(), None, Some(String::from("HUB")), None);
         end_point.id = Some(short);
     }
     let response = hub.register_hub(end_point).await;
