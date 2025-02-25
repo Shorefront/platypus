@@ -4,7 +4,7 @@
 use surrealdb::RecordId;
 use serde::{Deserialize, Serialize};
 
-use tmflib::{HasId,Uri};
+use tmflib::HasId;
 use crate::common::error::PlatypusError;
 use actix_web::HttpResponse;
 use etag::EntityTag;
