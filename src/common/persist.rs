@@ -17,8 +17,8 @@ use tmflib::{HasId, HasLastUpdate};
 
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct TMF<T : HasId> {
-    id : RecordId,
+pub struct TMF<T> {
+    pub id : RecordId,
     pub item : T,
 }
 
