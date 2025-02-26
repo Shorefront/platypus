@@ -1,5 +1,6 @@
 //! Persistence Module
 //! 
+use jsonpath_rust::JsonPath;
 use surrealdb::{engine::any::Any, opt::auth::Root};
 use surrealdb::{RecordId, Surreal};
 // use surrealdb::Surreal::Root;
@@ -106,9 +107,15 @@ impl Persistence {
         let query = format!("SELECT * FROM {} {} {} {}",T::get_class(),filter,limit,offset);
         let mut output = self.db.query(query).await?;
         let result : Vec<TMF<T>> = output.take(0)?;
-        let item = result.iter().map(|tmf| {
+        let item: Vec<T> = result.iter().map(|tmf| {
             tmf.clone().item
         }).collect();
+        if let Some(f) = query_opts.filter {
+            let json = serde_json::to_value(item.clone()).unwrap();
+            let path = JsonPath::try_from(f.as_str()).unwrap();
+            let filtered = path.find_as_path(&json);
+            debug!("Filtered: {:?}",filtered); 
+        } 
         Ok(item)    
     }
 
@@ -144,6 +151,9 @@ impl Persistence {
         let item = result.iter().map(|tmf| {
             tmf.clone().item
         }).collect();
+        if let Some(f) = query_opts.filter {
+            debug!("Filter: {}",f);
+        }  
         Ok(item)    
     }
 
