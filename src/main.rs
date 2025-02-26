@@ -60,7 +60,7 @@ pub struct QueryOptions {
     /// JSONPath Filtering
     filter: Option<String>,
     // Remaining fields
-    basic_filter: Vec<(String,String)>,
+    basic_filter: Option<Vec<(String,String)>>,
     // Legacy name filter
     name: Option<String>,
 }
@@ -106,7 +106,7 @@ impl From<Vec<(String,String)>> for QueryOptions {
             offset,
             filter,
             name,
-            basic_filter : filtered_values,
+            basic_filter : Some(filtered_values),
         }
     }
 }
