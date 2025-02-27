@@ -51,6 +51,6 @@ impl From<PlatypusError> for TMFError {
 
 impl From<serde_json::Error> for PlatypusError {
    fn from(value: serde_json::Error) -> Self {
-       PlatypusError { message: value.to_string() }
+       PlatypusError { message: format!("Line {}: {}",value.line(),value.to_string()) }
    }
 }
