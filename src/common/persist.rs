@@ -113,8 +113,10 @@ impl Persistence {
         if let Some(f) = query_opts.filter {
             let json = serde_json::to_value(item.clone()).unwrap();
             let path = JsonPath::try_from(f.as_str()).unwrap();
-            let filtered = path.find_as_path(&json);
-            debug!("Filtered: {:?}",filtered); 
+            let filtered = path.find(&json);
+            let filtered_str = serde_json::to_string(&filtered)?;
+            // debug!("Filtered: {:?}",filtered_str); 
+            println!("Filtered: {:?}",filtered_str);
         } 
         Ok(item)    
     }
