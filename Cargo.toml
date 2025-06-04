@@ -1,6 +1,6 @@
 [package]
 name = "platypus"
-version = "0.1.6"
+version = "0.1.8"
 edition = "2021"
 authors = ["Ryan Ruckley <rruckley@gmail.com>"]
 description = "API layer on top of TMF620 to provide product composition"
@@ -25,15 +25,16 @@ v5 = ["tmflib/build-V5"]
 default = ["core","v4","events"]
 
 [dependencies]
-actix-web = { version = "4.6.0", features = ["rustls-0_23"]}
-actix-web-prom = "0.9.0"
-env_logger = "0.11"
+actix-web = { version = "4.11.0", features = ["rustls-0_23"]}
+actix-web-prom = "0.10.0"
+env_logger = "0.11.8"
 etag = "4.0.0"
-log = "0.4.21"
-rustls = "0.23"
+log = "0.4.27"
+rustls = "0.23.27"
 rustls-pemfile = "2.2.0"
-serde = "1.0.202"
-serde_json = "1.0.117"
-surrealdb = {version = "2.2.1"}
-tmflib = { git = "https://github.com/rruckley/tmflib.git"}
-uuid = { version = "1.14.0", features = ["v4"] }
+serde = "1.0.219"
+serde_json = "1.0.140"
+surrealdb = {version = "2.3.3"}
+# tmflib = { git = "https://github.com/rruckley/tmflib.git"}
+tmflib = "0.1.28"
+uuid = { version = "1.17.0", features = ["v4"] }
