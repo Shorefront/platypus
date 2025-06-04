@@ -28,14 +28,14 @@ pub struct Persistence {
 }
 
 impl Persistence {
-    pub async fn new(config : &Config) -> Persistence {
+    pub async fn new(config : &Config) -> Result<Persistence,PlatypusError> {
         use surrealdb::engine::any;
 
         // Connect to the database
-        let db_host = config.get("DB_HOST").expect("DB Host not configured");
-        let db_ns   = config.get("DB_NS").expect("DB Namespace not configured");
-        let db_user = config.get("DB_USER").expect("DB User not set");
-        let db_pass = config.get("DB_PASS").expect("DB Pass not set");
+        let db_host = config.get("DB_HOST").ok_or(PlatypusError::from("DB_HOST not defined"))?;
+        let db_ns   = config.get("DB_NS").ok_or(PlatypusError::from("DB Namespace not configured"))?;
+        let db_user = config.get("DB_USER").ok_or(PlatypusError::from("DB User not set"))?;
+        let db_pass = config.get("DB_PASS").ok_or(PlatypusError::from("DB Pass not set"))?;
 
         let db = any::connect(db_host).await
             .expect("Could not connect");
@@ -51,9 +51,9 @@ impl Persistence {
         }).await
             .expect("Could not authenticate");
 
-        Persistence { 
+        Ok(Persistence { 
             db,
-        }
+        })
     }
 
     fn tmf_payload<'a, T : HasId + Serialize + Clone + Deserialize<'a>>(item : T) -> TMF<T> {

@@ -3,7 +3,7 @@
 #![warn(missing_docs)]
 
 use actix_web::dev::Extensions;
-use log::{debug,info};
+use log::{debug,info,error};
 
 mod model;
 #[cfg(feature = "composable")]
@@ -102,8 +102,13 @@ async fn main() -> std::io::Result<()> {
 
     // Data objects to be pass in
     info!("Connecting to SurrealDB...");
-    let persist = Persistence::new(&config).await;
-        // let persis = Persistence::default();
+    let persist = match Persistence::new(&config).await {
+        Ok(p) => p,
+        Err(e) => {
+            error!("Failed to connect to SurrealDB: {}", e);
+            return Ok(());
+        }
+    };
 
     let cert_file = config.get("TLS_CERT").unwrap_or("certs/cert.pem".to_string());
     let key_file = config.get("TLS_KEY").unwrap_or("certs/key.pem".to_string());
