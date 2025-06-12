@@ -24,6 +24,8 @@ pub mod tmf633;
 pub mod tmf645;
 #[cfg(feature = "tmf648")]
 pub mod tmf648;
+#[cfg(feature = "tmf663")]
+pub mod tmf663;
 #[cfg(feature = "tmf674")]
 pub mod tmf674;
 
