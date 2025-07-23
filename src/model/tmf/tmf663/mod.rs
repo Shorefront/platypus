@@ -27,7 +27,7 @@ use crate::model::tmf::{
 pub mod tmf663_shopping_cart;
 
 /// Get a list
-#[get("/tmf-api/shoppingCartManagement/v4/{object}")]
+#[get("/tmf-api/shoppingCart/v4/{object}")]
 pub async fn tmf663_list_handler(
     path : web::Path<String>,
     query : web::Query<QueryOptions>,
@@ -50,7 +50,7 @@ pub async fn tmf663_list_handler(
     } 
 }
 
-#[get("/tmf-api/shoppingCartManagement/v4/{object}/{id}")]
+#[get("/tmf-api/shoppingCart/v4/{object}/{id}")]
 pub async fn tmf663_get_handler(
     path : web::Path<(String,String)>,
     query : web::Query<QueryOptions>,
@@ -74,7 +74,7 @@ pub async fn tmf663_get_handler(
 }
 
 /// Create an object
-#[post("/tmf-api/shoppingCartManagement/v4/{object}")]
+#[post("/tmf-api/shoppingCart/v4/{object}")]
 pub async fn tmf663_post_handler(
     path : web::Path<String>,
     raw: web::Bytes,
@@ -100,7 +100,7 @@ pub async fn tmf663_post_handler(
 }
 
 /// Update an object
-#[patch("/tmf-api/shoppingCartManagement/v4/{object}/{id}")]
+#[patch("/tmf-api/shoppingCart/v4/{object}/{id}")]
 pub async fn tmf663_patch_handler(
     path : web::Path<(String,String)>,
     tmf663: web::Data<Mutex<TMF663ShoppingCartManagement>>,
@@ -122,7 +122,7 @@ pub async fn tmf663_patch_handler(
     } 
 }
 
-#[delete("/tmf-api/shoppingCartManagement/v4/{object}/{id}")]
+#[delete("/tmf-api/shoppingCart/v4/{object}/{id}")]
 pub async fn tmf663_delete_handler(
     path : web::Path<(String,String)>,
     tmf663: web::Data<Mutex<TMF663ShoppingCartManagement>>,
