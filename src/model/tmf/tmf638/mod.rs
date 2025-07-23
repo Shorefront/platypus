@@ -64,7 +64,7 @@ pub async fn tmf638_get_handler(
     let persist = persist.lock().unwrap();
     tmf638.persist(persist.clone());
     match object.as_str() {
-        "product" => {
+        "service" => {
             let product = tmf638.get_service(id, query_opts).await;
             render_get_output(product)
         },
@@ -108,7 +108,7 @@ pub async fn tmf638_patch_handler(
     let persist = persist.lock().unwrap();
     tmf637.persist(persist.clone());
     match object.as_str() {
-        "product" => {
+        "service" => {
             let product = tmf637.update_service(id, item.into_inner()).await;
             render_patch_output(product)
         },

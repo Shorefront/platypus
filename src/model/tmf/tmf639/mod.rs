@@ -130,7 +130,7 @@ pub async fn tmf639_delete_handler(
     let persist = persist.lock().unwrap();
     tmf638.persist(persist.clone());
     match object.as_str() {
-        "service" => {
+        "resource" => {
             let product = tmf638.delete_resource(id).await;
             render_delete_output(product)
         },
