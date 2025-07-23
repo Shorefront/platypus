@@ -28,7 +28,7 @@ pub mod tmf638_service_inventory_management;
 use tmf638_service_inventory_management::TMF638ServiceInventoryManagement;
 
 
-#[get("/tmf-api/serviceInventoryManagement/v4/{object}")]
+#[get("/tmf-api/serviceInventory/v4/{object}")]
 pub async fn tmf638_list_handler(
     path : web::Path<String>,
     query : web::Query<QueryOptions>,
@@ -51,7 +51,7 @@ pub async fn tmf638_list_handler(
     } 
 }
 
-#[get("/tmf-api/serviceInventoryManagement/v4/{object}/{id}")]
+#[get("/tmf-api/serviceInventory/v4/{object}/{id}")]
 pub async fn tmf638_get_handler(
     path : web::Path<(String,String)>,
     query : web::Query<QueryOptions>,
@@ -74,7 +74,7 @@ pub async fn tmf638_get_handler(
     } 
 }   
 
-#[post("/tmf-api/serviceInventoryManagement/v4/{object}")]
+#[post("/tmf-api/serviceInventory/v4/{object}")]
 pub async fn tmf638_create_handler(
     path : web::Path<String>,
     item: web::Json<Service>,
@@ -96,7 +96,7 @@ pub async fn tmf638_create_handler(
     } 
 }   
 
-#[patch("/tmf-api/serviceInventoryManagement/v4/{object}/{id}")]
+#[patch("/tmf-api/serviceInventory/v4/{object}/{id}")]
 pub async fn tmf638_patch_handler(
     path : web::Path<(String,String)>,
     item: web::Json<Service>,
@@ -118,7 +118,7 @@ pub async fn tmf638_patch_handler(
     } 
 }
 
-#[delete("/tmf-api/serviceInventoryManagement/v4/{object}/{id}")]
+#[delete("/tmf-api/serviceInventory/v4/{object}/{id}")]
 pub async fn tmf638_delete_handler(
     path : web::Path<(String,String)>,
     tmf638: web::Data<Mutex<TMF638ServiceInventoryManagement>>,
