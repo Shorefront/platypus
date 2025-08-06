@@ -1,7 +1,7 @@
 //! Template Modules
-//! 
+//!
 
-pub mod product;
 pub mod component;
+pub mod product;
 
-const TEMPLATE_CATEGORY : &str = "Templates";
+const TEMPLATE_CATEGORY: &str = "Templates";
