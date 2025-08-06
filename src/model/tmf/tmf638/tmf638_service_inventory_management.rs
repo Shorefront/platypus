@@ -17,16 +17,28 @@ impl TMF638ServiceInventoryManagement {
         self.persist = Some(persist);
     }
 
-    pub async fn get_services(&self, query_ops: QueryOptions) -> Result<Vec<Service>, PlatypusError> {
+    pub async fn get_services(
+        &self,
+        query_ops: QueryOptions,
+    ) -> Result<Vec<Service>, PlatypusError> {
         self.persist.as_ref().unwrap().get_items(query_ops).await
     }
 
-    pub async fn get_service(&self, id: String, query_ops: QueryOptions) -> Result<Vec<Service>, PlatypusError> {
+    pub async fn get_service(
+        &self,
+        id: String,
+        query_ops: QueryOptions,
+    ) -> Result<Vec<Service>, PlatypusError> {
         self.persist.as_ref().unwrap().get_item(id, query_ops).await
     }
 
     pub async fn add_service(&mut self, item: Service) -> Result<Vec<Service>, PlatypusError> {
-        let result = self.persist.as_mut().unwrap().create_tmf_item(item.clone()).await;
+        let result = self
+            .persist
+            .as_mut()
+            .unwrap()
+            .create_tmf_item(item.clone())
+            .await;
         #[cfg(feature = "events")]
         {
             // let event = item.to_event();
@@ -35,8 +47,17 @@ impl TMF638ServiceInventoryManagement {
         result
     }
 
-    pub async fn update_service(&self, id: String, patch: Service) -> Result<Vec<Service>, PlatypusError> {
-        let result = self.persist.as_ref().unwrap().patch_tmf_item(id, patch.clone()).await;
+    pub async fn update_service(
+        &self,
+        id: String,
+        patch: Service,
+    ) -> Result<Vec<Service>, PlatypusError> {
+        let result = self
+            .persist
+            .as_ref()
+            .unwrap()
+            .patch_tmf_item(id, patch.clone())
+            .await;
         #[cfg(feature = "events")]
         {
             // let event = patch.to_event();
@@ -46,7 +67,12 @@ impl TMF638ServiceInventoryManagement {
     }
 
     pub async fn delete_service(&self, id: String) -> Result<Service, PlatypusError> {
-        let result = self.persist.as_ref().unwrap().delete_tmf_item::<Service>(id).await;
+        let result = self
+            .persist
+            .as_ref()
+            .unwrap()
+            .delete_tmf_item::<Service>(id)
+            .await;
         #[cfg(feature = "events")]
         {
             // let event = Service::new(id).to_event();

@@ -1,5 +1,5 @@
 //! TMF639 Resource Inventory Management
-//! 
+//!
 
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
@@ -17,16 +17,28 @@ impl TMF639ResourceInventoryManagement {
         self.persist = Some(persist);
     }
 
-    pub async fn get_resources(&self, query_ops: QueryOptions) -> Result<Vec<Resource>, PlatypusError> {
+    pub async fn get_resources(
+        &self,
+        query_ops: QueryOptions,
+    ) -> Result<Vec<Resource>, PlatypusError> {
         self.persist.as_ref().unwrap().get_items(query_ops).await
     }
 
-    pub async fn get_resource(&self, id: String, query_ops: QueryOptions) -> Result<Vec<Resource>, PlatypusError> {
+    pub async fn get_resource(
+        &self,
+        id: String,
+        query_ops: QueryOptions,
+    ) -> Result<Vec<Resource>, PlatypusError> {
         self.persist.as_ref().unwrap().get_item(id, query_ops).await
     }
 
     pub async fn add_resource(&mut self, item: Resource) -> Result<Vec<Resource>, PlatypusError> {
-        let result = self.persist.as_mut().unwrap().create_tmf_item(item.clone()).await;
+        let result = self
+            .persist
+            .as_mut()
+            .unwrap()
+            .create_tmf_item(item.clone())
+            .await;
         #[cfg(feature = "events")]
         {
             // let event = item.to_event();
@@ -35,8 +47,17 @@ impl TMF639ResourceInventoryManagement {
         result
     }
 
-    pub async fn update_resource(&self, id: String, patch: Resource) -> Result<Vec<Resource>, PlatypusError> {
-        let result = self.persist.as_ref().unwrap().patch_tmf_item(id, patch.clone()).await;
+    pub async fn update_resource(
+        &self,
+        id: String,
+        patch: Resource,
+    ) -> Result<Vec<Resource>, PlatypusError> {
+        let result = self
+            .persist
+            .as_ref()
+            .unwrap()
+            .patch_tmf_item(id, patch.clone())
+            .await;
         #[cfg(feature = "events")]
         {
             // let event = patch.to_event();
@@ -46,7 +67,12 @@ impl TMF639ResourceInventoryManagement {
     }
 
     pub async fn delete_resource(&self, id: String) -> Result<Resource, PlatypusError> {
-        let result = self.persist.as_ref().unwrap().delete_tmf_item::<Resource>(id).await;
+        let result = self
+            .persist
+            .as_ref()
+            .unwrap()
+            .delete_tmf_item::<Resource>(id)
+            .await;
         #[cfg(feature = "events")]
         {
             // let event = Service::new(id).to_event();

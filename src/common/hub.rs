@@ -1,22 +1,21 @@
 //! Hub module for end-point registration
 
-use actix_web::{post,delete,web, HttpResponse, Responder};
 use super::error::PlatypusError;
 use crate::common::persist::Persistence;
-use std::sync::Mutex;
-use log::error;
-use serde::{Deserialize,Serialize};
-use tmflib::Uri;
 use crate::common::persist::TMF;
+use actix_web::{delete, post, web, HttpResponse, Responder};
+use log::error;
+use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
+use tmflib::Uri;
 
-
-#[derive(Clone,Debug,Default,Deserialize,Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct NotificationEndpoint {
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<String>,
-    domain : String,
+    domain: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    filter : Option<String>,
+    filter: Option<String>,
     callback: Uri,
     #[serde(skip_serializing_if = "Option::is_none")]
     query: Option<String>,
@@ -24,60 +23,65 @@ pub struct NotificationEndpoint {
 
 #[derive(Clone, Debug)]
 pub struct HubManagement {
-    persist : Option<Persistence>,
+    persist: Option<Persistence>,
 }
 
 impl HubManagement {
-    pub fn new(persist : Option<Persistence>) -> Self {
-        HubManagement {
-            persist,
-        }
+    pub fn new(persist: Option<Persistence>) -> Self {
+        HubManagement { persist }
     }
-    pub fn persist(&mut self, persist : Persistence) {
+    pub fn persist(&mut self, persist: Persistence) {
         self.persist = Some(persist);
     }
 
-    pub async fn register_hub(&mut self, hub : NotificationEndpoint) -> Result<NotificationEndpoint,PlatypusError> {
+    pub async fn register_hub(
+        &mut self,
+        hub: NotificationEndpoint,
+    ) -> Result<NotificationEndpoint, PlatypusError> {
         let payload = TMF {
-            id : ("hub",hub.id.clone().unwrap()).into(),
-            item : hub.clone(),
+            id: ("hub", hub.id.clone().unwrap()).into(),
+            item: hub.clone(),
         };
-        self
-            .persist
+        self.persist
             .as_mut()
             .unwrap()
-            .create_hub_item(payload).await
+            .create_hub_item(payload)
+            .await
             .map(|r| r.item)
-    }   
+    }
 
-    pub async fn unregister_hub(&mut self, hub_id : String) -> Result<NotificationEndpoint,PlatypusError> {
+    pub async fn unregister_hub(
+        &mut self,
+        hub_id: String,
+    ) -> Result<NotificationEndpoint, PlatypusError> {
         self.persist.as_mut().unwrap().delete_hub_item(hub_id).await
     }
 }
 
-pub fn render_register_hub(output : Result<NotificationEndpoint,PlatypusError>) -> HttpResponse {
+pub fn render_register_hub(output: Result<NotificationEndpoint, PlatypusError>) -> HttpResponse {
     match output {
-        Ok(b) => {
-            HttpResponse::Created()
-                .append_header(("Location",format!("/tmf-api/hub/{}",b.id.clone().unwrap())))
-                .append_header(("Content-Type","application/json"))
-                .json(b.clone())
-        }
+        Ok(b) => HttpResponse::Created()
+            .append_header((
+                "Location",
+                format!("/tmf-api/hub/{}", b.id.clone().unwrap()),
+            ))
+            .append_header(("Content-Type", "application/json"))
+            .json(b.clone()),
         Err(e) => {
             error!("Could not create: {e}");
             HttpResponse::Conflict().json(e)
-        },     
+        }
     }
 }
 
-pub fn render_delete_hub<T : Serialize>(output : Result<T,PlatypusError>) -> HttpResponse {
+pub fn render_delete_hub<T: Serialize>(output: Result<T, PlatypusError>) -> HttpResponse {
     match output {
         Ok(_b) => HttpResponse::NoContent().finish(),
         Err(e) => {
             error!("Could not delete: {e}");
             HttpResponse::NotFound().json(e)
-        },     
-    }     
+        }
+    }
 }
 
 #[post("/tmf-api/hub")]
@@ -91,13 +95,15 @@ pub async fn hub_handle_post(
 
     let json = String::from_utf8(raw.to_vec()).unwrap();
 
-
-    let result = create_hub(&mut hub.clone(),json).await;
+    let result = create_hub(&mut hub.clone(), json).await;
     render_register_hub(result)
 }
 
-pub async fn create_hub(hub : &mut HubManagement,json : String) -> Result<NotificationEndpoint,PlatypusError> {
-    let mut end_point : NotificationEndpoint = match serde_json::from_str(&json) {
+pub async fn create_hub(
+    hub: &mut HubManagement,
+    json: String,
+) -> Result<NotificationEndpoint, PlatypusError> {
+    let mut end_point: NotificationEndpoint = match serde_json::from_str(&json) {
         Ok(e) => e,
         Err(e) => {
             return Err(PlatypusError::from(e));
@@ -105,7 +111,13 @@ pub async fn create_hub(hub : &mut HubManagement,json : String) -> Result<Notifi
     };
     if end_point.id.is_none() {
         let id = uuid::Uuid::new_v4();
-        let (short,_) = tmflib::gen_code(format!("{}:{}","H-",end_point.domain), id.to_string(), None, Some(String::from("HUB")), None);
+        let (short, _) = tmflib::gen_code(
+            format!("{}:{}", "H-", end_point.domain),
+            id.to_string(),
+            None,
+            Some(String::from("HUB")),
+            None,
+        );
         end_point.id = Some(short);
     }
     hub.register_hub(end_point).await
@@ -113,7 +125,7 @@ pub async fn create_hub(hub : &mut HubManagement,json : String) -> Result<Notifi
 
 #[delete("/tmf-api/hub/{hub_id}")]
 pub async fn hub_handle_delete(
-    path : web::Path<String>,
+    path: web::Path<String>,
     hub: web::Data<Mutex<HubManagement>>,
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
@@ -128,8 +140,7 @@ pub async fn hub_handle_delete(
 
 pub fn config_hub(cfg: &mut web::ServiceConfig) {
     let hub_mgt = HubManagement::new(None);
-    cfg
-        .service(hub_handle_post)
+    cfg.service(hub_handle_post)
         .service(hub_handle_delete)
         .app_data(web::Data::new(Mutex::new(hub_mgt.clone())));
 }
