@@ -45,23 +45,20 @@ impl Persistence {
             .get("DB_PASS")
             .ok_or(PlatypusError::from("DB Pass not set"))?;
 
-        let db = any::connect(db_host).await.expect("Could not connect");
+        let db = any::connect(db_host).await?;
 
         // Select a namespace and database
-        db.use_ns(db_ns)
-            .use_db("platypus-db")
-            .await
-            .expect("Could not set namespace");
+        db.use_ns(db_ns).use_db("platypus-db").await?;
 
         // Authenticate
         db.signin(Root {
             username: db_user.as_str(),
             password: db_pass.as_str(),
-        })
-        .await
-        .expect("Could not authenticate");
+        }).await?;
 
-        Ok(Persistence { db })
+        Ok(Persistence { 
+            db,
+        })
     }
 
     fn tmf_payload<'a, T: HasId + Serialize + Clone + Deserialize<'a>>(item: T) -> TMF<T> {
