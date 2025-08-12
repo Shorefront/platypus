@@ -54,11 +54,10 @@ impl Persistence {
         db.signin(Root {
             username: db_user.as_str(),
             password: db_pass.as_str(),
-        }).await?;
-
-        Ok(Persistence { 
-            db,
         })
+        .await?;
+
+        Ok(Persistence { db })
     }
 
     fn tmf_payload<'a, T: HasId + Serialize + Clone + Deserialize<'a>>(item: T) -> TMF<T> {
