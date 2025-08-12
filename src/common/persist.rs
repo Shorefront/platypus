@@ -70,7 +70,7 @@ impl Persistence {
     fn query_to_filter(query_opts: QueryOptions) -> String {
         // Attempt to convert a QueryOption into a WHERE clause
         match query_opts.name {
-            Some(f) => format!("WHERE item.name = '{}'", f),
+            Some(f) => format!("WHERE item.name = '{f}'"),
             None => String::new(),
         }
     }
@@ -100,12 +100,12 @@ impl Persistence {
         let filter = Persistence::query_to_filter(query_opts.clone());
 
         let limit = match query_opts.limit {
-            Some(l) => format!("LIMIT BY {}", l),
+            Some(l) => format!("LIMIT BY {l}"),
             None => String::new(),
         };
 
         let offset = match query_opts.offset {
-            Some(o) => format!("START AT {}", o),
+            Some(o) => format!("START AT {o}"),
             None => String::new(),
         };
 
@@ -143,12 +143,12 @@ impl Persistence {
         let filter = Persistence::query_to_filter(query_opts.clone());
 
         let limit = match query_opts.limit {
-            Some(l) => format!("LIMIT BY {}", l),
+            Some(l) => format!("LIMIT BY {l}"),
             None => String::new(),
         };
 
         let offset = match query_opts.offset {
-            Some(o) => format!("START AT {}", o),
+            Some(o) => format!("START AT {o}"),
             None => String::new(),
         };
 

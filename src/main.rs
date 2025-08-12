@@ -76,8 +76,8 @@ fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
         let ttl = sock.ttl().ok();
         debug!(
             "New Connection: {} {} {}",
-            bind.to_string(),
-            peer.to_string(),
+            bind,
+            peer,
             ttl.unwrap_or_default()
         );
     }
@@ -116,7 +116,7 @@ async fn main() -> std::io::Result<()> {
     let persist = match Persistence::new(&config).await {
         Ok(p) => p,
         Err(e) => {
-            error!("Failed to connect to SurrealDB: {}", e);
+            error!("Failed to connect to SurrealDB: {e}");
             return Ok(());
         }
     };
@@ -126,8 +126,8 @@ async fn main() -> std::io::Result<()> {
         .unwrap_or("certs/cert.pem".to_string());
     let key_file = config.get("TLS_KEY").unwrap_or("certs/key.pem".to_string());
 
-    info!("Using certificate: {} ", cert_file);
-    info!("Using key: {} ", key_file);
+    info!("Using certificate: {cert_file} ");
+    info!("Using key: {key_file} ");
 
     let mut certs_file =
         BufReader::new(File::open(cert_file).expect("TLS: Could not open cert.pem"));
