@@ -110,6 +110,7 @@ pub fn render_delete_output<T: Serialize>(output: Result<T, PlatypusError>) -> H
 }
 
 /// Generic TMF struct for DB
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T: HasId> {
     id: RecordId,
