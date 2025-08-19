@@ -113,13 +113,18 @@ pub async fn tmf674_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf674 = tmf674.lock().unwrap();
+    let tmf674 = tmf674.lock().unwrap();
     let persist = persist.lock().unwrap();
-    tmf674.persist(persist.clone());
+    let mut tmf674_clone = tmf674.clone();
+    let persist_clone = persist.clone();
+    drop(tmf674);
+    drop(persist);
+    tmf674_clone.persist(persist_clone);
+  
     match object.as_str() {
         "geographicSite" => {
-            let customers = tmf674.delete_site(id).await;
-            render_delete_output(customers)
+            let sites = tmf674_clone.delete_site(id).await;
+            render_delete_output(sites)
         }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object")),
     }
