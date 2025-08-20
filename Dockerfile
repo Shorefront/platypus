@@ -1,4 +1,4 @@
-ARG RUST_VERSION=1.75
+ARG RUST_VERSION=1.87
 FROM rust:${RUST_VERSION}-slim-bullseye as build
 
 COPY . .
@@ -8,6 +8,8 @@ RUN apt update \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
 RUN cargo build --release
+
+FROM debian:bullseye-slim
 
 RUN apt update \
     && apt install --yes ca-certificates gettext-base libssl1.1 --no-install-recommends \
