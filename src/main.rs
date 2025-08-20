@@ -59,7 +59,7 @@ use common::config::Config;
 // use common::metrics::health_handler;
 
 /// Fields for filtering output
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Default, Debug, Deserialize)]
 pub struct QueryOptions {
     /// Specific set of fields delimited by comma
     fields: Option<String>,
@@ -67,6 +67,10 @@ pub struct QueryOptions {
     offset: Option<u16>,
     /// Filter on name
     name: Option<String>,
+    /// Exapand references
+    expand: Option<bool>,
+    /// Depth of expansion
+    depth: Option<u8>,
 }
 
 fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
