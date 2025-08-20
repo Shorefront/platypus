@@ -67,6 +67,10 @@ pub struct QueryOptions {
     offset: Option<u16>,
     /// Filter on name
     name: Option<String>,
+    /// Exapand references
+    expand: Option<bool>,
+    /// Depth of expansion
+    depth: Option<u8>,
 }
 
 fn log_conn_info(connection: &dyn Any, _data: &mut Extensions) {
