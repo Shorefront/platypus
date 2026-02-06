@@ -16,6 +16,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 use actix_web::middleware::Logger;
+use actix_web::middleware::Compress;
 use actix_web::{rt::net::TcpStream, web, App, HttpResponse, HttpServer};
 
 #[cfg(feature = "tmf620")]
@@ -243,6 +244,7 @@ async fn main() -> std::io::Result<()> {
         app.service(web::resource("/health").to(health))
             .wrap(prom.clone())
             .wrap(Logger::default())
+            .wrap(Compress::default())
     })
     .on_connect(log_conn_info)
     // .bind(("0.0.0.0",port))?
