@@ -8,7 +8,7 @@ use surrealdb::{RecordId, Surreal};
 #[cfg(feature = "db_pgsql")]
 use sqlx::postgres::Postgres;
 #[cfg(feature = "db_pgsql")]
-use sqlx::{query,Pool};
+use sqlx::{query,Row,Pool};
 
 use log::{debug, info};
 
@@ -138,7 +138,7 @@ impl Persistence {
         };
 
         let query = format!(
-            "SELECT * FROM {} {} {} {}",
+            "SELECT json FROM {} {} {} {}",
             T::get_class(),
             filter,
             limit,
@@ -147,14 +147,17 @@ impl Persistence {
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_pgsql")]
-        let mut output = sqlx::query("SELECT * FROM $1 $2 $3 $4")
+        let output = sqlx::query("SELECT * FROM $1 $2 $3 $4")
             .bind(T::get_class())
             .bind(filter)
             .bind(limit)
             .bind(offset)
             .fetch_all(&self.db).await?;
 
-        let item = output.into_iter().map(|tmf| tmf.into()).collect();
+        let item = output.into_iter().map(|row| {
+            let json : String = row.get("json");
+            serde_json::from_str(&json).unwrap()
+        }).collect();
         Ok(item)
     }
 

@@ -2,6 +2,7 @@
 //!
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "db_surreal")]
 use surrealdb::RecordId;
 
 use crate::common::error::PlatypusError;
@@ -112,6 +113,9 @@ pub fn render_delete_output<T: Serialize>(output: Result<T, PlatypusError>) -> H
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T: HasId> {
+    #[cfg(feature = "db_surreal")]
     id: RecordId,
+    #[cfg(feature = "db_pgsql")]
+    id: String,
     pub item: T,
 }

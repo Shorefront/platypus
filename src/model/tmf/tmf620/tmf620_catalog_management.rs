@@ -11,8 +11,6 @@ use crate::QueryOptions;
 
 use serde::{Deserialize, Serialize};
 
-use surrealdb::sql::Thing;
-
 use crate::common::error::PlatypusError;
 use crate::common::persist::Persistence;
 
@@ -21,13 +19,6 @@ pub struct TMF620CatalogManagement {
     // Use of vectors here is very simplistic, ideally need a hash.
     //db : Surreal<Db>,
     persist: Option<Persistence>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct CategoryRecord {
-    #[allow(dead_code)]
-    id: Option<Thing>,
-    category: Category,
 }
 
 impl TMF620CatalogManagement {
