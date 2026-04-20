@@ -43,4 +43,4 @@ sqlx = "0.8.6"
 surrealdb = {version = "3.0.5"}
 # tmflib = { git = "https://github.com/rruckley/tmflib.git"}
 tmflib = "0.1.38"
-uuid = { version = "1.23.0", features = ["v4"] }
+uuid = { version = "1.23.1", features = ["v4"] }
