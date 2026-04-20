@@ -52,8 +52,8 @@ impl Persistence {
 
         // Authenticate
         db.signin(Root {
-            username: db_user.as_str(),
-            password: db_pass.as_str(),
+            username: db_user.clone(),
+            password: db_pass.clone(),
         })
         .await?;
 
