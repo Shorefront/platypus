@@ -9,8 +9,9 @@ keywords = ["TMF,SurrealDB,Actix-Web,Rust"]
 
 [features]
 core = ["tmf620","tmf622","tmf629","tmf632","tmf633","tmf638","tmf639","tmf645","tmf648","tmf663","tmf674"]
-pgdb = []
-composable = ["core","pgdb"]
+db_pgsql = ["sqlx"]
+db_surreal = ["surrealdb"]
+composable = ["core","db_pgsql"]
 events = []
 tmf620 = ["tmflib/tmf620"]
 tmf622 = ["tmflib/tmf622"]
@@ -27,7 +28,7 @@ tmf674 = ["tmflib/tmf674"]
 
 v4 = ["tmflib/build-V4"]
 v5 = ["tmflib/build-V5"]
-default = ["core","v4","events"]
+default = ["core","v4","events","db_pgsql"]
 
 [dependencies]
 actix-web = { version = "4.13.0", features = ["rustls-0_23"]}
@@ -39,8 +40,8 @@ rustls = "0.23.38"
 rustls-pemfile = "2.2.0"
 serde = "1.0.219"
 serde_json = "1.0.142"
-sqlx = "0.8.6"
-surrealdb = {version = "3.0.5"}
+sqlx = { version = "0.8.6", optional = true}
+surrealdb = {version = "3.0.5", optional = true}
 # tmflib = { git = "https://github.com/rruckley/tmflib.git"}
 tmflib = "0.1.38"
 uuid = { version = "1.23.1", features = ["v4"] }
