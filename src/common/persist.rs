@@ -1,8 +1,12 @@
 //! Persistence Module
-//!
+
+#[cfg(feature = "db_surreal")]
 use surrealdb::{engine::any::Any, opt::auth::Root};
+#[cfg(feature = "db_surreal")]
 use surrealdb::{RecordId, Surreal};
 // use surrealdb::Surreal::Root;
+#[cfg(feature = "db_pgsql")]
+use sqlx::{Pool, Postgres};
 
 use log::{debug, info};
 
@@ -24,7 +28,10 @@ pub struct TMF<T> {
 
 #[derive(Clone, Debug)]
 pub struct Persistence {
+    #[cfg(feature = "db_surreal")]
     pub db: Surreal<Any>,
+    #[cfg(feature = "db_pgsql")]
+    pub db: Pool<Postgres>,
 }
 
 impl Persistence {
