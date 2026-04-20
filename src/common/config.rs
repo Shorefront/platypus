@@ -6,6 +6,9 @@ use std::env;
 const PLATYPUS_PORT: &str = "8001";
 const PLATYPUS_WORKERS: u16 = 4;
 const DB_HOST: &str = "wss://platypus-06a3rhk0qlrtj092qq5dgtl91o.aws-use1.surreal.cloud";
+#[cfg(feature = "pgdb")]
+const DB_HOST: &str = "localhost:5432";
+
 const DB_NS: &str = "tmf";
 const DB_USER: &str = "platypus";
 const DB_PASS: &str = "Platypus2025!";
