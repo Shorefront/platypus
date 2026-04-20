@@ -5,10 +5,11 @@ use std::env;
 
 const PLATYPUS_PORT: &str = "8001";
 const PLATYPUS_WORKERS: u16 = 4;
+#[cfg(feature = "db_surreal")]
 const DB_HOST: &str = "wss://platypus-06a3rhk0qlrtj092qq5dgtl91o.aws-use1.surreal.cloud";
-#[cfg(feature = "pgdb")]
-const DB_HOST: &str = "localhost:5432";
-
+#[cfg(feature = "db_pgsql")]
+const DB_HOST: &str = "postgres://db_user@localhost/platypus";
+#[cfg(feature = "db_surreal")]
 const DB_NS: &str = "tmf";
 const DB_USER: &str = "platypus";
 const DB_PASS: &str = "Platypus2025!";
@@ -33,6 +34,7 @@ impl Config {
             "PLATYPUS_PORT" => Some(PLATYPUS_PORT.to_string()),
             "PLATYPUS_WORKERS" => Some(PLATYPUS_WORKERS.to_string()),
             "DB_HOST" => Some(DB_HOST.to_string()),
+            #[cfg(  feature = "db_surreal")]
             "DB_NS" => Some(DB_NS.to_string()),
             "DB_USER" => Some(DB_USER.to_string()),
             "DB_PASS" => Some(DB_PASS.to_string()),

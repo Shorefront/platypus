@@ -6,7 +6,9 @@ use surrealdb::{engine::any::Any, opt::auth::Root};
 use surrealdb::{RecordId, Surreal};
 // use surrealdb::Surreal::Root;
 #[cfg(feature = "db_pgsql")]
-use sqlx::{Pool, Postgres};
+use sqlx::postgres::Postgres;
+#[cfg(feature = "db_pgsql")]
+use sqlx::{query,Pool};
 
 use log::{debug, info};
 
@@ -22,7 +24,10 @@ use tmflib::{HasId, HasLastUpdate};
 /// Generic TMF struct for DB
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T> {
+    #[cfg(feature = "db_surreal")]
     pub id: RecordId,
+    #[cfg(feature = "db_pgsql")]
+    pub id : String, 
     pub item: T,
 }
 
@@ -36,7 +41,14 @@ pub struct Persistence {
 
 impl Persistence {
     pub async fn new(config: &Config) -> Result<Persistence, PlatypusError> {
+        #[cfg(feature = "db_surreal")]
         use surrealdb::engine::any;
+        #[cfg(feature = "db_pgsql")]
+        let conn_str = config
+            .get("DB_HOST")
+            .ok_or(PlatypusError::from("DB_HOST not defined"))?;
+        #[cfg(feature = "db_pgsql")]   
+        let db = sqlx::PgPool::connect(&conn_str).await?;
 
         // Connect to the database
         let db_host = config
@@ -52,12 +64,18 @@ impl Persistence {
             .get("DB_PASS")
             .ok_or(PlatypusError::from("DB Pass not set"))?;
 
+        #[cfg(feature = "db_pgsql")]
+        let db = sqlx::PgPool::connect(&db_host).await?;
+
+        #[cfg(feature = "db_surreal")]
         let db = any::connect(db_host).await?;
 
         // Select a namespace and database
+        #[cfg(feature = "db_surreal")]
         db.use_ns(db_ns).use_db("platypus-db").await?;
 
         // Authenticate
+        #[cfg(feature = "db_surreal")]
         db.signin(Root {
             username: db_user.clone(),
             password: db_pass.clone(),
@@ -69,7 +87,10 @@ impl Persistence {
 
     fn tmf_payload<'a, T: HasId + Serialize + Clone + Deserialize<'a>>(item: T) -> TMF<T> {
         TMF {
+            #[cfg(feature = "db_surreal")]
             id: (T::get_class(), item.get_id()).into(),
+            #[cfg(feature = "db_pgsql")]
+            id: item.get_id(),
             item,
         }
     }
@@ -123,9 +144,17 @@ impl Persistence {
             limit,
             offset
         );
+        #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
-        let result: Vec<TMF<T>> = output.take(0)?;
-        let item = result.iter().map(|tmf| tmf.clone().item).collect();
+        #[cfg(feature = "db_pgsql")]
+        let mut output = sqlx::query("SELECT * FROM $1 $2 $3 $4")
+            .bind(T::get_class())
+            .bind(filter)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.db).await?;
+
+        let item = output.into_iter().map(|tmf| tmf.into()).collect();
         Ok(item)
     }
 
