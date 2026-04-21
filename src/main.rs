@@ -117,7 +117,7 @@ async fn main() -> std::io::Result<()> {
     let persist = match Persistence::new(&config).await {
         Ok(p) => p,
         Err(e) => {
-            error!("Failed to connect to SurrealDB: {}", e);
+            error!("Failed to connect to Database: {}", e);
             return Ok(());
         }
     };
@@ -166,13 +166,13 @@ async fn main() -> std::io::Result<()> {
         // New simple config functions.
         #[cfg(feature = "tmf620")]
         {
-            debug!("Adding module: TMF620");
+            debug!("TMF620");
             app = app.configure(config_tmf620);
         }
 
         #[cfg(feature = "tmf622")]
         {
-            debug!("Adding module: TMF622");
+            debug!("TMF622");
             app = app.configure(config_tmf622);
         }
 
