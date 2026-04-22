@@ -151,11 +151,8 @@ impl Persistence {
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT * FROM $1 $2 $3 $4")
+        let output = sqlx::query("SELECT * FROM data.tmf WHERE module = $1")
             .bind(T::get_class())
-            .bind(filter)
-            .bind(limit)
-            .bind(offset)
             .fetch_all(&self.db).await?;
 
         #[cfg(feature = "db_pgsql")]
@@ -208,7 +205,7 @@ impl Persistence {
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT item.id, item.href $1 FROM $2 $3 $4 $5")
+        let output = sqlx::query("SELECT item.id, item.href $1 FROM data.tmf $3 $4 $5")
             .bind(field_query)
             .bind(T::get_class())
             .bind(filter)
