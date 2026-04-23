@@ -43,12 +43,6 @@ impl Persistence {
     pub async fn new(config: &Config) -> Result<Persistence, PlatypusError> {
         #[cfg(feature = "db_surreal")]
         use surrealdb::engine::any;
-        #[cfg(feature = "db_pgsql")]
-        let conn_str = config
-            .get("DB_HOST")
-            .ok_or(PlatypusError::from("DB_HOST not defined"))?;
-        #[cfg(feature = "db_pgsql")]   
-        let db = sqlx::PgPool::connect(&conn_str).await?;
 
         // Connect to the database
         let db_host = config
@@ -106,6 +100,21 @@ impl Persistence {
         }
     }
 
+    #[cfg(feature = "db_pgsql")]
+    async fn create_db_partition<T : HasId>(&self, item : T) -> Result<(),PlatypusError> {
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS data.tmf_$1 PARTITION OF data.tmf FOR VALUES IN ($1)
+            AS SELECT * FROM tmf.data;
+            TRUNCATE data.$1;
+            COMMIT;
+            "#)
+            .bind(T::get_class())
+            .execute(&self.db)
+            .await?;
+        Ok(())
+    }
+
     fn query_to_fields(query_opts: QueryOptions) -> Option<Vec<String>> {
         match query_opts.fields {
             Some(f) => {
@@ -150,8 +159,9 @@ impl Persistence {
         );
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
+        debug!("SQL Module: {}",T::get_class());
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT * FROM data.tmf WHERE module = $1")
+        let output = sqlx::query("SELECT json::text FROM data.tmf WHERE module = $1")
             .bind(T::get_class())
             .fetch_all(&self.db).await?;
 
@@ -532,7 +542,7 @@ impl Persistence {
         Ok(item)
     }
 
-    #[cfg(feature = "pg_surreal")]
+    #[cfg(feature = "db_surreal")]
     pub async fn delete_tmf_item<T>(&self, id: String) -> Result<T, PlatypusError>
     where
         T: HasId + Serialize + Clone + DeserializeOwned,
