@@ -1,18 +1,17 @@
-CREATE OR REPLACE FUNCTION create_partition (base_name TEXT)
+CREATE OR REPLACE FUNCTION create_partition (module_name TEXT)
 RETURNS void AS $$
 DECLARE
-    final_table_name TEXT;
+	final_table_name VARCHAR(32);
 BEGIN
-    final_table_name := 'data.tmf_' || base_name;
-    EXECUTE format('CREATE TABLE IF NOT EXISTS %I AS SELECT * FROM data.tmf LIMIT 1;', final_table_name);
-    -- TRUNCATE TABLE final_table_name;
-    -- ALTER TABLE final_table_name ADD PRIMARY KEY (id);
-    -- ALTER TABLE final_table_name ALTER COLUMN id SET NOT NULL;
-    -- ALTER TABLE final_table_name ALTER COLUMN href SET NOT NULL;
-    -- ALTER TABLE final_table_name ALTER COLUMN module SET NOT NULL;
-    -- ALTER TABLE final_table_name ALTER COLUMN json SET NOT NULL;
-    -- ALTER TABLE data.tmf ATTACH PARTITION final_table_name FOR VALUES IN (base_name);
-
-    RAISE NOTICE 'Table % created or already exists.', final_table_name;
+	final_table_name := 'tmf_' || module_name;
+	EXECUTE format('CREATE TABLE IF NOT EXISTS data.%I AS SELECT * FROM data.tmf LIMIT 1;',final_table_name);
+	EXECUTE format('TRUNCATE TABLE data.%I',final_table_name);
+	--EXECUTE format('ALTER TABLE data.%I ADD PRIMARY KEY (id)',final_table_name);
+	EXECUTE format('ALTER TABLE data.%I ALTER COLUMN id SET NOT NULL',final_table_name);
+	EXECUTE format('ALTER TABLE data.%I ALTER COLUMN href SET NOT NULL',final_table_name);
+	EXECUTE format('ALTER TABLE data.%I ALTER COLUMN module SET NOT NULL',final_table_name);
+    EXECUTE format('ALTER TABLE data.%I ALTER COLUMN json SET NOT NULL',final_table_name);
+	EXECUTE format('ALTER TABLE data.tmf ATTACH PARTITION data.%I FOR VALUES IN (''%I'')',final_table_name,module_name);
+	RAISE NOTICE 'Table % created or already exists', final_table_name;
 END;
 $$ LANGUAGE plpgsql;
