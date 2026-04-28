@@ -215,7 +215,7 @@ impl Persistence {
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT item.id, item.href $1 FROM data.tmf $3 $4 $5")
+        let output = sqlx::query("SELECT item.id, item.href, item.json $1 FROM data.tmf $3 $4 $5")
             .bind(field_query)
             .bind(T::get_class())
             .bind(filter)
@@ -425,10 +425,19 @@ impl Persistence {
         mut item: T,
     ) -> Result<Vec<T>, PlatypusError> {
         // Should only generate a new id if one has not been supplied
+
+        use sqlx::query;
         item.generate_id();
+        let id = item.get_id();
+        let href = item.get_href();
         let payload = Persistence::tmf_payload(item);
-        let query = format!("INSERT INTO {} (id, json) VALUES ($1, $2) RETURNING json", T::get_class());
-        let output = sqlx::query(&query)
+        // let query = format!("INSERT INTO data.tmf (id,json) VALUES ($2, $3) RETURNING json",item.get_id(),item.to_string());
+        // let _partition_result = self.create_db_partition(payload.clone()).await;
+        // let json = serde_json::to_string(&payload)?;
+        let output = sqlx::query("INSERT INTO data.tmf (id, module,href, json) VALUES ($1, $2, $3, $4::jsonb)")
+            .bind(id)
+            .bind(T::get_class())
+            .bind(href)
             .bind(serde_json::to_string(&payload).unwrap())
             .fetch_one(&self.db).await?;
         let json: String = output.get("json");
@@ -565,7 +574,7 @@ pub async fn store_tmf_event<T, U>(
         T: Serialize + Clone + DeserializeOwned + 'static,
         U: Serialize + DeserializeOwned + 'static,
     {
-        let query = format!("INSERT INTO event (json) VALUES ($1) RETURNING json");
+        let query = format!("INSERT INTO events.event (json) VALUES ($1::jsonb)");
         let output = sqlx::query(&query)
             .bind(serde_json::to_string(&event).unwrap())
             .fetch_one(&self.db).await?;
