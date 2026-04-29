@@ -265,7 +265,7 @@ impl Persistence {
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_surreal")]
         let result: Vec<TMF<T>> = output.take(0)?;
-        let row = sqlx::query("SELECT * FROM $1 WHERE id = $2")
+        let row = sqlx::query("SELECT json::text FROM data.tmf WHERE module = $1 AND id = $2")
             .bind(T::get_class())
             .bind(id)
             .fetch_one(&self.db).await?;
@@ -275,7 +275,9 @@ impl Persistence {
         #[cfg(feature = "db_pgsql")]
         let json : String = row.get("json");
         #[cfg(feature = "db_pgsql")]
-        let item = vec![serde_json::from_str(&json).unwrap()];
+        let tmf : TMF<T> = serde_json::from_str(&json).unwrap();
+        #[cfg(feature = "db_pgsql")]
+        let item = vec![tmf.item];
         Ok(item)
     }
 
