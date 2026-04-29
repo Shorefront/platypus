@@ -39,7 +39,10 @@ impl HubManagement {
         hub: NotificationEndpoint,
     ) -> Result<NotificationEndpoint, PlatypusError> {
         let payload = TMF {
+            #[cfg(feature = "db_surreal")]
             id: ("hub", hub.id.clone().unwrap()).into(),
+            #[cfg(feature = "db_pgsql")]
+            id: hub.id.clone().unwrap(),
             item: hub.clone(),
         };
         self.persist

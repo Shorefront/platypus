@@ -13,6 +13,7 @@ impl std::fmt::Display for PlatypusError {
     }
 }
 
+#[cfg(feature = "db_surreal")]
 impl From<surrealdb::Error> for PlatypusError {
     fn from(value: surrealdb::Error) -> Self {
         PlatypusError {
@@ -21,6 +22,15 @@ impl From<surrealdb::Error> for PlatypusError {
     }
 }
 
+#[cfg(feature = "db_pgsql")]
+impl From<sqlx::Error> for PlatypusError {
+    fn from(value: sqlx::Error) -> Self {
+        PlatypusError {
+            message: value.to_string(),
+        }
+    }
+}
+    
 impl From<&str> for PlatypusError {
     fn from(value: &str) -> Self {
         PlatypusError {
