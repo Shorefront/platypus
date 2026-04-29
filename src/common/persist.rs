@@ -101,7 +101,7 @@ impl Persistence {
     }
 
     #[cfg(feature = "db_pgsql")]
-    async fn create_db_partition<T : HasId>(&self, item : T) -> Result<(),PlatypusError> {
+    async fn _create_db_partition<T : HasId>(&self, item : T) -> Result<(),PlatypusError> {
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS data.tmf_$1 PARTITION OF data.tmf FOR VALUES IN ($1)
@@ -168,7 +168,9 @@ impl Persistence {
         #[cfg(feature = "db_pgsql")]
         let item = output.into_iter().map(|row| {
             let json : String = row.get("json");
-            serde_json::from_str(&json).unwrap()
+            debug!("JSON: {}", json);
+            let tmf : TMF<T> =serde_json::from_str(&json).unwrap();
+            tmf.item
         }).collect();
         Ok(item)
     }
@@ -215,12 +217,12 @@ impl Persistence {
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT item.id, item.href, item.json $1 FROM data.tmf $3 $4 $5")
-            .bind(field_query)
+        let output = sqlx::query("SELECT id, href, json $1 FROM data.tmf WHERE module = $1")
+            // .bind(field_query)
             .bind(T::get_class())
-            .bind(filter)
-            .bind(limit)
-            .bind(offset)
+            // .bind(filter)
+            // .bind(limit)
+            // .bind(offset)
             .fetch_all(&self.db).await?;
         #[cfg(feature = "db_surreal")]    
         let result: Vec<TMF<T>> = output.take(0)?;
