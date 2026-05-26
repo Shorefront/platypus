@@ -7,6 +7,7 @@ use tmflib::tmf645::check_service_qualification::CheckServiceQualification;
 use crate::common::error::PlatypusError;
 use crate::common::persist::Persistence;
 
+#[derive(Clone,Debug)]
 pub struct TMF645ServiceQualificationManagement {
     persist: Option<Persistence>,
 }

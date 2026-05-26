@@ -35,9 +35,13 @@ pub async fn tmf632_list_handler_v4(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let query_opts = query.into_inner();
-    let mut tmf632 = tmf632.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf632.persist(persist.clone());
+    let mut tmf632 = {
+        tmf632.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf632.persist(persist);
     match path.as_str() {
         "individual" => {
             let result = tmf632.get_individuals(query_opts).await;
@@ -61,9 +65,13 @@ pub async fn tmf632_get_handler_v4(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf632 = tmf632.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf632.persist(persist.clone());
+    let mut tmf632 = {
+        tmf632.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf632.persist(persist);
     match object.as_str() {
         "individual" => {
             let result = tmf632.get_individual(id, query_opts).await;
@@ -86,9 +94,13 @@ pub async fn tmf632_post_handler_v4(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf632 = tmf632.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf632.persist(persist.clone());
+    let mut tmf632 = {
+        tmf632.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf632.persist(persist);
     match object.as_str() {
         "individual" => {
             // Create individual object
@@ -117,9 +129,13 @@ pub async fn tmf632_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf632 = tmf632.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf632.persist(persist.clone());
+    let mut tmf632 = {
+        tmf632.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf632.persist(persist);
     match object.as_str() {
         "individual" => {
             let individual: Individual = serde_json::from_str(json.as_str()).unwrap();
@@ -143,9 +159,13 @@ pub async fn tmf632_delete_handler_v4(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf632 = tmf632.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf632.persist(persist.clone());
+    let mut tmf632 = {
+        tmf632.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf632.persist(persist);
     match object.as_str() {
         "individual" => {
             let result = tmf632.delete_individual(id).await;

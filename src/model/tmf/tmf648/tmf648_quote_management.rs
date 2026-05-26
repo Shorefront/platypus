@@ -6,6 +6,7 @@ use log::debug;
 use tmflib::common::event::EventPayload;
 use tmflib::tmf648::quote::{Quote, QuoteEventType, QuoteStateType};
 
+#[derive(Clone,Debug)]
 pub struct TMF648QuoteManagement {
     persist: Option<Persistence>,
 }
