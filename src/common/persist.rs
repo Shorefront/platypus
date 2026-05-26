@@ -101,7 +101,7 @@ impl Persistence {
     }
 
     #[cfg(feature = "db_pgsql")]
-    async fn _create_db_partition<T : HasId>(&self, item : T) -> Result<(),PlatypusError> {
+    async fn _create_db_partition<T : HasId>(&self, _item : T) -> Result<(),PlatypusError> {
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS data.tmf_$1 PARTITION OF data.tmf FOR VALUES IN ($1)
@@ -222,7 +222,7 @@ impl Persistence {
             .bind(T::get_class())
             // .bind(filter)
             // .bind(limit)
-            // .bind(offset)
+            .bind(offset)
             .fetch_all(&self.db).await?;
         #[cfg(feature = "db_surreal")]    
         let result: Vec<TMF<T>> = output.take(0)?;
@@ -260,6 +260,7 @@ impl Persistence {
         &self,
         id: String,
     ) -> Result<Vec<T>, PlatypusError> {
+        #[cfg(feature = "db_surreal")]
         let query = format!("SELECT * FROM {}:{}", T::get_class(), id);
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;

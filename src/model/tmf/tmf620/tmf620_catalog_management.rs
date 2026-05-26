@@ -9,7 +9,7 @@ use tmflib::tmf620::product_specification::ProductSpecification;
 
 use crate::QueryOptions;
 
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 
 use crate::common::error::PlatypusError;
 use crate::common::persist::Persistence;

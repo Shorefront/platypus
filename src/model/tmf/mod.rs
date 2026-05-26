@@ -1,7 +1,7 @@
 //! TMF Modules
 //!
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 #[cfg(feature = "db_surreal")]
 use surrealdb::RecordId;
 
