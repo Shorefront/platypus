@@ -376,7 +376,7 @@ impl Persistence {
         &self,
         item: T,
     ) -> Result<T, PlatypusError> {
-        let query = format!("INSERT INTO hub (json) VALUES ($1) RETURNING json");
+        let query = "INSERT INTO hub (json) VALUES ($1) RETURNING json".to_string();
         let output = sqlx::query(&query)
             .bind(serde_json::to_string(&item).unwrap())
             .fetch_one(&self.db).await?;
@@ -402,7 +402,7 @@ impl Persistence {
         &self,
         item: String,
     ) -> Result<T, PlatypusError> {
-        let query = format!("DELETE FROM events.hub WHERE id = $1 RETURNING json");
+        let query = "DELETE FROM events.hub WHERE id = $1 RETURNING json".to_string();
         let output = sqlx::query(&query)
             .bind(&item)
             .fetch_one(&self.db).await?;
@@ -430,7 +430,6 @@ impl Persistence {
     ) -> Result<Vec<T>, PlatypusError> {
         // Should only generate a new id if one has not been supplied
 
-        use sqlx::query;
         item.generate_id();
         let id = item.get_id();
         let href = item.get_href();
@@ -438,6 +437,7 @@ impl Persistence {
         // let query = format!("INSERT INTO data.tmf (id,json) VALUES ($2, $3) RETURNING json",item.get_id(),item.to_string());
         // let _partition_result = self.create_db_partition(payload.clone()).await;
         // let json = serde_json::to_string(&payload)?;
+        debug!("Using partition: {}", T::get_class());
         let output = sqlx::query("INSERT INTO data.tmf (id, module,href, json) VALUES ($1, $2, $3, $4::jsonb)")
             .bind(id)
             .bind(T::get_class())
@@ -468,9 +468,7 @@ impl Persistence {
     }
 
     #[cfg(feature = "db_pgsql")]
-    pub async fn create_tmf_item_lastupdate<
-        'a,
-        T: HasId + HasLastUpdate + Serialize + Clone + DeserializeOwned + 'static,
+    pub async fn create_tmf_item_lastupdate<T: HasId + HasLastUpdate + Serialize + Clone + DeserializeOwned + 'static,
     >(
         &self,        mut item: T,
     ) -> Result<Vec<T>, PlatypusError> {
@@ -578,7 +576,7 @@ pub async fn store_tmf_event<T, U>(
         T: Serialize + Clone + DeserializeOwned + 'static,
         U: Serialize + DeserializeOwned + 'static,
     {
-        let query = format!("INSERT INTO events.event (json) VALUES ($1::jsonb)");
+        let query = "INSERT INTO events.event (json) VALUES ($1::jsonb)".to_string();
         let output = sqlx::query(&query)
             .bind(serde_json::to_string(&event).unwrap())
             .fetch_one(&self.db).await?;
@@ -622,8 +620,8 @@ pub async fn store_tmf_event<T, U>(
     #[cfg(feature = "events")]
     pub async fn send_tmf_events(&self, domain: Option<String>) -> Result<u16, PlatypusError> {
         info!(
-            "Process events for domain: {}",
-            domain.unwrap_or("No domain".to_string())
+            "Process events for domain: {domain}",
+            domain = domain.unwrap_or("No domain".to_string())
         );
 
         Err(PlatypusError::from("Not implemented"))

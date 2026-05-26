@@ -93,8 +93,13 @@ pub async fn hub_handle_post(
     hub: web::Data<Mutex<HubManagement>>,
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
-    let mut hub = hub.lock().unwrap();
-    hub.persist(persist.lock().unwrap().clone());
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    let mut hub = {
+        hub.lock().unwrap().clone()
+    };
+    hub.persist(persist);
 
     let json = String::from_utf8(raw.to_vec()).unwrap();
 
@@ -133,8 +138,13 @@ pub async fn hub_handle_delete(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let id = path.into_inner();
-    let mut hub = hub.lock().unwrap();
-    hub.persist(persist.lock().unwrap().clone());
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    let mut hub = {
+        hub.lock().unwrap().clone()
+    };
+    hub.persist(persist);
 
     let result = hub.unregister_hub(id).await;
 

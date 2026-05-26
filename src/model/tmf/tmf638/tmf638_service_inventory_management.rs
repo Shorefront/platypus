@@ -4,6 +4,7 @@ use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
 use tmflib::tmf638::service::Service;
 
+#[derive(Clone, Debug)]
 pub struct TMF638ServiceInventoryManagement {
     persist: Option<Persistence>,
 }

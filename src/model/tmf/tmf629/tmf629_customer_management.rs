@@ -10,6 +10,7 @@ use tmflib::{
 
 use crate::QueryOptions;
 
+#[derive(Clone, Debug)]
 pub struct TMF629CustomerManagement {
     persist: Option<Persistence>,
 }

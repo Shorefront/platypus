@@ -27,10 +27,14 @@ pub async fn tmf645_create_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf645 = tmf645.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf645 = {
+        tmf645.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
-    tmf645.persist(persist.clone());
+    tmf645.persist(persist);
     match object.as_str() {
         "checkServiceQualification" => {
             let qualification: CheckServiceQualification =
@@ -51,9 +55,13 @@ pub async fn tmf645_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf645 = tmf645.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf645.persist(persist.clone());
+    let mut tmf645 = {
+        tmf645.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf645.persist(persist);
     match object.as_str() {
         "checkServiceQualification" => {
             let qualification: CheckServiceQualification =
@@ -74,9 +82,13 @@ pub async fn tmf645_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf645 = tmf645.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf645.persist(persist.clone());
+    let mut tmf645 = {
+        tmf645.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf645.persist(persist);
     match object.as_str() {
         "checkServiceQualification" => {
             let qualifications = tmf645.get_check_qualifications(query_opts).await;
@@ -95,9 +107,13 @@ pub async fn tmf645_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf645 = tmf645.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf645.persist(persist.clone());
+    let mut tmf645 = {
+        tmf645.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf645.persist(persist);
     match object.as_str() {
         "checkServiceQualification" => {
             let qualifications = tmf645.get_check_qualification(id, query_opts).await;
@@ -114,9 +130,13 @@ pub async fn tmf645_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf645 = tmf645.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf645.persist(persist.clone());
+    let mut tmf645 = {
+        tmf645.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf645.persist(persist);
     match object.as_str() {
         "checkServiceQualification" => {
             let qualification = tmf645.delete_check_qualification(id).await;

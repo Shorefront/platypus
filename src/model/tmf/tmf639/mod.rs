@@ -26,9 +26,13 @@ pub async fn tmf639_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf639 = tmf639.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf639.persist(persist.clone());
+    let mut tmf639 = {
+        tmf639.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf639.persist(persist);
     match object.as_str() {
         "resource" => {
             let products = tmf639.get_resources(query_opts).await;
@@ -47,9 +51,13 @@ pub async fn tmf639_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf638 = tmf638.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf638.persist(persist.clone());
+    let mut tmf638 = {
+        tmf638.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf638.persist(persist);
     match object.as_str() {
         "resource" => {
             let product = tmf638.get_resource(id, query_opts).await;
@@ -67,9 +75,13 @@ pub async fn tmf639_create_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let object = path.into_inner();
-    let mut tmf638 = tmf638.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf638.persist(persist.clone());
+    let mut tmf638 = {
+        tmf638.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf638.persist(persist);
     match object.as_str() {
         "resouce" => {
             let product = tmf638.add_resource(item.into_inner()).await;
@@ -87,9 +99,13 @@ pub async fn tmf639_patch_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf637 = tmf637.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf637.persist(persist.clone());
+    let mut tmf637 = {
+        tmf637.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf637.persist(persist);
     match object.as_str() {
         "resource" => {
             let product = tmf637.update_resource(id, item.into_inner()).await;
@@ -106,9 +122,13 @@ pub async fn tmf639_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf638 = tmf638.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf638.persist(persist.clone());
+    let mut tmf638 = {
+        tmf638.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf638.persist(persist);
     match object.as_str() {
         "resource" => {
             let product = tmf638.delete_resource(id).await;

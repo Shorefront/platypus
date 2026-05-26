@@ -25,9 +25,13 @@ pub async fn tmf674_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf674 = tmf674.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf674.persist(persist.clone());
+    let mut tmf674 = {
+        tmf674.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf674.persist(persist);
     match object.as_str() {
         "geographicSite" => {
             let sites = tmf674.get_sites(query_opts).await;
@@ -46,9 +50,13 @@ pub async fn tmf674_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf674 = tmf674.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf674.persist(persist.clone());
+    let mut tmf674 = {
+        tmf674.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf674.persist(persist);
     match object.as_str() {
         "geographicSite" => {
             let customers = tmf674.get_site(id, query_opts).await;
@@ -68,10 +76,14 @@ pub async fn tmf674_post_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf674 = tmf674.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf674 = {
+        tmf674.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
-    tmf674.persist(persist.clone());
+    tmf674.persist(persist);
     match object.as_str() {
         "geographicSite" => {
             let site: GeographicSite =
@@ -93,13 +105,19 @@ pub async fn tmf674_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf674 = tmf674.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf674.persist(persist.clone());
+    
+    let new_persist = {
+        persist.lock().unwrap().clone()
+    };
+    let mut new_tmf674 = {
+        tmf674.lock().unwrap().clone()
+    };
+    new_tmf674.persist(new_persist.clone());
+
     match object.as_str() {
         "site" => {
             let site: GeographicSite = serde_json::from_str(json.as_str()).unwrap();
-            let result = tmf674.update_site(id, site).await;
+            let result = new_tmf674.update_site(id, site).await;
             render_patch_output(result)
         }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("PATCH: Bad object: {object}")),
@@ -113,12 +131,17 @@ pub async fn tmf674_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf674 = tmf674.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf674.persist(persist.clone());
+    
+    let mut new_tmf674 = {
+    tmf674.lock().unwrap().clone()    
+    };
+    let new_persist = {
+        persist.lock().unwrap().clone()
+    };
+    new_tmf674.persist(new_persist);
     match object.as_str() {
         "geographicSite" => {
-            let customers = tmf674.delete_site(id).await;
+            let customers = new_tmf674.delete_site(id).await;
             render_delete_output(customers)
         }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object")),
