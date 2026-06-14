@@ -17,17 +17,22 @@ const TLS_CERT: &str = "tls/cert.pem";
 const TLS_KEY: &str = "tls/key.pem";
 
 #[derive(Clone, Debug, Default)]
-pub struct Config {}
+pub struct Config {
+    config : Vec<(String, String)>,
+}
 
 impl Config {
     pub fn new() -> Config {
-        Config {}
+        Config { config: vec![] }
     }
     pub fn get(&self, item: &str) -> Option<String> {
-        match env::var(item) {
-            Ok(e) => Some(e),
-            _ => Config::get_default(item),
-        }
+        // Look for config value in config vector
+        // TODO: Populate config vector
+            self.config
+                .iter()
+                .find(|(key, _)| key == item)
+                .map(|(_, value)| value.clone())
+                .or_else(|| Config::get_default(item))
     }
     pub fn get_default(item: &str) -> Option<String> {
         match item {
@@ -40,7 +45,8 @@ impl Config {
             "DB_PASS" => Some(DB_PASS.to_string()),
             "TLS_CERT" => Some(TLS_CERT.to_string()),
             "TLS_KEY" => Some(TLS_KEY.to_string()),
-            _ => None,
+            _ => env::var(item)                .ok()
+                .or_else(|| Some(format!("Config item {item} not found in environment variables or defaults"))),
         }
     }
 }
