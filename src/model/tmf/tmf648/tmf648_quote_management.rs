@@ -70,17 +70,16 @@ impl TMF648QuoteManagement {
             .await;
         #[cfg(feature = "events")]
         {
-            let event = match patch.state.is_some() {
-                true => {
-                    let state = patch.state.clone().unwrap();
-                    match state {
-                        QuoteStateType::Pending => {
-                            patch.to_event(QuoteEventType::QuoteInformationRequiredEvent)
-                        }
-                        _ => patch.to_event(QuoteEventType::QuoteStateChangeEvent),
+            let event = if patch.state.is_some() {
+                let state = patch.state.clone().unwrap();
+                match state {
+                    QuoteStateType::Pending => {
+                        patch.to_event(QuoteEventType::QuoteInformationRequiredEvent)
                     }
-                }
-                false => patch.to_event(QuoteEventType::QuoteAttributeValueChangeEvent),
+                    _ => patch.to_event(QuoteEventType::QuoteStateChangeEvent),
+                } 
+            } else {
+                    patch.to_event(QuoteEventType::QuoteAttributeValueChangeEvent)
             };
             let _ = self
                 .persist

@@ -39,7 +39,8 @@ impl From<&str> for PlatypusError {
     }
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[allow(dead_code)]
+#[derive(Default, Deserialize, Serialize,Debug)]
 pub struct TMFError {
     code: String,
     reason: String,

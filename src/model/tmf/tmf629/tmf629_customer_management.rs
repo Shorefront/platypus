@@ -73,9 +73,10 @@ impl TMF629CustomerManagement {
         #[cfg(feature = "events")]
         {
             // Need to determine if the state has changed to set the correct event type
-            let event = match patch.status.is_some() {
-                true => patch.to_event(CustomerEventType::CustomerStateChangeEvent),
-                false => patch.to_event(CustomerEventType::CustomerAttributeValueChangeEvent),
+            let event = if patch.status.is_some() {
+                patch.to_event(CustomerEventType::CustomerStateChangeEvent)
+            } else {
+                patch.to_event(CustomerEventType::CustomerAttributeValueChangeEvent)
             };
             let _ = self
                 .persist

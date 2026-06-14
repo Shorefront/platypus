@@ -22,6 +22,7 @@ use crate::QueryOptions;
 use tmflib::{HasId, HasLastUpdate};
 
 /// Generic TMF struct for DB
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TMF<T> {
     #[cfg(feature = "db_surreal")]
@@ -95,7 +96,7 @@ impl Persistence {
     fn query_to_filter(query_opts: QueryOptions) -> String {
         // Attempt to convert a QueryOption into a WHERE clause
         match query_opts.name {
-            Some(f) => format!("WHERE item.name = '{}'", f),
+            Some(f) => format!("WHERE item.name = '{f}'"),
             None => String::new(),
         }
     }
@@ -103,12 +104,12 @@ impl Persistence {
     #[cfg(feature = "db_pgsql")]
     async fn _create_db_partition<T : HasId>(&self, _item : T) -> Result<(),PlatypusError> {
         sqlx::query(
-            r#"
+            r"
             CREATE TABLE IF NOT EXISTS data.tmf_$1 PARTITION OF data.tmf FOR VALUES IN ($1)
             AS SELECT * FROM tmf.data;
             TRUNCATE data.$1;
             COMMIT;
-            "#)
+            ")
             .bind(T::get_class())
             .execute(&self.db)
             .await?;
@@ -122,7 +123,7 @@ impl Persistence {
                 let mut output: Vec<String> = vec![];
                 if f == "none" || f.is_empty() {
                     return Some(output);
-                };
+                }
                 f.split(',').for_each(|f| {
                     output.push(f.to_owned());
                 });
@@ -137,16 +138,16 @@ impl Persistence {
         &self,
         query_opts: QueryOptions,
     ) -> Result<Vec<T>, PlatypusError> {
-        let filter = Persistence::query_to_filter(query_opts.clone());
+        let _filter = Persistence::query_to_filter(query_opts.clone());
 
         let limit = match query_opts.limit {
-            Some(l) => format!("LIMIT BY {}", l),
-            None => String::new(),
+            Some(l) => format!("LIMIT BY {l}"),
+            None => String::from("ALL"),
         };
 
         let offset = match query_opts.offset {
-            Some(o) => format!("START AT {}", o),
-            None => String::new(),
+            Some(o) => format!("START AT {o}"),
+            None => String::from("0"),
         };
 
         #[cfg(feature = "db_surreal")]
@@ -161,14 +162,16 @@ impl Persistence {
         let mut output = self.db.query(query).await?;
         debug!("SQL Module: {}",T::get_class());
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT json::text FROM data.tmf WHERE module = $1")
+        let output = sqlx::query("SELECT json::text FROM data.tmf WHERE module = $1 LIMIT $2 OFFSET $3")
             .bind(T::get_class())
+            .bind(limit)
+            .bind(offset)
             .fetch_all(&self.db).await?;
 
         #[cfg(feature = "db_pgsql")]
         let item = output.into_iter().map(|row| {
             let json : String = row.get("json");
-            debug!("JSON: {}", json);
+            debug!("JSON: {json}");
             let tmf : TMF<T> =serde_json::from_str(&json).unwrap();
             tmf.item
         }).collect();
@@ -180,7 +183,7 @@ impl Persistence {
         query_opts: QueryOptions,
     ) -> Result<Vec<T>, PlatypusError> {
         // Generate additional fields from vec
-        let field_query = match Persistence::query_to_fields(query_opts.clone()) {
+        let _field_query = match Persistence::query_to_fields(query_opts.clone()) {
             Some(f) => {
                 let fields: Vec<String> = f
                     .into_iter()
@@ -196,13 +199,13 @@ impl Persistence {
         let filter = Persistence::query_to_filter(query_opts.clone());
 
         let limit = match query_opts.limit {
-            Some(l) => format!("LIMIT BY {}", l),
-            None => String::new(),
+            Some(l) => format!("LIMIT BY {l}"),
+            None => String::from("ALL"),
         };
 
         let offset = match query_opts.offset {
-            Some(o) => format!("START AT {}", o),
-            None => String::new(),
+            Some(o) => format!("START AT {o}"),
+            None => String::from("0"),
         };
 
         #[cfg(feature = "db_surreal")]
@@ -217,11 +220,11 @@ impl Persistence {
         #[cfg(feature = "db_surreal")]
         let mut output = self.db.query(query).await?;
         #[cfg(feature = "db_pgsql")]
-        let output = sqlx::query("SELECT id, href, json $1 FROM data.tmf WHERE module = $1")
+        let output = sqlx::query("SELECT id, href, json $1 FROM data.tmf WHERE module = $1 LIMIT $2 OFFSET $3")
             // .bind(field_query)
             .bind(T::get_class())
-            // .bind(filter)
-            // .bind(limit)
+            .bind(filter)
+            .bind(limit)
             .bind(offset)
             .fetch_all(&self.db).await?;
         #[cfg(feature = "db_surreal")]    
@@ -289,18 +292,17 @@ impl Persistence {
         fields: Vec<String>,
     ) -> Result<Vec<T>, PlatypusError> {
         // Generate additional fields from vec
-        let field_query = match fields.is_empty() {
-            false => {
-                let fields: Vec<String> = fields
-                    .into_iter()
-                    .map(|f| {
-                        // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
-                        format!("item->>'{}'", f)
-                    })
-                    .collect();
-                format!(",{}", fields.join(","))
-            }
-            true => String::new(),
+        let field_query = if fields.is_empty() {
+            let fields: Vec<String> = fields
+                .into_iter()
+                .map(|f| {
+                    // Standard payload has TMF payload under 'item' object thus need to prepend 'item' to each field.
+                    format!("item->>'{f}'")
+                })
+                .collect();
+            format!(",{}", fields.join(","))
+        } else {
+            String::new()
         };
 
         let query = format!(
@@ -619,13 +621,27 @@ pub async fn store_tmf_event<T, U>(
     }
 
     #[cfg(feature = "events")]
-    pub async fn send_tmf_events(&self, domain: Option<String>) -> Result<u16, PlatypusError> {
-        info!(
-            "Process events for domain: {domain}",
-            domain = domain.unwrap_or("No domain".to_string())
-        );
+    pub async fn send_tmf_events(&self, domain: Option<String>) -> Result<usize, PlatypusError> {
+        #[cfg(feature = "db_pgsql")]
+        let output = sqlx::query("SELECT id, json->'title' FROM events.event WHERE domain = $1")
+            .bind(domain.clone().unwrap_or_default())
+            .fetch_all(&self.db).await?;
 
-        Err(PlatypusError::from("Not implemented"))
+        #[cfg(feature = "db_surreal")]
+        let query = format!("SELECT * FROM event WHERE domain = '{}'", domain.clone().unwrap_or_default());
+        #[cfg(feature = "db_surreal")]
+        let mut output = self.db.query(query).await?;
+
+        let count = output.len();
+
+        for row in output {
+            #[cfg(feature = "db_pgsql")]
+            let title: String = row.get("title");
+            #[cfg(feature = "db_pgsql")]
+            let id : String = row.get("id");
+            info!("Sending event : {} [{}]", title,id);
+        }
+        Ok(count)
     }
 }
 

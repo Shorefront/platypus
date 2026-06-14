@@ -1,6 +1,7 @@
 //! Platypus Primary Module
 
 #![warn(missing_docs)]
+#![warn(clippy::pedantic)]
 
 use actix_web::dev::Extensions;
 use log::{debug, error, info};
