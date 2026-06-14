@@ -639,7 +639,7 @@ pub async fn store_tmf_event<T, U>(
             let title: String = row.get("title");
             #[cfg(feature = "db_pgsql")]
             let id : String = row.get("id");
-            info!("Sending event : {} [{}]", title,id);
+            info!("Sending event : {title} [{id}]");
         }
         Ok(count)
     }
