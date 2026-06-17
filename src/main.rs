@@ -113,8 +113,13 @@ async fn main() -> std::io::Result<()> {
         .install_default()
         .expect("Could not install AWS LC provider");
 
+    #[cfg(feature = "db_pgsql")]
+    info!("Database engine = PostgreSQL");
+    #[cfg(feature = "db_surreal")]
+    info!("Database engine = SurrealDB");
+
     // Data objects to be pass in
-    info!("Connecting to SurrealDB...");
+    info!("Connecting to Database...");
     let persist = match Persistence::new(&config).await {
         Ok(p) => p,
         Err(e) => {
