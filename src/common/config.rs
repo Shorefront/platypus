@@ -32,7 +32,11 @@ impl Config {
                 .iter()
                 .find(|(key, _)| key == item)
                 .map(|(_, value)| value.clone())
+                .or_else(|| Config::get_env(item))
                 .or_else(|| Config::get_default(item))
+    }
+    pub fn get_env(item: &str) -> Option<String> {
+        env::var(item).ok()
     }
     pub fn get_default(item: &str) -> Option<String> {
         match item {
