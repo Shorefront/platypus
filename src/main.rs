@@ -4,6 +4,7 @@
 #![warn(clippy::pedantic)]
 
 use actix_web::dev::Extensions;
+use actis_web::middleware::*;
 use log::{debug, error, info};
 
 mod common;
@@ -250,6 +251,7 @@ async fn main() -> std::io::Result<()> {
         app.service(web::resource("/health").to(health))
             .wrap(prom.clone())
             .wrap(Logger::default())
+            // Added compression middleware to reduce bandwidth usages
             .wrap(Compress::default())
     })
     .on_connect(log_conn_info)
