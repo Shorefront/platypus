@@ -16,9 +16,12 @@ RUN apt update \
     && rm -rf /var/lib/{apt,dpkg,cache,log}
 
 COPY --from=build "/target/release/platypus" "/bin/platypus"
+COPY --from=build "/tls" "/etc/tls"
 
 ENV RUST_LOG info
 ENV DB_HOST "postgres://db_user:Platypus2025!@172.17.0.1/platypus"
+ENV TLS_CERT "/etc/tls/cert.pem"
+ENV TLS_KEY "/etc/tls/key.pem"
 
 EXPOSE 8001
 
