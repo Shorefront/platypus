@@ -1,6 +1,6 @@
 //! TMF648 Module
 //!
-//! use std::sync::Mutex;
+//! use `std::sync::Mutex`;
 
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
 use std::sync::Mutex;
@@ -29,8 +29,12 @@ pub async fn tmf648_create_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf648 = tmf648.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf648 = {
+        tmf648.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
     tmf648.persist(persist.clone());
     match object.as_str() {
@@ -53,9 +57,13 @@ pub async fn tmf648_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf648 = tmf648.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf648.persist(persist.clone());
+    let mut tmf648 = {
+        tmf648.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf648.persist(persist);
     match object.as_str() {
         "quote" => {
             let quote: Quote = serde_json::from_str(json.as_str()).unwrap();
@@ -75,9 +83,13 @@ pub async fn tmf648_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf648 = tmf648.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf648.persist(persist.clone());
+    let mut tmf648 = {
+        tmf648.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf648.persist(persist);
     match object.as_str() {
         "quote" => {
             let quotes = tmf648.get_quotes(query_opts).await;
@@ -96,13 +108,17 @@ pub async fn tmf648_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf648 = tmf648.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf648.persist(persist.clone());
+    let mut tmf648 = {
+        tmf648.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf648.persist(persist);
     match object.as_str() {
         "quote" => {
-            let customers = tmf648.get_quote(id, query_opts).await;
-            render_get_output(customers)
+            let quote = tmf648.get_quote(id, query_opts).await;
+            render_get_output(quote)
         }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object")),
     }
@@ -115,9 +131,13 @@ pub async fn tmf648_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf648 = tmf648.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf648.persist(persist.clone());
+    let mut tmf648 = {
+        tmf648.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf648.persist(persist);
     match object.as_str() {
         "quote" => {
             let customers = tmf648.delete_quote(id).await;

@@ -35,10 +35,14 @@ pub async fn tmf620_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let persist = persist.lock().unwrap();
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Now have to pass persistence into tmf module here
-    let mut tmf620 = tmf620.lock().unwrap();
-    tmf620.persist(persist.clone());
+    let mut tmf620 = {
+        tmf620.lock().unwrap().clone()
+    };
+    tmf620.persist(persist);
 
     match object.as_str() {
         "catalog" => {
@@ -81,9 +85,13 @@ pub async fn tmf620_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let persist = persist.lock().unwrap();
-    let mut tmf620 = tmf620.lock().unwrap();
-    tmf620.persist(persist.clone());
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    let mut tmf620 = {
+        tmf620.lock().unwrap().clone()
+    };
+    tmf620.persist(persist);
     match object.as_str() {
         "catalog" => {
             let output = tmf620.get_catalog(id, query_opts).await;
@@ -125,9 +133,13 @@ pub async fn tmf620_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf620 = tmf620.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf620.persist(persist.clone());
+    let mut tmf620 = {
+        tmf620.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf620.persist(persist);
     match object.as_str() {
         "category" => {
             let category: Category = serde_json::from_str(json.as_str()).unwrap();
@@ -168,10 +180,15 @@ pub async fn tmf620_post_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf620 = tmf620.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf620 = {
+        tmf620.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    let new_persist = persist.clone();
     // Set persistance into TMF object
-    tmf620.persist(persist.clone());
+    tmf620.persist(persist);
     match object.as_str() {
         // Create specification
         "category" => {
@@ -239,7 +256,7 @@ pub async fn tmf620_post_handler(
             }
         }
         "hub" => {
-            let mut hub = HubManagement::new(Some(persist.clone()));
+            let mut hub = HubManagement::new(Some(new_persist));
             let result = create_hub(&mut hub, json).await;
             render_register_hub(result)
         }
@@ -255,9 +272,13 @@ pub async fn tmf620_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf620 = tmf620.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf620.persist(persist.clone());
+    let mut tmf620 = {
+        tmf620.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf620.persist(persist);
     match object.as_str() {
         "catalog" => {
             let output = tmf620.delete_catalog(id).await;

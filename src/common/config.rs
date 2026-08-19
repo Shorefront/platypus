@@ -5,7 +5,11 @@ use std::env;
 
 const PLATYPUS_PORT: &str = "8001";
 const PLATYPUS_WORKERS: u16 = 4;
+#[cfg(feature = "db_surreal")]
 const DB_HOST: &str = "wss://platypus-06a3rhk0qlrtj092qq5dgtl91o.aws-use1.surreal.cloud";
+#[cfg(feature = "db_pgsql")]
+const DB_HOST: &str = "postgres://db_user:Platypus2025!@localhost/platypus";
+#[cfg(feature = "db_surreal")]
 const DB_NS: &str = "tmf";
 const DB_USER: &str = "platypus";
 const DB_PASS: &str = "Platypus2025!";
@@ -13,29 +17,40 @@ const TLS_CERT: &str = "tls/cert.pem";
 const TLS_KEY: &str = "tls/key.pem";
 
 #[derive(Clone, Debug, Default)]
-pub struct Config {}
+pub struct Config {
+    config : Vec<(String, String)>,
+}
 
 impl Config {
     pub fn new() -> Config {
-        Config {}
+        Config { config: vec![] }
     }
     pub fn get(&self, item: &str) -> Option<String> {
-        match env::var(item) {
-            Ok(e) => Some(e),
-            _ => Config::get_default(item),
-        }
+        // Look for config value in config vector
+        // TODO: Populate config vector
+            self.config
+                .iter()
+                .find(|(key, _)| key == item)
+                .map(|(_, value)| value.clone())
+                .or_else(|| Config::get_env(item))
+                .or_else(|| Config::get_default(item))
+    }
+    pub fn get_env(item: &str) -> Option<String> {
+        env::var(item).ok()
     }
     pub fn get_default(item: &str) -> Option<String> {
         match item {
             "PLATYPUS_PORT" => Some(PLATYPUS_PORT.to_string()),
             "PLATYPUS_WORKERS" => Some(PLATYPUS_WORKERS.to_string()),
             "DB_HOST" => Some(DB_HOST.to_string()),
+            #[cfg(  feature = "db_surreal")]
             "DB_NS" => Some(DB_NS.to_string()),
             "DB_USER" => Some(DB_USER.to_string()),
             "DB_PASS" => Some(DB_PASS.to_string()),
             "TLS_CERT" => Some(TLS_CERT.to_string()),
             "TLS_KEY" => Some(TLS_KEY.to_string()),
-            _ => None,
+            _ => env::var(item)                .ok()
+                .or_else(|| Some(format!("Config item {item} not found in environment variables or defaults"))),
         }
     }
 }

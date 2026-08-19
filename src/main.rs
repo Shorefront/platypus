@@ -1,8 +1,10 @@
 //! Platypus Primary Module
 
 #![warn(missing_docs)]
+#![warn(clippy::pedantic)]
 
 use actix_web::dev::Extensions;
+// use actix_web::middleware::*;
 use log::{debug, error, info};
 
 mod common;
@@ -16,6 +18,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 use actix_web::middleware::Logger;
+use actix_web::middleware::Compress;
 use actix_web::{rt::net::TcpStream, web, App, HttpResponse, HttpServer};
 
 #[cfg(feature = "tmf620")]
@@ -111,12 +114,17 @@ async fn main() -> std::io::Result<()> {
         .install_default()
         .expect("Could not install AWS LC provider");
 
+    #[cfg(feature = "db_pgsql")]
+    info!("Database engine = PostgreSQL");
+    #[cfg(feature = "db_surreal")]
+    info!("Database engine = SurrealDB");
+
     // Data objects to be pass in
-    info!("Connecting to SurrealDB...");
+    info!("Connecting to Database...");
     let persist = match Persistence::new(&config).await {
         Ok(p) => p,
         Err(e) => {
-            error!("Failed to connect to SurrealDB: {e}");
+            error!("Failed to connect to Database: {e}");
             return Ok(());
         }
     };
@@ -165,13 +173,13 @@ async fn main() -> std::io::Result<()> {
         // New simple config functions.
         #[cfg(feature = "tmf620")]
         {
-            debug!("Adding module: TMF620");
+            debug!("TMF620");
             app = app.configure(config_tmf620);
         }
 
         #[cfg(feature = "tmf622")]
         {
-            debug!("Adding module: TMF622");
+            debug!("TMF622");
             app = app.configure(config_tmf622);
         }
 
@@ -243,6 +251,8 @@ async fn main() -> std::io::Result<()> {
         app.service(web::resource("/health").to(health))
             .wrap(prom.clone())
             .wrap(Logger::default())
+            // Added compression middleware to reduce bandwidth usages
+            .wrap(Compress::default())
     })
     .on_connect(log_conn_info)
     // .bind(("0.0.0.0",port))?

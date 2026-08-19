@@ -29,10 +29,14 @@ pub async fn tmf633_post_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf633 = tmf633.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf633 = {
+        tmf633.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
-    tmf633.persist(persist.clone());
+    tmf633.persist(persist);
     match object.as_str() {
         "serviceCandidate" => {
             let category: ServiceCandidate = serde_json::from_str(json.as_str()).unwrap();
@@ -69,9 +73,13 @@ pub async fn tmf633_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let persist = persist.lock().unwrap();
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Now have to pass persistence into tmf module here
-    let mut tmf633 = tmf633.lock().unwrap();
+    let mut tmf633 = {
+        tmf633.lock().unwrap().clone()
+    };
     tmf633.persist(persist.clone());
     match object.as_str() {
         "serviceCandidate" => {
@@ -105,10 +113,14 @@ pub async fn tmf633_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let persist = persist.lock().unwrap();
+    let persist ={
+        persist.lock().unwrap().clone()
+    };
     // Now have to pass persistence into tmf module here
-    let mut tmf633 = tmf633.lock().unwrap();
-    tmf633.persist(persist.clone());
+    let mut tmf633 = {
+        tmf633.lock().unwrap().clone()
+    };
+    tmf633.persist(persist);
     match object.as_str() {
         "serviceCandidate" => {
             let output = tmf633.get_candidate(id, query_opts).await;
@@ -141,9 +153,13 @@ pub async fn tmf633_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf633 = tmf633.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf633.persist(persist.clone());
+    let mut tmf633 = {
+        tmf633.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf633.persist(persist);
     match object.as_str() {
         "serciceCandidate" => {
             let candidate: ServiceCandidate = serde_json::from_str(json.as_str()).unwrap();
@@ -176,9 +192,13 @@ pub async fn tmf633_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf633 = tmf633.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf633.persist(persist.clone());
+    let mut tmf633 = {
+        tmf633.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf633.persist(persist);
     match object.as_str() {
         "serviceCandidate" => {
             let output = tmf633.delete_candidate(id).await;

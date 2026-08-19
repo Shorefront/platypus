@@ -25,9 +25,13 @@ pub async fn tmf663_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf663 = tmf663.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf663.persist(persist.clone());
+    let mut tmf663 = {
+        tmf663.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf663.persist(persist);
     match object.as_str() {
         "shoppingCart" => {
             let sites = tmf663.get_carts(query_opts).await;
@@ -46,9 +50,13 @@ pub async fn tmf663_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf663 = tmf663.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf663.persist(persist.clone());
+    let mut tmf663 = {
+        tmf663.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf663.persist(persist);
     match object.as_str() {
         "shoppingCart" => {
             let customers = tmf663.get_cart(id, query_opts).await;
@@ -68,10 +76,15 @@ pub async fn tmf663_post_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf663 = tmf663.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf663 = {
+        tmf663.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
-    tmf663.persist(persist.clone());
+    tmf663.persist(persist);
+
     match object.as_str() {
         "shoppingCart" => {
             let cart: ShoppingCart =
@@ -93,9 +106,14 @@ pub async fn tmf663_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf663 = tmf663.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf663.persist(persist.clone());
+    let mut tmf663 = {
+        tmf663.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    // Set persistance into TMF object
+    tmf663.persist(persist);
     match object.as_str() {
         "shoppingCart" => {
             let site: ShoppingCart = serde_json::from_str(json.as_str()).unwrap();
@@ -113,9 +131,13 @@ pub async fn tmf663_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf663 = tmf663.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf663.persist(persist.clone());
+    let mut tmf663 = {
+        tmf663.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf663.persist(persist);
     match object.as_str() {
         "shoppingCart" => {
             let cart = tmf663.delete_cart(id).await;

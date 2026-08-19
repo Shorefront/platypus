@@ -82,11 +82,10 @@ impl TMF674GeographicSiteManagement {
             .await;
         #[cfg(feature = "events")]
         {
-            let event = match patch.status.is_some() {
-                true => patch.to_event(GeographicSiteEventType::GeographicSiteStatusChangeEvent),
-                false => {
-                    patch.to_event(GeographicSiteEventType::GeographicSiteAttributeValueChangeEvent)
-                }
+            let event = if patch.status.is_some() {
+                patch.to_event(GeographicSiteEventType::GeographicSiteStatusChangeEvent)
+            } else {
+                patch.to_event(GeographicSiteEventType::GeographicSiteAttributeValueChangeEvent)
             };
             let _ = self
                 .persist

@@ -26,9 +26,13 @@ pub async fn tmf629_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf629 = tmf629.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf629.persist(persist.clone());
+    let mut tmf629 = {
+        tmf629.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf629.persist(persist);
     match object.as_str() {
         "customer" => {
             let customers = tmf629.get_customers(query_opts).await;
@@ -47,9 +51,13 @@ pub async fn tmf629_get_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf629 = tmf629.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf629.persist(persist.clone());
+    let mut tmf629 = {
+        tmf629.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf629.persist(persist);
     match object.as_str() {
         "customer" => {
             let customers = tmf629.get_customer(id, query_opts).await;
@@ -69,10 +77,14 @@ pub async fn tmf629_create_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf629 = tmf629.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf629 = {
+        tmf629.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
-    tmf629.persist(persist.clone());
+    tmf629.persist(persist);
     match object.as_str() {
         "customer" => {
             let customer: Customer =
@@ -94,9 +106,13 @@ pub async fn tmf629_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf629 = tmf629.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf629.persist(persist.clone());
+    let mut tmf629 = {
+        tmf629.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf629.persist(persist);
     match object.as_str() {
         "customer" => {
             let customer: Customer = serde_json::from_str(json.as_str()).unwrap();
@@ -114,9 +130,13 @@ pub async fn tmf629_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf629 = tmf629.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf629.persist(persist.clone());
+    let mut tmf629 = {
+        tmf629.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf629.persist(persist);
     match object.as_str() {
         "customer" => {
             let customers = tmf629.delete_customer(id).await;

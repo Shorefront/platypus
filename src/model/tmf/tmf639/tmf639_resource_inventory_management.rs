@@ -4,6 +4,8 @@
 use crate::common::{error::PlatypusError, persist::Persistence};
 use crate::QueryOptions;
 use tmflib::tmf639::resource::Resource;
+
+#[derive(Clone, Debug)]
 pub struct TMF639ResourceInventoryManagement {
     persist: Option<Persistence>,
 }

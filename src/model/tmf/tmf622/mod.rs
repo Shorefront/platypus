@@ -27,9 +27,13 @@ pub async fn tmf622_list_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf622 = tmf622.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf622.persist(persist.clone());
+    let mut tmf622 = {
+        tmf622.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf622.persist(persist);
     match object.as_str() {
         "productOrder" => {
             let sites = tmf622.get_orders(query_opts).await;
@@ -43,17 +47,21 @@ pub async fn tmf622_list_handler(
 pub async fn tmf622_get_handler(
     path: web::Path<(String, String)>,
     query: web::Query<QueryOptions>,
-    tmf674: web::Data<Mutex<TMF622ProductOrderManagement>>,
+    tmf622: web::Data<Mutex<TMF622ProductOrderManagement>>,
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let query_opts = query.into_inner();
-    let mut tmf674 = tmf674.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf674.persist(persist.clone());
+    let mut tmf622 = {
+        tmf622.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf622.persist(persist);
     match object.as_str() {
         "productOrder" => {
-            let customers = tmf674.get_order(id, query_opts).await;
+            let customers = tmf622.get_order(id, query_opts).await;
             render_get_output(customers)
         }
         _ => HttpResponse::BadRequest().json(PlatypusError::from("Invalid Object")),
@@ -70,10 +78,14 @@ pub async fn tmf622_post_handler(
 ) -> impl Responder {
     let object = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf622 = tmf622.lock().unwrap();
-    let persist = persist.lock().unwrap();
+    let mut tmf622 = {
+        tmf622.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
     // Set persistance into TMF object
-    tmf622.persist(persist.clone());
+    tmf622.persist(persist);
     match object.as_str() {
         "productOrder" => {
             let order: ProductOrder =
@@ -95,9 +107,13 @@ pub async fn tmf622_patch_handler(
 ) -> impl Responder {
     let (object, id) = path.into_inner();
     let json = String::from_utf8(raw.to_vec()).unwrap();
-    let mut tmf622 = tmf622.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf622.persist(persist.clone());
+    let mut tmf622 = {
+        tmf622.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf622.persist(persist);
     match object.as_str() {
         "productOrder" => {
             let order: ProductOrder = serde_json::from_str(json.as_str()).unwrap();
@@ -115,9 +131,13 @@ pub async fn tmf622_delete_handler(
     persist: web::Data<Mutex<Persistence>>,
 ) -> impl Responder {
     let (object, id) = path.into_inner();
-    let mut tmf622 = tmf622.lock().unwrap();
-    let persist = persist.lock().unwrap();
-    tmf622.persist(persist.clone());
+    let mut tmf622 = {
+        tmf622.lock().unwrap().clone()
+    };
+    let persist = {
+        persist.lock().unwrap().clone()
+    };
+    tmf622.persist(persist);
     match object.as_str() {
         "productOrder" => {
             let customers = tmf622.delete_order(id).await;
