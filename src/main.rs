@@ -4,7 +4,7 @@
 #![warn(clippy::pedantic)]
 
 use actix_web::dev::Extensions;
-use actis_web::middleware::*;
+// use actix_web::middleware::*;
 use log::{debug, error, info};
 
 mod common;
