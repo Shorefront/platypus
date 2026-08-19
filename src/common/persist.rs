@@ -50,7 +50,7 @@ impl Persistence {
             .get("DB_HOST")
             .ok_or(PlatypusError::from("DB_HOST not defined"))?;
         // TODO! Remove hardcoding of DB connection details and pull from config/env variables
-        debug!("Connecting to database at {}", db_host);
+        debug!("Connecting to database at {db_host}");
         #[cfg(feature = "db_surreal")]
         let db_ns = config
             .get("DB_NS")
